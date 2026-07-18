@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tecido-garage-management
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false   # set in the Render dashboard (Neon connection string)
+      - key: NODE_VERSION
+        value: 22
