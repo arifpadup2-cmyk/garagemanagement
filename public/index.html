@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0F172A">
 <title>GMS — Garage Management</title>
 <style>
 :root{
-  --accent:#F97316;--accent-lt:#FFF7ED;--accent-dk:#EA580C;
+  --accent:#F97316;--accent-lt:#FFF7ED;--accent-dk:#EA580C;--accent-text:#C2410C;--accent-press:#9A3412;
   --blue:#1E40AF;--blue-lt:#EFF6FF;
   --green:#16A34A;--green-lt:#DCFCE7;
   --red:#DC2626;--red-lt:#FEF2F2;
@@ -24,17 +24,22 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5}
 button{cursor:pointer;font-family:inherit;font-size:14px;border:none;outline:none}
-input,select,textarea{font-family:inherit;font-size:14px;outline:none;border:1.5px solid var(--b1);border-radius:var(--r-sm);padding:9px 12px;width:100%;background:#fff;color:var(--t1);transition:border-color .15s}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+button:focus-visible,[onclick]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none;border:1.5px solid #64748B;border-radius:var(--r-sm);padding:9px 12px;width:100%;background:#fff;color:var(--t1);transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#64748B;opacity:1}
+input:focus,select:focus,textarea:focus{border-color:var(--accent-dk);box-shadow:0 0 0 3px rgba(234,88,12,.22)}
 textarea{resize:vertical;min-height:80px}
 label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px}
 
 /* LOGIN */
-#v-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;background:linear-gradient(135deg,#0F172A 0%,#1E293B 50%,#1E40AF 100%)}
+#v-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.02) 0 2px,transparent 2px 16px),linear-gradient(135deg,#0F172A 0%,#1E293B 55%,#1E3A8A 100%)}
+.login-card input,.login-card select{min-height:44px}
+.login-card .login-check{width:20px;height:20px;accent-color:var(--accent-text);cursor:pointer}
+.login-card .btn-primary{min-height:48px}
 .login-card{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
 .login-logo{text-align:center;margin-bottom:28px}
-.login-icon{font-size:52px;display:block;margin-bottom:10px}
-.login-title{font-size:22px;font-weight:800;color:var(--t1)}
+.login-icon{display:block;margin:0 auto 12px;width:56px;height:56px;color:var(--accent-text);background:var(--accent-lt);border-radius:14px;padding:13px}
+.login-title{font-size:22px;font-weight:800;color:var(--t1);margin:0}
 .login-sub{font-size:13px;color:var(--t2);margin-top:4px}
 .login-error{background:#FEF2F2;border:1px solid #FCA5A5;color:#DC2626;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
 
@@ -118,8 +123,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .card{background:#fff;border-radius:var(--r-lg);border:1.5px solid var(--b1);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 .card-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r-sm);font-weight:600;font-size:13px;transition:all .15s;border:1.5px solid transparent;cursor:pointer;white-space:nowrap}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:var(--accent-dk)}
+.btn-primary{background:var(--accent-text);color:#fff;border-color:var(--accent-text)}
+.btn-primary:hover{background:var(--accent-press);border-color:var(--accent-press)}
 .btn-secondary{background:#fff;color:var(--t1);border-color:var(--b1)}
 .btn-secondary:hover{border-color:var(--b2);background:var(--bg)}
 .btn-blue{background:var(--blue);color:#fff}
@@ -261,8 +266,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .tp-notif-bar{height:100%;background:#EF4444;border-radius:2px;width:100%;transition:none}
 /* Login tabs */
 .login-tabs{display:flex;border-bottom:1.5px solid var(--b1);margin-bottom:20px}
-.login-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s}
-.login-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.login-tab{flex:1;padding:13px 9px;min-height:44px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s}
+.login-tab.active{color:var(--accent-text);border-bottom-color:var(--accent-text)}
 
 /* ─── RESPONSIVE — must come AFTER all base styles ─── */
 @media(max-width:768px){
@@ -428,47 +433,47 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 
 <!-- LOGIN -->
 <div id="v-login">
-  <div class="login-card">
+  <main class="login-card" aria-label="Sign in">
     <div class="login-logo">
-      <span class="login-icon">🔧</span>
-      <div class="login-title">Garage Management</div>
+      <svg class="login-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      <h1 class="login-title">Garage Management</h1>
       <div class="login-sub">Sign in to continue</div>
     </div>
-    <div class="login-tabs">
-      <button class="login-tab active" id="tab-admin" onclick="switchLoginTab('admin')">Admin</button>
-      <button class="login-tab" id="tab-tech" onclick="switchLoginTab('tech')">Technician</button>
+    <div class="login-tabs" role="tablist" aria-label="Login type">
+      <button class="login-tab active" id="tab-admin" role="tab" aria-selected="true" aria-controls="login-admin-panel" onclick="switchLoginTab('admin')">Admin</button>
+      <button class="login-tab" id="tab-tech" role="tab" aria-selected="false" aria-controls="login-tech-panel" onclick="switchLoginTab('tech')">Technician</button>
     </div>
     <!-- Admin login -->
-    <div id="login-admin-panel">
-      <div class="login-error" id="login-error"></div>
+    <div id="login-admin-panel" role="tabpanel" aria-labelledby="tab-admin">
+      <div class="login-error" id="login-error" role="alert"></div>
       <div class="form-group">
-        <label>Username</label>
+        <label for="l-user">Username</label>
         <input type="text" id="l-user" placeholder="Enter username" autocomplete="username">
       </div>
       <div class="form-group">
-        <label>Password</label>
+        <label for="l-pass">Password</label>
         <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password">
       </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="l-remember" style="width:auto;margin:0" checked>
-        <label for="l-remember" style="margin:0;font-weight:500;cursor:pointer;font-size:13px">Remember me</label>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;min-height:44px">
+        <input type="checkbox" id="l-remember" class="login-check" style="width:20px;margin:0" checked>
+        <label for="l-remember" style="margin:0;font-weight:500;cursor:pointer;font-size:13px;flex:1;padding:12px 0">Remember me</label>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-top:4px;padding:11px;font-size:15px" onclick="doLogin()" id="login-btn">Sign In</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px;padding:13px;font-size:15px" onclick="doLogin()" id="login-btn">Sign In</button>
     </div>
     <!-- Technician login -->
-    <div id="login-tech-panel" style="display:none">
-      <div class="login-error" id="tech-login-error"></div>
+    <div id="login-tech-panel" role="tabpanel" aria-labelledby="tab-tech" style="display:none">
+      <div class="login-error" id="tech-login-error" role="alert"></div>
       <div class="form-group">
-        <label>Select Your Name</label>
+        <label for="tl-name">Select Your Name</label>
         <select id="tl-name" style="font-size:14px"><option value="">Loading technicians…</option></select>
       </div>
       <div class="form-group">
-        <label>4-Digit PIN</label>
+        <label for="tl-pin">4-Digit PIN</label>
         <input type="password" id="tl-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="off">
       </div>
-      <button class="btn btn-primary" style="width:100%;padding:11px;font-size:15px" onclick="doTechLogin()" id="tech-login-btn">Sign In as Technician</button>
+      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:15px" onclick="doTechLogin()" id="tech-login-btn">Sign In as Technician</button>
     </div>
-  </div>
+  </main>
 </div>
 
 <!-- APP -->
@@ -6028,6 +6033,8 @@ function switchLoginTab(tab){
   document.getElementById('login-tech-panel').style.display=tab==='tech'?'':'none';
   document.getElementById('tab-admin').classList.toggle('active',tab==='admin');
   document.getElementById('tab-tech').classList.toggle('active',tab==='tech');
+  document.getElementById('tab-admin').setAttribute('aria-selected',tab==='admin'?'true':'false');
+  document.getElementById('tab-tech').setAttribute('aria-selected',tab==='tech'?'true':'false');
   if(tab==='tech')loadTechLoginList();
 }
 
