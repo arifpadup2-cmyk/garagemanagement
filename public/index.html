@@ -256,6 +256,25 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   .dsh-stage-count{font-size:26px}
   .dsh-money-net{border-right:none;border-bottom:1.5px solid var(--b1);padding:0 0 12px;width:100%}
 }
+/* Dashboard premium — depth, motion, refined numerals */
+#v-dashboard .dsh-pipeline{border-color:#E7ECF3;box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 26px -10px rgba(15,23,42,.11)}
+#v-dashboard .card{border-color:#E7ECF3;box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 26px -12px rgba(15,23,42,.10)}
+.dsh-stage{overflow:hidden}
+.dsh-stage::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--stage-col);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.dsh-stage:hover::before,.dsh-stage:focus-visible::before{transform:scaleX(1)}
+.dsh-stage-dot{background:var(--stage-col);box-shadow:0 0 0 3px color-mix(in srgb,var(--stage-col) 20%,transparent)}
+.dsh-stage-count,.dsh-net-val,.dsh-mstat .v,#v-dashboard .li-title{font-variant-numeric:tabular-nums}
+.dsh-stage-count{letter-spacing:-1px}
+.dsh-net-val{font-size:32px;letter-spacing:-.6px}
+.dsh-mstat{transition:transform .15s cubic-bezier(.2,.7,.2,1),box-shadow .15s,border-color .15s,background .15s}
+.dsh-mstat:hover{transform:translateY(-2px);box-shadow:0 8px 18px -8px rgba(15,23,42,.18);border-color:#E2E8F0}
+#v-dashboard .list-item{transition:transform .15s cubic-bezier(.2,.7,.2,1),box-shadow .15s,border-color .15s}
+#v-dashboard .list-item:hover{transform:translateY(-2px);box-shadow:0 8px 18px -8px rgba(15,23,42,.16);border-color:#E2E8F0}
+@keyframes dshUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.dsh-in>.dsh-pipeline{animation:dshUp .5s cubic-bezier(.2,.7,.2,1) both}
+.dsh-in>.dsh-money{animation:dshUp .5s cubic-bezier(.2,.7,.2,1) .07s both}
+.dsh-in>.dash-panels{animation:dshUp .5s cubic-bezier(.2,.7,.2,1) .14s both}
+@media(prefers-reduced-motion:reduce){.dsh-in>*{animation:none!important}}
 .avail-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
 
 /* JOB CARD */
@@ -1790,7 +1809,7 @@ function navTo(tab){
   }
   show('v-'+tab);
   if(tab==='mob-home')renderMobHome();
-  else if(tab==='dashboard')renderDashboard();
+  else if(tab==='dashboard'){dashAnimate=true;renderDashboard();}
   else if(tab==='customers')renderCustomers();
   else if(tab==='jobcards')renderJobCards();
   else if(tab==='technicians')renderTechnicians();
@@ -1936,9 +1955,10 @@ function dashPeriodRange(){
   return{from:'2000-01-01',to:today};
 }
 
+var dashAnimate=false;
 function setDashPeriod(p){
   dashPeriod=p;
-  if(p!=='custom')renderDashboard();
+  if(p!=='custom'){dashAnimate=true;renderDashboard();}
   else renderDashPeriodBar();
 }
 
@@ -2062,9 +2082,9 @@ function renderDashboard(){
   var netCol=net>=0?'var(--green)':'var(--red)';
   var netStr=(net<0?'−':'')+fmtMoney(Math.abs(net));
   function pstage(status,count,name,col){
-    return '<button class="dsh-stage" onclick="navTo(\'jobcards\');setJcFilter(\''+status+'\')">'+
-      '<span class="dsh-stage-head"><span class="dsh-stage-dot" style="background:'+col+'"></span><span class="dsh-stage-name">'+name+'</span></span>'+
-      '<span class="dsh-stage-count'+(count?'':' zero')+'">'+count+'</span>'+
+    return '<button class="dsh-stage" style="--stage-col:'+col+'" onclick="navTo(\'jobcards\');setJcFilter(\''+status+'\')">'+
+      '<span class="dsh-stage-head"><span class="dsh-stage-dot"></span><span class="dsh-stage-name">'+name+'</span></span>'+
+      '<span class="dsh-stage-count'+(count?'':' zero')+'" data-target="'+count+'">'+count+'</span>'+
     '</button>';
   }
 
@@ -2097,6 +2117,23 @@ function renderDashboard(){
         '</div>'+techHTML+
       '</div>'+
     '</div>';
+
+  // Premium entrance: reveal + count-up (only on nav/period change, never background refresh)
+  var doAnim=dashAnimate;dashAnimate=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(doAnim&&!reduce){
+    el.classList.remove('dsh-in');void el.offsetWidth;el.classList.add('dsh-in');
+    el.querySelectorAll('.dsh-stage-count').forEach(function(node){
+      var target=parseInt(node.getAttribute('data-target'),10)||0;
+      if(target<=0)return;
+      var t0=performance.now(),dur=700;
+      requestAnimationFrame(function step(t){
+        var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+        node.textContent=Math.round(e*target);
+        if(p<1)requestAnimationFrame(step);else node.textContent=target;
+      });
+    });
+  }
 }
 
 function openJobCardById(id){
