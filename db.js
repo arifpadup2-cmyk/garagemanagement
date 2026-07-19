@@ -26,12 +26,14 @@ CREATE TABLE IF NOT EXISTS transactions (id text PRIMARY KEY, data jsonb NOT NUL
 CREATE TABLE IF NOT EXISTS fin_accounts (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS technicians  (id text PRIMARY KEY, data jsonb NOT NULL, name text);
 CREATE TABLE IF NOT EXISTS advisors     (id text PRIMARY KEY, data jsonb NOT NULL, name text);
+CREATE TABLE IF NOT EXISTS appointments (id text PRIMARY KEY, data jsonb NOT NULL, appt_date text, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 
 CREATE INDEX IF NOT EXISTS idx_jobcards_created  ON job_cards(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_invoices_created  ON invoices(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_txn_date          ON transactions(txn_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appt_date         ON appointments(appt_date);
 `;
 
 async function initSchema() {

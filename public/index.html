@@ -478,6 +478,30 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .wb-val{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
 .wb-hint{font-size:12px;color:var(--t3);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 @media(max-width:768px){.wb-hint .wb-hint-drag{display:none}}
+/* ── APPOINTMENTS CALENDAR ── */
+.cal-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.cal-nav{display:flex;align-items:center;gap:9px}
+.cal-navbtn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--b1);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:border-color .15s,background .15s}
+.cal-navbtn:hover{border-color:var(--b2);background:var(--bg)}
+.cal-range{font-size:15px;font-weight:800;color:var(--t1);margin-left:4px}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+@media(max-width:900px){.cal-week{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.cal-week{grid-template-columns:1fr}}
+.cal-day{background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-md);display:flex;flex-direction:column;min-height:132px;overflow:hidden}
+.cal-day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cal-day-head{padding:9px 12px;border-bottom:1px solid var(--b1);display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.cal-day.today .cal-day-head{background:var(--accent-lt)}
+.cal-dow{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
+.cal-dom{font-size:15px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.cal-day.today .cal-dom{color:var(--accent-text)}
+.cal-day-body{padding:8px;display:flex;flex-direction:column;gap:7px;flex:1}
+.cal-appt{border:1px solid var(--b1);border-radius:8px;padding:8px 9px;cursor:pointer;transition:border-color .12s,box-shadow .12s;background:var(--card)}
+.cal-appt:hover{border-color:var(--b2);box-shadow:0 4px 10px -6px rgba(15,23,42,.22)}
+.cal-appt-time{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.cal-appt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cal-appt-cust{font-size:12px;font-weight:600;color:var(--t1);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-appt-veh{font-size:11px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-day-empty{font-size:18px;color:var(--b2);text-align:center;margin:auto;font-weight:700}
 /* ── Entity detail header (customer / vehicle) ── */
 .ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
@@ -868,6 +892,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-item active" id="snav-dashboard" onclick="navTo('dashboard')" title="Dashboard"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="snav-label">Dashboard</span></div>
       <div class="snav-item" id="snav-jobcards" onclick="navTo('jobcards')" title="Job Cards"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span><span class="snav-label">Job Cards</span></div>
       <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
+      <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
       <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Sales"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Sales</span></div>
       <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
       <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
@@ -1122,6 +1147,54 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
       </div>
       <div id="workshop-board"></div>
+    </div>
+
+    <!-- APPOINTMENTS (calendar) -->
+    <div id="v-appointments" class="view">
+      <div class="page-header">
+        <div><div class="page-title">Appointments</div><div class="page-sub">Bookings &amp; workshop schedule</div></div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="showAddAppointment(false)">+ New Appointment</button>
+        </div>
+      </div>
+      <div id="appt-content"></div>
+    </div>
+
+    <!-- ADD/EDIT APPOINTMENT -->
+    <div id="v-add-appointment" class="view">
+      <div class="page-header">
+        <button class="back-btn" onclick="navTo('appointments')">← Appointments</button>
+      </div>
+      <div class="card" style="max-width:640px">
+        <div class="card-title" id="appt-form-title">New Appointment</div>
+        <div class="form-row">
+          <div class="form-group"><label>Customer</label><select id="appt-customer" onchange="apptCustomerChange()"></select></div>
+          <div class="form-group"><label>Vehicle</label><select id="appt-vehicle"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Date *</label><input type="date" id="appt-date"></div>
+          <div class="form-group"><label>Time *</label><input type="time" id="appt-time"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Service / Reason</label><input type="text" id="appt-service" placeholder="e.g. Periodic service, AC check"></div>
+          <div class="form-group"><label>Service Advisor</label><select id="appt-advisor"></select></div>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="appt-status">
+            <option value="scheduled">Scheduled</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="arrived">Arrived</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="appt-notes" placeholder="Any additional details…"></textarea></div>
+        <div class="btn-group" style="margin-top:6px">
+          <button class="btn btn-primary" id="appt-save-btn" onclick="saveAppointment()">Save Appointment</button>
+          <button class="btn btn-secondary" onclick="navTo('appointments')">Cancel</button>
+          <button class="btn btn-red" id="appt-del-btn" onclick="deleteAppointment()" style="display:none;margin-left:auto">Delete</button>
+        </div>
+      </div>
     </div>
 
     <!-- ADD/EDIT JOB CARD -->
@@ -1970,7 +2043,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});document.getElementById(id).style.display='block';window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -1993,7 +2066,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2033,6 +2106,8 @@ var _I={
   mail:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg>',
   mapPin:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
   chat:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6a8.5 8.5 0 0 1-.9-3.9A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>',
+  chevL:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  chevR:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
 };
 // Render an icon at a fixed size in a color (used outside the nav's own sizing rules).
 function ico(name,size,color){size=size||18;return '<span class="ico" style="width:'+size+'px;height:'+size+'px'+(color?';color:'+color:'')+'">'+(_I[name]||'')+'</span>';}
@@ -2108,6 +2183,7 @@ function navTo(tab){
   else if(tab==='customers')renderCustomers();
   else if(tab==='jobcards')renderJobCards();
   else if(tab==='workshop')renderWorkshop();
+  else if(tab==='appointments')renderAppointments();
   else if(tab==='technicians')renderTechnicians();
   else if(tab==='advisors')renderAdvisors();
   else if(tab==='vehicles'){renderVehiclesSection();}
@@ -2125,7 +2201,7 @@ function navTo(tab){
 }
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
-var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
+var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-jobcard':['Job Cards','New Job Card'],
   'jobcard':['Job Cards','Detail'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
@@ -2133,7 +2209,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'add-advisor':['Service Advisors','Add Advisor'],'add-transaction':['Accounts','Transaction'],'fin-accounts':['Accounts','Chart of Accounts'],
   'add-fin-account':['Accounts','New Account'],'gen-ledger':['Accounts','General Ledger'],'trial-balance':['Accounts','Trial Balance'],
   'pl-statement':['Accounts','Profit & Loss'],'balance-sheet':['Accounts','Balance Sheet'],'cust-accs':['Accounts','Customer Accounts'],
-  'cust-acc-detail':['Accounts','Customer Ledger'],'acc-statement':['Accounts','Statement'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports']
+  'cust-acc-detail':['Accounts','Customer Ledger'],'acc-statement':['Accounts','Statement'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
+  'add-appointment':['Appointments','New Appointment']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -2395,6 +2472,10 @@ function initFirestore(){
     advisors=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='advisors')renderAdvisors();
     if(activeNav==='add-jobcard'||activeNav==='v-add-jobcard')populateAdvisorSelect(document.getElementById('jc-advisor')?document.getElementById('jc-advisor').value:'');
+  });
+  db.collection('appointments').onSnapshot(function(snap){
+    appointments=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='appointments')renderAppointments();
   });
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -3167,6 +3248,121 @@ function wbMove(id,stageKey){
     toast(jcNum(jc)+' moved to '+lbl,'success');
     renderWorkshop();
   }).catch(function(err){toast('Could not move job card: '+err.message,'error');});
+}
+
+// ── APPOINTMENTS / CALENDAR ──
+var appointments=[];
+var editingApptId=null, apptWeekStart=null;
+var APPT_STATUS={
+  scheduled:{label:'Scheduled',color:'#2563EB'},
+  confirmed:{label:'Confirmed',color:'#16A34A'},
+  arrived:{label:'Arrived',color:'#EA580C'},
+  completed:{label:'Completed',color:'#64748B'},
+  cancelled:{label:'Cancelled',color:'#DC2626'}
+};
+function apptMonday(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());var day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x;}
+function apptYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function apptShiftWeek(n){if(!apptWeekStart)apptWeekStart=apptMonday(new Date());apptWeekStart=new Date(apptWeekStart.getFullYear(),apptWeekStart.getMonth(),apptWeekStart.getDate()+n*7);renderAppointments();}
+function apptToday(){apptWeekStart=apptMonday(new Date());renderAppointments();}
+function renderAppointments(){
+  var el=document.getElementById('appt-content');if(!el)return;
+  if(!apptWeekStart)apptWeekStart=apptMonday(new Date());
+  var days=[];for(var i=0;i<7;i++){days.push(new Date(apptWeekStart.getFullYear(),apptWeekStart.getMonth(),apptWeekStart.getDate()+i));}
+  var todayStr=apptYmd(new Date());
+  var rangeLabel=days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' – '+days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  var weekAppts=appointments.filter(function(a){return a.date>=apptYmd(days[0])&&a.date<=apptYmd(days[6]);});
+  var head='<div class="cal-head"><div class="cal-nav">'+
+    '<button class="cal-navbtn" onclick="apptShiftWeek(-1)" aria-label="Previous week">'+ico('chevL',16)+'</button>'+
+    '<button class="btn btn-secondary btn-sm" onclick="apptToday()">Today</button>'+
+    '<button class="cal-navbtn" onclick="apptShiftWeek(1)" aria-label="Next week">'+ico('chevR',16)+'</button>'+
+    '<span class="cal-range">'+rangeLabel+'</span></div>'+
+    '<div style="font-size:12px;color:var(--t2);font-weight:600">'+weekAppts.length+' appointment'+(weekAppts.length!==1?'s':'')+' this week</div></div>';
+  var grid='<div class="cal-week">'+days.map(function(d){
+    var ds=apptYmd(d),isToday=ds===todayStr;
+    var dayAppts=appointments.filter(function(a){return a.date===ds;}).sort(function(a,b){return (a.time||'').localeCompare(b.time||'');});
+    return '<div class="cal-day'+(isToday?' today':'')+'">'+
+      '<div class="cal-day-head"><span class="cal-dow">'+d.toLocaleDateString('en-GB',{weekday:'short'})+'</span><span class="cal-dom">'+d.getDate()+'</span></div>'+
+      '<div class="cal-day-body">'+
+        (dayAppts.length?dayAppts.map(function(a){var st=APPT_STATUS[a.status]||APPT_STATUS.scheduled;
+          return '<div class="cal-appt" onclick="showAddAppointment(\''+a.id+'\')">'+
+            '<div class="cal-appt-time"><span class="cal-appt-dot" style="background:'+st.color+'"></span>'+esc(a.time||'—')+'</div>'+
+            '<div class="cal-appt-cust">'+esc(a.customerName||'Walk-in')+'</div>'+
+            ((a.vehicleReg||a.service)?'<div class="cal-appt-veh">'+esc([a.vehicleReg,a.service].filter(Boolean).join(' · '))+'</div>':'')+
+          '</div>';
+        }).join(''):'<div class="cal-day-empty">·</div>')+
+      '</div></div>';
+  }).join('')+'</div>';
+  el.innerHTML=head+grid;
+}
+function apptCustomerChange(){
+  var cId=document.getElementById('appt-customer').value;
+  var vSel=document.getElementById('appt-vehicle');
+  var vs=cId?vehicles.filter(function(v){return v.customerId===cId;}):vehicles;
+  vSel.innerHTML='<option value="">— Select vehicle —</option>'+vs.map(function(v){return '<option value="'+v.id+'">'+esc(v.registrationNo+' — '+[v.make,v.model].filter(Boolean).join(' '))+'</option>';}).join('');
+}
+function showAddAppointment(id){
+  editingApptId=(id&&id!==false)?id:null;
+  var a=editingApptId?appointments.find(function(x){return x.id===editingApptId;}):null;
+  document.getElementById('appt-form-title').textContent=a?'Edit Appointment':'New Appointment';
+  document.getElementById('appt-save-btn').textContent=a?'Update Appointment':'Save Appointment';
+  document.getElementById('appt-del-btn').style.display=a?'':'none';
+  var cSel=document.getElementById('appt-customer');
+  cSel.innerHTML='<option value="">— Walk-in / other —</option>'+customers.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('');
+  var adSel=document.getElementById('appt-advisor');
+  adSel.innerHTML='<option value="">— Unassigned —</option>'+advisors.map(function(ad){return '<option value="'+ad.id+'">'+esc(ad.name)+'</option>';}).join('');
+  if(a){
+    cSel.value=a.customerId||'';apptCustomerChange();
+    document.getElementById('appt-vehicle').value=a.vehicleId||'';
+    document.getElementById('appt-date').value=a.date||'';
+    document.getElementById('appt-time').value=a.time||'';
+    document.getElementById('appt-service').value=a.service||'';
+    adSel.value=a.advisorId||'';
+    document.getElementById('appt-status').value=a.status||'scheduled';
+    document.getElementById('appt-notes').value=a.notes||'';
+  } else {
+    apptCustomerChange();
+    document.getElementById('appt-date').value=apptYmd(new Date());
+    document.getElementById('appt-time').value='09:00';
+    document.getElementById('appt-service').value='';
+    document.getElementById('appt-status').value='scheduled';
+    document.getElementById('appt-notes').value='';
+  }
+  show('v-add-appointment');
+}
+function saveAppointment(){
+  var date=document.getElementById('appt-date').value;
+  var time=document.getElementById('appt-time').value;
+  if(!date){toast('Please select a date.');return;}
+  if(!time){toast('Please select a time.');return;}
+  var cId=document.getElementById('appt-customer').value;
+  var c=cId?customers.find(function(x){return x.id===cId;}):null;
+  var vId=document.getElementById('appt-vehicle').value;
+  var v=vId?vehicles.find(function(x){return x.id===vId;}):null;
+  var adId=document.getElementById('appt-advisor').value;
+  var ad=adId?advisors.find(function(x){return x.id===adId;}):null;
+  var data={
+    customerId:cId,customerName:c?c.name:'',
+    vehicleId:vId,vehicleReg:v?v.registrationNo:'',vehicleMake:v?v.make:'',vehicleModel:v?v.model:'',
+    date:date,time:time,service:document.getElementById('appt-service').value.trim(),
+    advisorId:adId,advisorName:ad?ad.name:'',
+    status:document.getElementById('appt-status').value,
+    notes:document.getElementById('appt-notes').value.trim()
+  };
+  var btn=document.getElementById('appt-save-btn');btn.disabled=true;btn.textContent='Saving…';
+  var done=function(msg){btn.disabled=false;btn.textContent=editingApptId?'Update Appointment':'Save Appointment';toast(msg,'success');navTo('appointments');};
+  var fail=function(e){btn.disabled=false;btn.textContent=editingApptId?'Update Appointment':'Save Appointment';toast('Error saving: '+e.message,'error');};
+  if(editingApptId){
+    db.collection('appointments').doc(editingApptId).update(data).then(function(){done('Appointment updated');}).catch(fail);
+  } else {
+    data.createdAt=Date.now();
+    db.collection('appointments').add(data).then(function(){done('Appointment booked');}).catch(fail);
+  }
+}
+function deleteAppointment(){
+  if(!editingApptId)return;var id=editingApptId;
+  confirmDialog({title:'Delete appointment?',message:'This booking will be permanently removed.',confirmText:'Delete',onConfirm:function(){
+    db.collection('appointments').doc(id).delete().then(function(){toast('Appointment deleted','success');navTo('appointments');});
+  }});
 }
 
 // ── JC VEHICLE STATE ──

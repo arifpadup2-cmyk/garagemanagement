@@ -37,6 +37,7 @@ const COLL = {
   finAccounts:  { table: 'fin_accounts', order: 'created_at ASC NULLS LAST' },
   technicians:  { table: 'technicians',  order: 'name ASC NULLS LAST', extra: { name: 'name' }, noCreated: true },
   advisors:     { table: 'advisors',     order: 'name ASC NULLS LAST', extra: { name: 'name' }, noCreated: true },
+  appointments: { table: 'appointments', order: 'appt_date ASC NULLS LAST', extra: { appt_date: 'date' } },
 };
 
 function extractedColumns(cfg, doc) {
