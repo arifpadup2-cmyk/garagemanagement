@@ -448,6 +448,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .so-totrow.grand{border-top:1.5px solid var(--b1);margin-top:5px;padding-top:12px;font-size:16px;font-weight:800;color:var(--t1)}
 .so-totrow .num{font-variant-numeric:tabular-nums}
 .wst-select{font-size:12px;padding:5px 12px;border-radius:99px;font-weight:700;border:1.5px solid var(--b1);cursor:pointer;background:#fff;-webkit-appearance:none;appearance:none}
+.data-table tbody tr.dt-row{cursor:pointer}
+/* ── Entity detail header (customer / vehicle) ── */
+.ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
+.ent-title{font-size:20px;font-weight:800;color:var(--t1);letter-spacing:-.3px}
+.ent-sub{margin-top:5px;display:flex;gap:14px;flex-wrap:wrap}
+.ent-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--t2);font-weight:500}
+.ent-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ent-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+@media(max-width:600px){.ent-kpis{grid-template-columns:1fr 1fr}}
 
 /* INVOICE */
 .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
@@ -1978,6 +1988,10 @@ var _I={
   user:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
   calendar:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>',
   gauge:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14a2 2 0 0 0 2-2c0-1.1-2-5-2-5s-2 3.9-2 5a2 2 0 0 0 2 2z"/><path d="M4 18a9 9 0 1 1 16 0"/></svg>',
+  phone:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  mail:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg>',
+  mapPin:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  chat:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6a8.5 8.5 0 0 1-.9-3.9A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>',
 };
 // Render an icon at a fixed size in a color (used outside the nav's own sizing rules).
 function ico(name,size,color){size=size||18;return '<span class="ico" style="width:'+size+'px;height:'+size+'px'+(color?';color:'+color:'')+'">'+(_I[name]||'')+'</span>';}
@@ -2783,40 +2797,61 @@ function showCustomer(c){
   show('v-customer');
 }
 
+// Shared enterprise service-history table (customer + vehicle detail)
+function jobHistoryTable(jobs,showVehicle){
+  if(!jobs.length)return '<div class="empty" style="padding:22px 0">No job cards yet.</div>';
+  return '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Job Card</th>'+(showVehicle?'<th>Vehicle</th>':'')+'<th>Date In</th><th>Status</th><th class="num">Value</th></tr></thead><tbody>'+
+    jobs.map(function(jc){var val=(jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0);
+      return '<tr class="dt-row" onclick="openJobCardById(\''+jc.id+'\')">'+
+        '<td style="font-weight:700">'+esc(jcNum(jc))+'</td>'+
+        (showVehicle?'<td>'+esc(jc.vehicleReg||'—')+(jc.vehicleMake?' · '+esc(jc.vehicleMake):'')+'</td>':'')+
+        '<td>'+(jc.dateIn?fmtDate(jc.dateIn):fmtTs(jc.createdAt))+'</td>'+
+        '<td>'+jcStatusBadge(jc.status)+'</td>'+
+        '<td class="num" style="font-weight:700">'+(val?fmtMoney(val):'—')+'</td></tr>';
+    }).join('')+
+  '</tbody></table></div></div>';
+}
+function entStat(label,value,color){return '<div class="stat-card"><span class="stat-card-k">'+label+'</span><span class="stat-card-v"'+(color?' style="color:'+color+'"':'')+'>'+value+'</span></div>';}
+
 function renderCustomerDetail(){
   var c=curCustomer;
   var el=document.getElementById('customer-detail');
   var custVehs=vehicles.filter(function(v){return v.customerId===c.id;});
   var custJobs=jobCards.filter(function(j){return j.customerId===c.id;});
+  var custInv=invoices.filter(function(iv){return iv.customerId===c.id;});
+  var invoiced=custInv.reduce(function(s,iv){return s+Number(iv.total||0);},0);
+  var outstanding=custInv.reduce(function(s,iv){return s+(Number(iv.total||0)-Number(iv.totalPaid||0));},0);
   var vRows=custVehs.map(function(v){
     return'<div class="list-item" onclick="openVehicleById(\''+v.id+'\')">'+
-      '<div class="li-icon" style="background:#FFF7ED"><span class="ico" style="width:20px;height:20px;color:#EA580C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span></div>'+
+      '<div class="li-icon" style="background:#FFF7ED">'+ico('vehicles',20,'#EA580C')+'</div>'+
       '<div class="li-body">'+
         '<div class="li-title">'+esc(v.registrationNo)+' — '+esc([v.make,v.model].filter(Boolean).join(' '))+'</div>'+
         '<div class="li-sub">'+esc([v.year,v.color,v.fuelType].filter(Boolean).join(' · '))+'</div>'+
-      '</div>'+
+      '</div>'+ico('folder',16,'var(--t3)')+
     '</div>';
   }).join('')||'<div class="empty" style="padding:16px 0">No vehicles yet.</div>';
-  var jRows=custJobs.slice(0,5).map(function(jc){
-    return'<div class="list-item" onclick="openJobCardById(\''+jc.id+'\')">'+
-      '<div class="li-body"><div class="li-title">'+esc(jcNum(jc))+'</div><div class="li-sub">'+esc(jc.vehicleReg||'')+(jc.vehicleMake?' · '+esc(jc.vehicleMake+' '+jc.vehicleModel):'')+' · '+fmtTs(jc.createdAt)+'</div></div>'+
-      jcStatusBadge(jc.status)+
-    '</div>';
-  }).join('')||'<div class="empty" style="padding:16px 0">No job cards yet.</div>';
+  var wa=(c.wa||c.phone||'').replace(/[^0-9]/g,'');
 
   el.innerHTML=
-    '<div class="card">'+
-      '<div class="card-title">Customer Info</div>'+
-      '<div class="info-grid">'+
-        '<div><div class="info-label">Name</div><div class="info-val">'+esc(c.name)+'</div></div>'+
-        '<div><div class="info-label">Phone</div><div class="info-val">'+esc(c.phone||'—')+'</div></div>'+
-        '<div><div class="info-label">WhatsApp</div><div class="info-val">'+esc(c.wa||'—')+'</div></div>'+
-        '<div><div class="info-label">Email</div><div class="info-val">'+esc(c.email||'—')+'</div></div>'+
-        (c.address?'<div style="grid-column:1/-1"><div class="info-label">Address</div><div class="info-val">'+esc(c.address)+'</div></div>':'')+
+    '<div class="card"><div class="ent-head">'+
+      '<div class="ent-avatar">'+esc(staffInitials(c.name))+'</div>'+
+      '<div style="min-width:0"><div class="ent-title">'+esc(c.name)+'</div>'+
+        '<div class="ent-sub">'+
+          (c.phone?'<span class="ent-chip">'+ico('phone',14,'var(--t3)')+esc(c.phone)+'</span>':'')+
+          (c.email?'<span class="ent-chip">'+ico('mail',14,'var(--t3)')+esc(c.email)+'</span>':'')+
+          (c.address?'<span class="ent-chip">'+ico('mapPin',14,'var(--t3)')+esc(c.address)+'</span>':'')+
+        '</div></div>'+
+        (wa?'<div class="ent-actions"><a class="btn btn-green btn-sm" href="https://wa.me/'+wa+'" target="_blank" rel="noopener">'+ico('chat',15)+'WhatsApp</a></div>':'')+
+      '</div>'+
+      '<div class="ent-kpis">'+
+        entStat('Vehicles',custVehs.length)+
+        entStat('Job Cards',custJobs.length)+
+        entStat('Total Invoiced',fmtMoney(invoiced))+
+        entStat('Outstanding',fmtMoney(outstanding),outstanding>0?'var(--red)':'var(--t1)')+
       '</div>'+
     '</div>'+
     '<div class="card"><div class="card-title">Vehicles ('+custVehs.length+')</div>'+vRows+'</div>'+
-    '<div class="card"><div class="card-title">Job Cards ('+custJobs.length+')</div>'+jRows+'</div>';
+    '<div class="card"><div class="card-title">Service History ('+custJobs.length+')</div>'+jobHistoryTable(custJobs,true)+'</div>';
 }
 
 function showAddCustomer(editing){
@@ -2881,30 +2916,29 @@ function renderVehicleDetail(){
   var v=curVehicle;
   var el=document.getElementById('vehicle-detail');
   var vJobs=jobCards.filter(function(j){return j.vehicleId===v.id;});
-  var jRows=vJobs.map(function(jc){
-    return'<div class="list-item" onclick="openJobCardById(\''+jc.id+'\')">'+
-      '<div class="li-body"><div class="li-title">'+esc(jcNum(jc))+'</div><div class="li-sub">'+fmtTs(jc.createdAt)+'</div></div>'+
-      jcStatusBadge(jc.status)+
-    '</div>';
-  }).join('')||'<div class="empty" style="padding:16px 0">No job cards for this vehicle.</div>';
+  var spent=vJobs.reduce(function(s,jc){return s+(jc.works||[]).reduce(function(sw,w){return sw+Number(w.cost||0);},0);},0);
+  var lastVisit=vJobs.length?vJobs.slice().sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);})[0]:null;
+  function spec(icn,k,val){return '<div class="so-spec-item"><div class="so-spec-k">'+ico(icn,13,'var(--t3)')+k+'</div><div class="so-spec-v">'+val+'</div></div>';}
 
   el.innerHTML=
-    '<div class="card">'+
-      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">'+
-        '<div style="font-size:40px">🚗</div>'+
-        '<div><div style="font-size:20px;font-weight:800">'+esc(v.registrationNo)+'</div>'+
-        '<div style="font-size:14px;color:var(--t2);margin-top:2px">'+esc([v.year,v.make,v.model].filter(Boolean).join(' '))+'</div></div>'+
+    '<div class="card so-head">'+
+      '<div class="so-vehicle" style="border-bottom:none">'+
+        '<span class="so-plate">'+esc(v.registrationNo||'—')+'</span>'+
+        '<div class="so-veh-txt"><div class="so-veh-model" style="font-size:17px">'+esc([v.year,v.make,v.model].filter(Boolean).join(' ')||'Vehicle')+'</div>'+
+          '<div class="so-veh-cust">'+ico('user',13,'var(--t3)')+esc(v.customerName||'—')+'</div></div>'+
+        '<div class="ent-actions" style="margin-left:auto"><span class="stat-card" style="padding:10px 16px;flex-direction:row;align-items:center;gap:10px"><span class="stat-card-k" style="margin:0">Total spent</span><span class="stat-card-v" style="font-size:17px">'+fmtMoney(spent)+'</span></span></div>'+
       '</div>'+
-      '<div class="info-grid">'+
-        '<div><div class="info-label">Color</div><div class="info-val">'+esc(v.color||'—')+'</div></div>'+
-        '<div><div class="info-label">Fuel Type</div><div class="info-val">'+esc(v.fuelType||'—')+'</div></div>'+
-        '<div><div class="info-label">Mileage</div><div class="info-val">'+(v.mileage?v.mileage+' km':'—')+'</div></div>'+
-        '<div><div class="info-label">VIN / Chassis</div><div class="info-val" style="font-size:12px">'+esc(v.vin||'—')+'</div></div>'+
-        '<div><div class="info-label">Owner</div><div class="info-val">'+esc(v.customerName||'—')+'</div></div>'+
+      '<div class="so-spec">'+
+        spec('gauge','Mileage',v.mileage?esc(v.mileage)+' km':'—')+
+        spec('plusCircle','Fuel Type',esc(v.fuelType||'—'))+
+        spec('book','Color',esc(v.color||'—'))+
+        spec('statement','VIN / Chassis',esc(v.vin||'—'))+
+        spec('calendar','Last Visit',lastVisit?fmtDate(lastVisit.dateIn||tsToDs(lastVisit.createdAt)):'—')+
+        spec('jobcards','Total Jobs',String(vJobs.length))+
       '</div>'+
-      (v.notes?'<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b1)"><div class="info-label">Notes</div><div style="margin-top:4px;font-size:13px;color:var(--t2)">'+esc(v.notes)+'</div></div>':'')+
     '</div>'+
-    '<div class="card"><div class="card-title">Job History ('+vJobs.length+')</div>'+jRows+'</div>';
+    (v.notes?'<div class="card"><div class="card-title">Notes</div><div style="font-size:13px;color:var(--t2);line-height:1.6;white-space:pre-wrap">'+esc(v.notes)+'</div></div>':'')+
+    '<div class="card"><div class="card-title">Service History ('+vJobs.length+')</div>'+jobHistoryTable(vJobs,false)+'</div>';
 }
 
 function showAddVehicle(editing){
