@@ -18,7 +18,7 @@
   --green:#16A34A;--green-lt:#DCFCE7;
   --red:#DC2626;--red-lt:#FEF2F2;
   --amber:#D97706;--amber-lt:#FFFBEB;
-  --t1:#0F172A;--t2:#475569;--t3:#94A3B8;
+  --t1:#0F172A;--t2:#475569;--t3:#556173;
   --b1:#E2E8F0;--b2:#CBD5E1;
   --bg:#F8FAFC;--card:#FFFFFF;
   --sidebar-w:230px;
@@ -34,6 +34,8 @@ input::placeholder,textarea::placeholder{color:#64748B;opacity:1}
 input:focus,select:focus,textarea:focus{border-color:var(--accent-dk);box-shadow:0 0 0 3px rgba(234,88,12,.22)}
 textarea{resize:vertical;min-height:80px}
 label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px}
+.ico{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle}
+.ico svg{width:100%;height:100%;display:block}
 
 /* LOGIN — split-screen (hero + form) */
 #v-login{--lg-accent:#C2410C;--lg-accent-strong:#9A3412;--lg-accent-soft:#FB923C;--lg-ring:rgba(234,88,12,.2);--lg-tint:rgba(249,115,22,.12);--lg-tint-border:rgba(249,115,22,.28);--lg-glow:rgba(249,115,22,.16);--lg-logo-a:#F97316;--lg-logo-b:#C2410C;--lg-border:#818C9C;--lg-muted:#64748B;--lg-label:#334155;--lg-ink:#0F172A;display:flex;min-height:100vh;background:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--lg-ink)}
@@ -179,6 +181,19 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .btn-group{display:flex;gap:8px;flex-wrap:wrap}
 .card{background:#fff;border-radius:var(--r-lg);border:1.5px solid var(--b1);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 .card-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.sec-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+/* Industrial stat card — neutral surface, semantic colour lives only in the dot */
+.stat-card{background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-md);padding:15px 16px;display:flex;flex-direction:column;gap:9px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.stat-card-k{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stat-card-v{font-size:22px;font-weight:800;color:var(--t1);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+/* Function tile — white card, monochrome icon chip, accent on hover only */
+.acc-fn{display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;font-family:inherit}
+.acc-fn:hover{border-color:var(--b2);box-shadow:0 8px 20px -12px rgba(15,23,42,.2);transform:translateY(-1px)}
+.acc-fn-ic{width:38px;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.acc-fn-txt{min-width:0}
+.acc-fn-lbl{display:block;font-size:13.5px;font-weight:700;color:var(--t1)}
+.acc-fn-sub{display:block;font-size:11.5px;color:var(--t3);margin-top:3px;line-height:1.45}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r-sm);font-weight:600;font-size:13px;transition:all .15s;border:1.5px solid transparent;cursor:pointer;white-space:nowrap}
 .btn-primary{background:var(--accent-text);color:#fff;border-color:var(--accent-text)}
 .btn-primary:hover{background:var(--accent-press);border-color:var(--accent-press)}
@@ -211,7 +226,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .empty{text-align:center;padding:40px 16px;color:var(--t3);font-size:14px}
 .search-wrap{position:relative;margin-bottom:14px}
 .search-wrap input{padding-left:36px}
-.search-wrap::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+.search-wrap::before{content:'';position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23556173' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") no-repeat center/contain;pointer-events:none}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
 .info-item{}
 .info-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
@@ -223,10 +238,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .kpi-card{background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:16px}
 .kpi-val{font-size:30px;font-weight:800;color:var(--t1);line-height:1}
 .kpi-label{font-size:11px;color:var(--t2);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.kpi-accent{border-color:#FDBA74;background:#FFF7ED}
-.kpi-blue{border-color:#93C5FD;background:#EFF6FF}
-.kpi-green{border-color:#86EFAC;background:#DCFCE7}
-.kpi-red{border-color:#FCA5A5;background:#FEF2F2}
+.kpi-accent{border-color:#F0D8BE;background:#FDF8F3}
+.kpi-blue{border-color:#C7D8EF;background:#F5F8FD}
+.kpi-green{border-color:#C6E4D2;background:#F4FBF6}
+.kpi-red{border-color:#EBCCCC;background:#FDF6F6}
 .dash-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
 /* Dashboard redesign — workshop pipeline + cash-flow */
 .dsh-pipeline{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden}
@@ -458,7 +473,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .mob-qs-lbl{font-size:9px;color:rgba(255,255,255,.5);margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .mob-home-sec-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;padding:0 2px}
 .mob-home-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mob-home-tile{border-radius:20px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:10px;cursor:pointer;border:1.5px solid transparent;box-shadow:0 2px 12px rgba(15,23,42,.08);transition:transform .12s,box-shadow .12s;-webkit-tap-highlight-color:transparent;min-height:118px;position:relative;overflow:hidden}
+.mob-home-tile{border-radius:18px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:10px;cursor:pointer;background:var(--card);border:1.5px solid var(--b1);box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 16px -12px rgba(15,23,42,.14);transition:transform .12s,box-shadow .12s;-webkit-tap-highlight-color:transparent;min-height:118px;position:relative;overflow:hidden}
 .mob-home-tile:active{transform:scale(.96);box-shadow:none}
 .mob-tile-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mob-tile-icon svg{width:24px;height:24px}
@@ -755,7 +770,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Vehicles</div><div class="page-sub">Fleet overview</div></div>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="openVehHistory(null)">📋 Vehicle History</button>
+          <button class="btn btn-secondary btn-sm" onclick="openVehHistory(null)"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>Vehicle History</button>
           <button class="btn btn-primary btn-sm" onclick="navTo('customers')">+ Add via Customer</button>
         </div>
       </div>
@@ -769,7 +784,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Customers</div><div class="page-sub">Customer management</div></div>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="showCustReport()">📊 Reports</button>
+          <button class="btn btn-secondary btn-sm" onclick="showCustReport()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg></span>Reports</button>
           <button class="btn btn-primary btn-sm" onclick="showAddCustomer(false)">+ Add Customer</button>
         </div>
       </div>
@@ -799,10 +814,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="card-title" id="add-cust-title">New Customer</div>
         <div class="form-row">
           <div class="form-group"><label>Full Name *</label><input type="text" id="c-name" placeholder="Customer full name"></div>
-          <div class="form-group"><label>Phone *</label><input type="tel" id="c-phone" placeholder="+971 50 000 0000"></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" id="c-phone" placeholder="+974 3300 0000"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>WhatsApp</label><input type="tel" id="c-wa" placeholder="+971 50 000 0000"></div>
+          <div class="form-group"><label>WhatsApp</label><input type="tel" id="c-wa" placeholder="+974 3300 0000"></div>
           <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="email@example.com"></div>
         </div>
         <div class="form-group"><label>Address</label><input type="text" id="c-address" placeholder="Area, city"></div>
@@ -821,7 +836,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="card">
         <div class="card-title" id="add-veh-title">Add Vehicle</div>
         <div class="form-row">
-          <div class="form-group"><label>Plate / Registration No. *</label><input type="text" id="v-reg" placeholder="e.g. Dubai A 12345" style="text-transform:uppercase"></div>
+          <div class="form-group"><label>Plate / Registration No. *</label><input type="text" id="v-reg" placeholder="e.g. 234567" style="text-transform:uppercase"></div>
           <div class="form-group"><label>VIN / Chassis No.</label><input type="text" id="v-vin" placeholder="Chassis number"></div>
         </div>
         <div class="form-row">
@@ -852,7 +867,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <button class="back-btn" onclick="goBackToCustomer()">← Customer</button>
         <div class="btn-group">
           <button class="btn btn-secondary btn-sm" onclick="showAddVehicle(true)">Edit</button>
-          <button class="btn btn-secondary btn-sm" onclick="openVehHistory(curVehicle?curVehicle.id:null)">📋 History</button>
+          <button class="btn btn-secondary btn-sm" onclick="openVehHistory(curVehicle?curVehicle.id:null)"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>History</button>
           <button class="btn btn-primary btn-sm" onclick="newJobCardForVehicle()">+ Job Card</button>
         </div>
       </div>
@@ -864,7 +879,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Job Cards</div><div class="page-sub">Workshop job management</div></div>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="showJcReport()">📊 Reports</button>
+          <button class="btn btn-secondary btn-sm" onclick="showJcReport()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg></span>Reports</button>
           <button class="btn btn-primary btn-sm" onclick="showAddJobCard(null,null)">+ New Job Card</button>
         </div>
       </div>
@@ -936,7 +951,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="btn-group">
           <button class="btn btn-secondary btn-sm" onclick="editCurrentJobCard()">Edit</button>
           <button class="btn btn-blue btn-sm" id="invoice-btn" onclick="convertToInvoice()">→ Invoice</button>
-          <button class="btn btn-primary btn-sm" id="jc-gatepass-btn" onclick="showGatePass()">🚗 Gate Pass</button>
+          <button class="btn btn-primary btn-sm" id="jc-gatepass-btn" onclick="showGatePass()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span>Gate Pass</button>
         </div>
       </div>
       <div id="jobcard-detail"></div>
@@ -947,7 +962,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Technicians</div><div class="page-sub">Staff management</div></div>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="showTechReport()">📊 Reports</button>
+          <button class="btn btn-secondary btn-sm" onclick="showTechReport()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg></span>Reports</button>
           <button class="btn btn-primary btn-sm" onclick="showAddTechnician(null)">+ Add Technician</button>
         </div>
       </div>
@@ -964,14 +979,14 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="card-title" id="add-tech-title">New Technician</div>
         <div style="display:flex;justify-content:center;margin-bottom:20px">
           <div style="position:relative;width:96px;height:96px;cursor:pointer" onclick="document.getElementById('t-photo-input').click()" title="Click to upload photo">
-            <div id="t-photo-preview" style="width:96px;height:96px;border-radius:50%;background:var(--bg);border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:28px;font-weight:800;color:var(--t2)">👤</div>
-            <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;border:2.5px solid #fff;pointer-events:none">📷</div>
+            <div id="t-photo-preview" style="width:96px;height:96px;border-radius:50%;background:var(--bg);border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:28px;font-weight:800;color:var(--t2)"><span class="ico" style="width:34px;height:34px;color:var(--t3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span></div>
+            <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;border:2.5px solid #fff;pointer-events:none"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>
           </div>
           <input type="file" id="t-photo-input" accept="image/*" style="display:none" onchange="handleTechPhotoSelect(this)">
         </div>
         <div class="form-row">
           <div class="form-group"><label>Full Name *</label><input type="text" id="t-name" placeholder="Technician name"></div>
-          <div class="form-group"><label>Phone</label><input type="tel" id="t-phone" placeholder="+971 50 000 0000"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="t-phone" placeholder="+974 3300 0000"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Specialization</label><input type="text" id="t-spec" placeholder="e.g. Engine, Electrical, AC…"></div>
@@ -1008,14 +1023,14 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="card-title" id="add-adv-title">New Service Advisor</div>
         <div style="display:flex;justify-content:center;margin-bottom:20px">
           <div style="position:relative;width:96px;height:96px;cursor:pointer" onclick="document.getElementById('adv-photo-input').click()" title="Click to upload photo">
-            <div id="adv-photo-preview" style="width:96px;height:96px;border-radius:50%;background:var(--bg);border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:28px;font-weight:800;color:var(--t2)">👤</div>
-            <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;border:2.5px solid #fff;pointer-events:none">📷</div>
+            <div id="adv-photo-preview" style="width:96px;height:96px;border-radius:50%;background:var(--bg);border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:28px;font-weight:800;color:var(--t2)"><span class="ico" style="width:34px;height:34px;color:var(--t3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span></div>
+            <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;border:2.5px solid #fff;pointer-events:none"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>
           </div>
           <input type="file" id="adv-photo-input" accept="image/*" style="display:none" onchange="handleAdvPhotoSelect(this)">
         </div>
         <div class="form-row">
           <div class="form-group"><label>Full Name *</label><input type="text" id="adv-name" placeholder="Advisor name"></div>
-          <div class="form-group"><label>Phone</label><input type="tel" id="adv-phone" placeholder="+971 50 000 0000"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="adv-phone" placeholder="+974 3300 0000"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Email</label><input type="email" id="adv-email" placeholder="advisor@garage.com"></div>
@@ -1075,7 +1090,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
         <!-- Step 2: Amount -->
         <div class="form-group">
-          <label>Amount (AED) *</label>
+          <label>Amount (<span class="cur-lbl">QAR</span>) *</label>
           <input type="number" id="txn-amount" placeholder="0.00" min="0" step="0.01" style="font-size:20px;font-weight:700;letter-spacing:.5px">
         </div>
         <!-- Step 3: Description -->
@@ -1147,7 +1162,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Account Number</label><input type="text" id="fin-acc-num" placeholder="Optional account / IBAN"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Opening Balance (AED)</label><input type="number" id="fin-acc-bal" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="form-group"><label>Opening Balance (<span class="cur-lbl">QAR</span>)</label><input type="number" id="fin-acc-bal" placeholder="0.00" min="0" step="0.01"></div>
           <div class="form-group"><label>Description</label><input type="text" id="fin-acc-desc" placeholder="Optional notes about this account"></div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px">
@@ -1163,7 +1178,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <button class="back-btn" onclick="navTo('accounts')">← Accounts</button>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button>
         </div>
       </div>
       <div style="margin-bottom:14px"><div class="page-title">General Ledger</div><div class="page-sub">Full transaction ledger by account type &amp; date range</div></div>
@@ -1188,7 +1203,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-trial-balance" class="view">
       <div class="page-header">
         <button class="back-btn" onclick="navTo('accounts')">← Accounts</button>
-        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button></div>
+        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button></div>
       </div>
       <div style="margin-bottom:14px"><div class="page-title">Trial Balance</div><div class="page-sub">Debit and credit totals for all ledger accounts</div></div>
       <div class="card" style="margin-bottom:14px;padding:14px 16px">
@@ -1201,7 +1216,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-pl-statement" class="view">
       <div class="page-header">
         <button class="back-btn" onclick="navTo('accounts')">← Accounts</button>
-        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button></div>
+        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button></div>
       </div>
       <div style="margin-bottom:14px"><div class="page-title">Profit &amp; Loss</div><div class="page-sub">Income statement for the selected period</div></div>
       <div class="card" style="margin-bottom:14px;padding:14px 16px">
@@ -1217,7 +1232,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-balance-sheet" class="view">
       <div class="page-header">
         <button class="back-btn" onclick="navTo('accounts')">← Accounts</button>
-        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button></div>
+        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button></div>
       </div>
       <div style="margin-bottom:14px"><div class="page-title">Balance Sheet</div><div class="page-sub">Financial position as at selected date</div></div>
       <div class="card" style="margin-bottom:14px;padding:14px 16px">
@@ -1247,7 +1262,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <button class="back-btn" onclick="navTo('cust-accs')">← Customer Accounts</button>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button>
         </div>
       </div>
       <div id="cust-acc-detail-content"></div>
@@ -1258,7 +1273,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <button class="back-btn" onclick="navTo('accounts')">← Accounts</button>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button>
         </div>
       </div>
       <div style="margin-bottom:14px">
@@ -1301,16 +1316,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       </div>
       <div id="sales-kpis" class="dash-kpi-grid" style="margin-bottom:20px"></div>
       <div class="r2" style="gap:12px;margin-bottom:22px">
-        <div onclick="showQuickInvoice()" style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--r-lg);padding:22px 18px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(249,115,22,.18)'" onmouseout="this.style.boxShadow=''">
-          <div style="font-size:32px;margin-bottom:10px">⚡</div>
-          <div style="font-size:15px;font-weight:800;color:var(--accent)">New Quick Invoice</div>
-          <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5">Bill a customer directly — no job card needed. Vehicle → Services → Payment.</div>
-        </div>
-        <div onclick="setSalesReport('invoice');navTo('sales-reports')" style="background:#EFF6FF;border:1.5px solid #93C5FD;border-radius:var(--r-lg);padding:22px 18px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(37,99,235,.15)'" onmouseout="this.style.boxShadow=''">
-          <div style="font-size:32px;margin-bottom:10px">📊</div>
-          <div style="font-size:15px;font-weight:800;color:var(--blue)">Sales Reports</div>
-          <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5">Invoice-wise, item-wise &amp; service-wise analytics with date filters.</div>
-        </div>
+        <button type="button" onclick="showQuickInvoice()" class="acc-fn" style="padding:20px 18px;align-items:center">
+          <span class="acc-fn-ic" style="width:46px;height:46px;border-radius:12px"><span class="ico" style="width:23px;height:23px;color:var(--accent-text)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/></svg></span></span>
+          <span class="acc-fn-txt"><span class="acc-fn-lbl" style="font-size:15.5px">New Quick Invoice</span>
+          <span class="acc-fn-sub" style="font-size:12px;color:var(--t2)">Bill a customer directly — no job card needed. Vehicle → Services → Payment.</span></span>
+        </button>
+        <button type="button" onclick="setSalesReport('invoice');navTo('sales-reports')" class="acc-fn" style="padding:20px 18px;align-items:center">
+          <span class="acc-fn-ic" style="width:46px;height:46px;border-radius:12px"><span class="ico" style="width:23px;height:23px;color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg></span></span>
+          <span class="acc-fn-txt"><span class="acc-fn-lbl" style="font-size:15.5px">Sales Reports</span>
+          <span class="acc-fn-sub" style="font-size:12px;color:var(--t2)">Invoice-wise, item-wise &amp; service-wise analytics with date filters.</span></span>
+        </button>
       </div>
       <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Recent Invoices</div>
       <div id="sales-recent-list"></div>
@@ -1365,7 +1380,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
             </select>
           </div>
           <div class="form-group" id="qi-amount-wrap">
-            <label>Amount Received (AED)</label>
+            <label>Amount Received (<span class="cur-lbl">QAR</span>)</label>
             <input type="number" id="qi-pay-amount" placeholder="0.00" min="0" step="0.01">
           </div>
         </div>
@@ -1381,9 +1396,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <button class="back-btn" id="inv-back-btn" onclick="goBackFromInvoice()">← Back</button>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button>
           <button class="btn btn-green btn-sm" id="mark-paid-btn" onclick="openPaymentModal()">Record Payment</button>
-          <button class="btn btn-primary btn-sm" id="gatepass-btn" onclick="showGatePass()">🚗 Gate Pass</button>
+          <button class="btn btn-primary btn-sm" id="gatepass-btn" onclick="showGatePass()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span>Gate Pass</button>
         </div>
       </div>
       <div id="invoice-detail"></div>
@@ -1394,7 +1409,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <button class="back-btn" onclick="goBackToJobCard()">← Job Card</button>
         <div class="btn-group">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print Gate Pass</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print Gate Pass</button>
         </div>
       </div>
       <div id="gate-pass-content"></div>
@@ -1490,7 +1505,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="form-row">
           <div class="form-group">
             <label>Phone</label>
-            <input type="tel" id="set-phone" placeholder="+971 50 000 0000">
+            <input type="tel" id="set-phone" placeholder="+974 3300 0000">
           </div>
           <div class="form-group">
             <label>Email</label>
@@ -1504,11 +1519,11 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="form-row">
           <div class="form-group">
             <label>City</label>
-            <input type="text" id="set-city" placeholder="Dubai">
+            <input type="text" id="set-city" placeholder="Doha">
           </div>
           <div class="form-group">
             <label>Country</label>
-            <input type="text" id="set-country" placeholder="UAE">
+            <input type="text" id="set-country" placeholder="Qatar">
           </div>
         </div>
         <div class="form-row">
@@ -1618,7 +1633,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div style="padding:20px">
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group" style="margin-bottom:0"><label>Date *</label><input type="date" id="gle-date"></div>
-        <div class="form-group" style="margin-bottom:0"><label>Amount (AED) *</label><input type="number" id="gle-amount" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="form-group" style="margin-bottom:0"><label>Amount (<span class="cur-lbl">QAR</span>) *</label><input type="number" id="gle-amount" min="0" step="0.01" placeholder="0.00"></div>
       </div>
       <div class="form-group"><label>Description *</label><input type="text" id="gle-desc" placeholder="e.g. Invoice payment, Salary, Purchase..."></div>
       <!-- Journal Entry: DR / CR -->
@@ -1681,7 +1696,7 @@ const storage=firebase.storage();
 
 // STATE
 let customers=[],vehicles=[],jobCards=[],technicians=[],advisors=[],invoices=[];
-let companySettings={name:'',tagline:'',phone:'',email:'',address:'',city:'',country:'',vatNumber:'',currency:'AED',website:'',invoiceTerms:'',logoUrl:''};
+let companySettings={name:'',tagline:'',phone:'',email:'',address:'',city:'',country:'',vatNumber:'',currency:'QAR',website:'',invoiceTerms:'',logoUrl:''};
 let curCustomer=null,curVehicle=null,curJobCard=null,curInvoice=null;
 let activeNav='dashboard',jcFilter='all';
 let editingCustomerId=null,editingVehicleId=null,editingJobCardId=null,editingTechnicianId=null,editingAdvisorId=null;
@@ -1735,7 +1750,10 @@ function fmtRemaining(dateOut){
   return{text:diff+' days left',color:'#fff',bg:'#16A34A',icon:'✅',blink:false};
 }
 function fmtTs(ts){if(!ts)return'—';return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-function fmtMoney(n){return (companySettings.currency||'AED')+' '+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function cur(){return companySettings.currency||'QAR';}
+function fmtMoney(n){return cur()+' '+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+// Keep every "(CUR)" amount label in sync with the active currency setting.
+function syncCurLabels(){document.querySelectorAll('.cur-lbl').forEach(function(el){el.textContent=cur();});}
 function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
@@ -1752,7 +1770,25 @@ var _I={
   advisors:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
   accounts:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>',
   invoices:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg>',
+  plusCircle:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  minusCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  book:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2z"/><path d="M22 4h-6a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22z"/></svg>',
+  folder:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  scale:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"/><path d="M5 7h14"/><path d="M5 7l-3 6a3 3 0 0 0 6 0z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0z"/><line x1="8" y1="21" x2="16" y2="21"/></svg>',
+  trendUp:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>',
+  trendDown:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 7 9 13 13 9 21 17"/><polyline points="15 17 21 17 21 11"/></svg>',
+  bank:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><path d="M3 10l9-6 9 6"/><line x1="5" y1="10" x2="5" y2="21"/><line x1="10" y1="10" x2="10" y2="21"/><line x1="14" y1="10" x2="14" y2="21"/><line x1="19" y1="10" x2="19" y2="21"/></svg>',
+  barChart:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg>',
+  statement:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><polyline points="14 2 14 7 19 7"/><line x1="8.5" y1="12" x2="15.5" y2="12"/><line x1="8.5" y1="16" x2="13" y2="16"/></svg>',
+  search:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  printer:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>',
+  bolt:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/></svg>',
+  cash:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/></svg>',
+  building:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="9" y1="7" x2="10" y2="7"/><line x1="14" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="10" y2="11"/><line x1="14" y1="11" x2="15" y2="11"/><path d="M10 21v-4h4v4"/></svg>',
+  layers:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 12 15 2 8.5 12 2"/><polyline points="2 15.5 12 22 22 15.5"/></svg>',
 };
+// Render an icon at a fixed size in a color (used outside the nav's own sizing rules).
+function ico(name,size,color){size=size||18;return '<span class="ico" style="width:'+size+'px;height:'+size+'px'+(color?';color:'+color:'')+'">'+(_I[name]||'')+'</span>';}
 var MOB_TILES=[
   {id:'dashboard',   icon:_I.dashboard,  ic:'#475569',name:'Dashboard',        bg:'#F1F5F9',ib:'#E2E8F0',badge:null,info:function(){return 'Overview & reports';}},
   {id:'jobcards',    icon:_I.jobcards,   ic:'#EA580C',name:'Job Cards',         bg:'#FFF7ED',ib:'#FFEDD5',badge:function(){var n=jobCards.filter(function(j){return j.status==='in_progress';}).length;return n||null;},info:function(){var n=jobCards.filter(function(j){return j.status==='pending'||j.status==='open';}).length;return n+' pending';}},
@@ -1761,7 +1797,7 @@ var MOB_TILES=[
   {id:'vehicles',    icon:_I.vehicles,   ic:'#7C3AED',name:'Vehicles',          bg:'#F5F3FF',ib:'#EDE9FE',badge:null,info:function(){return vehicles.length+' registered';}},
   {id:'technicians', icon:_I.technicians,ic:'#16A34A',name:'Technicians',       bg:'#F0FDF4',ib:'#DCFCE7',badge:null,info:function(){return technicians.filter(function(t){return t.status==='available';}).length+' available';}},
   {id:'advisors',    icon:_I.advisors,   ic:'#0891B2',name:'Service Advisors',  bg:'#ECFEFF',ib:'#CFFAFE',badge:null,info:function(){return advisors.length+' advisors';}},
-  {id:'accounts',    icon:_I.accounts,   ic:'#D97706',name:'Accounts',          bg:'#FFFBEB',ib:'#FEF3C7',badge:null,info:function(){var today=new Date().toISOString().slice(0,10);var inc=transactions.filter(function(t){return t.date===today&&t.type==='income';}).reduce(function(s,t){return s+Number(t.amount||0);},0);return inc?'AED '+Number(inc).toFixed(0)+' today':'Finances';}},
+  {id:'accounts',    icon:_I.accounts,   ic:'#D97706',name:'Accounts',          bg:'#FFFBEB',ib:'#FEF3C7',badge:null,info:function(){var today=new Date().toISOString().slice(0,10);var inc=transactions.filter(function(t){return t.date===today&&t.type==='income';}).reduce(function(s,t){return s+Number(t.amount||0);},0);return inc?cur()+' '+Number(inc).toFixed(0)+' today':'Finances';}},
 ];
 
 function renderMobHome(){
@@ -1785,7 +1821,7 @@ function renderMobHome(){
   tiles.innerHTML=MOB_TILES.map(function(t){
     var b=t.badge?t.badge():null;
     var info=t.info?t.info():'';
-    return'<div class="mob-home-tile" onclick="navTo(\''+t.id+'\')" style="background:'+t.bg+'">'+
+    return'<div class="mob-home-tile" onclick="navTo(\''+t.id+'\')">'+
       (b?'<div class="mob-tile-badge">'+b+'</div>':'')+
       '<div class="mob-tile-icon" style="background:'+t.ib+';color:'+t.ic+'">'+t.icon+'</div>'+
       '<div><div class="mob-tile-name">'+t.name+'</div><div class="mob-tile-info">'+info+'</div></div>'+
@@ -1944,6 +1980,7 @@ function initFirestore(){
   db.collection('settings').doc('company').onSnapshot(function(doc){
     if(doc.exists){
       Object.assign(companySettings,doc.data());
+      syncCurLabels();
       if(activeNav==='settings')renderSettings();
     }
   });
@@ -2325,7 +2362,7 @@ function renderCustomers(){
     var vCount=vehicles.filter(function(v){return v.customerId===c.id;}).length;
     var jCount=jobCards.filter(function(j){return j.customerId===c.id;}).length;
     return'<div class="list-item" onclick="openCustomerById(\''+c.id+'\')">'+
-      '<div class="li-icon" style="background:#EFF6FF">👤</div>'+
+      '<div class="li-icon" style="background:#EFF6FF"><span class="ico" style="width:20px;height:20px;color:#2563EB"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span></div>'+
       '<div class="li-body">'+
         '<div class="li-title">'+esc(c.name)+'</div>'+
         '<div class="li-sub">'+esc(c.phone||'')+(c.email?' · '+esc(c.email):'')+'</div>'+
@@ -2357,7 +2394,7 @@ function renderCustomerDetail(){
   var custJobs=jobCards.filter(function(j){return j.customerId===c.id;});
   var vRows=custVehs.map(function(v){
     return'<div class="list-item" onclick="openVehicleById(\''+v.id+'\')">'+
-      '<div class="li-icon" style="background:#FFF7ED">🚗</div>'+
+      '<div class="li-icon" style="background:#FFF7ED"><span class="ico" style="width:20px;height:20px;color:#EA580C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span></div>'+
       '<div class="li-body">'+
         '<div class="li-title">'+esc(v.registrationNo)+' — '+esc([v.make,v.model].filter(Boolean).join(' '))+'</div>'+
         '<div class="li-sub">'+esc([v.year,v.color,v.fuelType].filter(Boolean).join(' · '))+'</div>'+
@@ -2775,7 +2812,7 @@ function renderModalPhoneStep(plateVal){
   body.innerHTML=
     '<div style="font-size:13px;color:var(--t2);margin-bottom:16px">Enter the customer\'s phone number to find their record or create a new one.</div>'+
     '<div class="form-group"><label>Customer Phone Number</label>'+
-      '<input type="tel" id="modal-phone" placeholder="+971 50 000 0000" style="font-size:15px">'+
+      '<input type="tel" id="modal-phone" placeholder="+974 3300 0000" style="font-size:15px">'+
     '</div>'+
     '<button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="modalSearchPhone()">Search Customer</button>'+
     '<div id="modal-phone-result" style="margin-top:16px"></div>';
@@ -2807,8 +2844,8 @@ function modalSearchPhone(){
       '<div style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--red);font-weight:600">No customer found with this number.</div>'+
       '<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:12px">Add New Customer</div>'+
       '<div class="form-row"><div class="form-group"><label>Full Name *</label><input type="text" id="modal-c-name" placeholder="Customer name"></div>'+
-      '<div class="form-group"><label>Phone *</label><input type="tel" id="modal-c-phone" value="'+esc(phone)+'" placeholder="+971 50 000 0000"></div></div>'+
-      '<div class="form-row"><div class="form-group"><label>WhatsApp</label><input type="tel" id="modal-c-wa" placeholder="+971 50 000 0000"></div>'+
+      '<div class="form-group"><label>Phone *</label><input type="tel" id="modal-c-phone" value="'+esc(phone)+'" placeholder="+974 3300 0000"></div></div>'+
+      '<div class="form-row"><div class="form-group"><label>WhatsApp</label><input type="tel" id="modal-c-wa" placeholder="+974 3300 0000"></div>'+
       '<div class="form-group"><label>Email</label><input type="email" id="modal-c-email" placeholder="email@example.com"></div></div>'+
       '<div class="form-group"><label>Address</label><input type="text" id="modal-c-address" placeholder="Area, city"></div>'+
       '<div style="font-size:13px;font-weight:700;color:var(--t1);margin:16px 0 12px;padding-top:16px;border-top:1.5px solid var(--b1)">Add Vehicle</div>'+
@@ -2832,7 +2869,7 @@ function modalSearchPhone(){
 function renderModalVehicleForm(isNew){
   var p=isNew?'mn-':'modal-';
   return'<div class="form-row">'+
-    '<div class="form-group"><label>Plate / Registration No. *</label><input type="text" id="'+p+'v-reg" placeholder="e.g. Dubai A 12345" style="text-transform:uppercase"></div>'+
+    '<div class="form-group"><label>Plate / Registration No. *</label><input type="text" id="'+p+'v-reg" placeholder="e.g. 234567" style="text-transform:uppercase"></div>'+
     '<div class="form-group"><label>VIN / Chassis No.</label><input type="text" id="'+p+'v-vin" placeholder="Chassis number"></div>'+
   '</div>'+
   '<div class="form-row">'+
@@ -2932,7 +2969,7 @@ function renderWorksEditor(){
     '</tr>';
   }).join('');
   el.innerHTML='<div style="overflow-x:auto"><table class="works-tbl">'+
-    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost (AED)</th><th></th></tr></thead>'+
+    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost ('+cur()+')</th><th></th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>';
   // Restore technician selects
   var trs=el.querySelectorAll('tbody tr');
@@ -3059,7 +3096,7 @@ function renderJobCardDetail(){
   if(gpBtn){
     var showGp=jc.status==='invoiced'||jc.status==='delivered';
     gpBtn.style.display=showGp?'':'none';
-    gpBtn.textContent=jc.status==='delivered'?'🚗 View Gate Pass':'🚗 Gate Pass';
+    gpBtn.textContent=jc.status==='delivered'?'🚗 View Gate Pass':'<span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span>Gate Pass';
   }
 
   el.innerHTML=
@@ -3113,7 +3150,7 @@ function renderStaffPhotoPreview(elId,photoUrl,initials){
     el.style.border='2px solid var(--b1)';
     el.style.background='#fff';
   } else {
-    el.innerHTML=initials||'👤';
+    el.innerHTML=(initials&&initials!=='?')?initials:'<span class="ico" style="width:38px;height:38px;color:var(--t3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>';
     el.style.border='2px dashed var(--b2)';
     el.style.background='var(--bg)';
   }
@@ -3629,7 +3666,7 @@ function qiRenderWorks(){
     '</tr>';
   }).join('');
   el.innerHTML='<div style="overflow-x:auto"><table class="works-tbl">'+
-    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost (AED)</th><th></th></tr></thead>'+
+    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost ('+cur()+')</th><th></th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>';
   var trs=el.querySelectorAll('tbody tr');
   qiWorkItems.forEach(function(w,i){
@@ -3875,7 +3912,7 @@ function setPayMode(mode){
           '<option value="cheque">Cheque</option>'+
         '</select>'+
       '</div>'+
-      '<div class="form-group"><label>Amount (AED)</label>'+
+      '<div class="form-group"><label>Amount ('+cur()+')</label>'+
         '<input type="number" id="pm-amount" value="'+balance.toFixed(2)+'" min="0" step="0.01" style="font-size:16px;font-weight:700">'+
       '</div>'+
       '<div class="form-group"><label>Notes</label><input type="text" id="pm-notes" placeholder="Optional notes"></div>'+
@@ -4213,14 +4250,14 @@ var txnPartyType='customer', txnPartyId='', txnPartyName='';
 var txnLinkedInvoiceId='', txnLinkedInvoice=null;
 
 var FIN_ACCOUNT_TYPES={
-  cash:     {label:'Cash',      icon:'💵',color:'#15803D',bg:'#F0FDF4', border:'#86EFAC', normalDr:true},
-  bank:     {label:'Bank',      icon:'🏦',color:'#1D4ED8',bg:'#EFF6FF', border:'#93C5FD', normalDr:true},
-  income:   {label:'Receipt',   icon:'📈',color:'#0D9488',bg:'#F0FDFA', border:'#5EEAD4', normalDr:false},
-  expense:  {label:'Payment',   icon:'📉',color:'#DC2626',bg:'#FEF2F2', border:'#FCA5A5', normalDr:true},
-  asset:    {label:'Asset',     icon:'🏢',color:'#7C3AED',bg:'#F5F3FF', border:'#C4B5FD', normalDr:true},
-  liability:{label:'Liability', icon:'⚖',color:'#EA580C',bg:'#FFF7ED', border:'#FDBA74', normalDr:false},
-  equity:   {label:'Equity',    icon:'🏛',color:'#0369A1',bg:'#F0F9FF', border:'#7DD3FC', normalDr:false},
-  other:    {label:'Other',     icon:'📂',color:'#64748B',bg:'#F8FAFC', border:'#CBD5E1', normalDr:true},
+  cash:     {label:'Cash',      icon:'cash',       color:'#15803D',bg:'#F0FDF4', border:'#86EFAC', normalDr:true},
+  bank:     {label:'Bank',      icon:'bank',       color:'#1D4ED8',bg:'#EFF6FF', border:'#93C5FD', normalDr:true},
+  income:   {label:'Receipt',   icon:'trendUp',    color:'#0D9488',bg:'#F0FDFA', border:'#5EEAD4', normalDr:false},
+  expense:  {label:'Payment',   icon:'trendDown',  color:'#DC2626',bg:'#FEF2F2', border:'#FCA5A5', normalDr:true},
+  asset:    {label:'Asset',     icon:'building',   color:'#7C3AED',bg:'#F5F3FF', border:'#C4B5FD', normalDr:true},
+  liability:{label:'Liability', icon:'scale',      color:'#EA580C',bg:'#FFF7ED', border:'#FDBA74', normalDr:false},
+  equity:   {label:'Equity',    icon:'layers',     color:'#0369A1',bg:'#F0F9FF', border:'#7DD3FC', normalDr:false},
+  other:    {label:'Other',     icon:'folder',     color:'#64748B',bg:'#F8FAFC', border:'#CBD5E1', normalDr:true},
 };
 var finAccounts=[];
 var editingFinAccId=null, curFinAccType='cash';
@@ -4318,16 +4355,16 @@ function setAccType(t){
 }
 
 var ACC_OPTIONS=[
-  {id:'income',   label:'+ New Receipt',       sub:'Record money received',               icon:'💰', bg:'#F0FDF4', ic:'#15803D', ib:'#DCFCE7', action:function(){showAddTransaction('income');}},
-  {id:'expense',  label:'+ New Payment',       sub:'Record money paid out',               icon:'💸', bg:'#FEF2F2', ic:'#DC2626', ib:'#FEE2E2', action:function(){showAddTransaction('expense');}},
-  {id:'gl',       label:'General Ledger',      sub:'Full ledger by customer / supplier',  icon:'📒', bg:'#EFF6FF', ic:'#1D4ED8', ib:'#DBEAFE', action:function(){showGenLedger();}},
-  {id:'cust-acc', label:'Customer Accounts',   sub:'Receivables & outstanding balances',  icon:'👤', bg:'#F5F3FF', ic:'#7C3AED', ib:'#EDE9FE', action:function(){navTo('cust-accs');}},
-  {id:'chart',    label:'Chart of Accounts',   sub:'Manage your ledger accounts',         icon:'📂', bg:'#FFFBEB', ic:'#D97706', ib:'#FEF3C7', action:function(){navTo('fin-accounts');}},
-  {id:'stmt',     label:'Account Statement',   sub:'Statement with running balance',      icon:'📄', bg:'#F0FDFA', ic:'#0D9488', ib:'#CCFBF1', action:function(){showAccStatement();}},
-  {id:'tb',       label:'Trial Balance',       sub:'Verify debits equal credits',         icon:'⚖',  bg:'#FFF7ED', ic:'#EA580C', ib:'#FFEDD5', action:function(){showTrialBalance();}},
-  {id:'pl',       label:'Profit & Loss',       sub:'Income statement by period',          icon:'📈', bg:'#F0FDF4', ic:'#15803D', ib:'#DCFCE7', action:function(){showPLStatement();}},
-  {id:'bs',       label:'Balance Sheet',       sub:'Assets, liabilities & equity',       icon:'🏛',  bg:'#F0F9FF', ic:'#0369A1', ib:'#E0F2FE', action:function(){showBalanceSheet();}},
-  {id:'reports',  label:'Reports',             sub:'Sales & financial analytics',         icon:'📊', bg:'#F8FAFC', ic:'#475569', ib:'#E2E8F0', action:function(){showSalesReports();}},
+  {id:'income',   label:'New Receipt',         sub:'Record money received',               icon:'plusCircle',  ic:'#15803D', action:function(){showAddTransaction('income');}},
+  {id:'expense',  label:'New Payment',         sub:'Record money paid out',               icon:'minusCircle', ic:'#DC2626', action:function(){showAddTransaction('expense');}},
+  {id:'gl',       label:'General Ledger',      sub:'Full ledger by customer / supplier',  icon:'book',        ic:'#1D4ED8', action:function(){showGenLedger();}},
+  {id:'cust-acc', label:'Customer Accounts',   sub:'Receivables & outstanding balances',  icon:'customers',   ic:'#7C3AED', action:function(){navTo('cust-accs');}},
+  {id:'chart',    label:'Chart of Accounts',   sub:'Manage your ledger accounts',         icon:'folder',      ic:'#B45309', action:function(){navTo('fin-accounts');}},
+  {id:'stmt',     label:'Account Statement',   sub:'Statement with running balance',      icon:'statement',   ic:'#0D9488', action:function(){showAccStatement();}},
+  {id:'tb',       label:'Trial Balance',       sub:'Verify debits equal credits',         icon:'scale',       ic:'#C2410C', action:function(){showTrialBalance();}},
+  {id:'pl',       label:'Profit & Loss',       sub:'Income statement by period',          icon:'trendUp',     ic:'#15803D', action:function(){showPLStatement();}},
+  {id:'bs',       label:'Balance Sheet',       sub:'Assets, liabilities & equity',        icon:'bank',        ic:'#0369A1', action:function(){showBalanceSheet();}},
+  {id:'reports',  label:'Reports',             sub:'Sales & financial analytics',         icon:'barChart',    ic:'#475569', action:function(){showSalesReports();}},
 ];
 
 function renderAccounts(){
@@ -4341,23 +4378,22 @@ function renderAccounts(){
   var periodLabel=periodLabels[accFilter]||'All Time';
   var sumEl=document.getElementById('acc-summary');
   if(sumEl)sumEl.innerHTML=
-    '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Summary — '+periodLabel+'</div>'+
+    '<div class="sec-label">Summary — '+periodLabel+'</div>'+
     '<div class="r3" style="gap:12px;margin-bottom:20px">'+
-      '<div class="kpi-card kpi-green"><div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Receipts</div><div style="font-size:20px;font-weight:800;color:var(--green)">'+fmtMoney(totalIncome)+'</div></div>'+
-      '<div class="kpi-card kpi-red"><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Payments</div><div style="font-size:20px;font-weight:800;color:var(--red)">'+fmtMoney(totalExpense)+'</div></div>'+
-      '<div class="kpi-card '+(net>=0?'kpi-blue':'kpi-red')+'"><div style="font-size:11px;font-weight:700;color:'+(net>=0?'var(--blue)':'var(--red)')+';text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Net '+(net>=0?'Profit':'Loss')+'</div><div style="font-size:20px;font-weight:800;color:'+(net>=0?'var(--blue)':'var(--red)')+'">'+fmtMoney(Math.abs(net))+'</div></div>'+
+      '<div class="stat-card"><span class="stat-card-k"><span class="stat-dot" style="background:var(--green)"></span>Receipts</span><span class="stat-card-v">'+fmtMoney(totalIncome)+'</span></div>'+
+      '<div class="stat-card"><span class="stat-card-k"><span class="stat-dot" style="background:var(--red)"></span>Payments</span><span class="stat-card-v">'+fmtMoney(totalExpense)+'</span></div>'+
+      '<div class="stat-card"><span class="stat-card-k"><span class="stat-dot" style="background:'+(net>=0?'var(--blue)':'var(--red)')+'"></span>Net '+(net>=0?'Profit':'Loss')+'</span><span class="stat-card-v" style="color:'+(net>=0?'var(--blue)':'var(--red)')+'">'+fmtMoney(Math.abs(net))+'</span></div>'+
     '</div>';
   var optEl=document.getElementById('acc-options');
   if(optEl)optEl.innerHTML=
-    '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Accounting Functions</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px">'+
+    '<div class="sec-label">Accounting Functions</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">'+
     ACC_OPTIONS.map(function(o){
-      return'<div onclick="ACC_OPTIONS.find(function(x){return x.id===\''+o.id+'\';}).action()" style="background:'+o.bg+';border:1.5px solid '+o.ic+'22;border-radius:var(--r-lg);padding:16px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px" '+
-        'onmouseover="this.style.borderColor=\''+o.ic+'\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.borderColor=\''+o.ic+'22\';this.style.transform=\'\'">'+
-        '<div style="width:40px;height:40px;border-radius:12px;background:'+o.ib+';display:flex;align-items:center;justify-content:center;font-size:20px">'+o.icon+'</div>'+
-        '<div><div style="font-size:13px;font-weight:800;color:'+o.ic+'">'+o.label+'</div>'+
-        '<div style="font-size:11px;color:var(--t2);margin-top:2px;line-height:1.4">'+o.sub+'</div></div>'+
-      '</div>';
+      return'<button type="button" class="acc-fn" onclick="ACC_OPTIONS.find(function(x){return x.id===\''+o.id+'\';}).action()">'+
+        '<span class="acc-fn-ic">'+ico(o.icon,20,o.ic)+'</span>'+
+        '<span class="acc-fn-txt"><span class="acc-fn-lbl">'+o.label+'</span>'+
+        '<span class="acc-fn-sub">'+o.sub+'</span></span>'+
+      '</button>';
     }).join('')+
     '</div>';
 }
@@ -4649,7 +4685,7 @@ function renderSettings(){
   f('set-email',s.email);f('set-address',s.address);f('set-city',s.city);
   f('set-country',s.country);f('set-vat',s.vatNumber);f('set-website',s.website);
   f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);
-  var cur=document.getElementById('set-currency');if(cur)cur.value=s.currency||'AED';
+  var curSel=document.getElementById('set-currency');if(curSel)curSel.value=s.currency||'QAR';
   show('v-settings');
 }
 
@@ -4674,6 +4710,7 @@ function saveCompanySettings(){
   };
   db.collection('settings').doc('company').set(data,{merge:true}).then(function(){
     Object.assign(companySettings,data);
+    syncCurLabels();
     btn.disabled=false;btn.textContent='✓ Save Settings';
     btn.style.background='#16A34A';
     setTimeout(function(){btn.style.background='';},2000);
@@ -4696,7 +4733,7 @@ function seedDefaultFinAccounts(btn){
     // Firestore listener will re-render automatically
   }).catch(function(e){
     alert('Error loading defaults: '+e.message);
-    if(btn){btn.disabled=false;btn.textContent='📋 Load Default Accounts';}
+    if(btn){btn.disabled=false;btn.textContent='<span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>Load Default Accounts';}
   });
 }
 
@@ -4706,7 +4743,7 @@ function renderFinAccTypeRow(){
   row.innerHTML=Object.keys(FIN_ACCOUNT_TYPES).map(function(k){
     var t=FIN_ACCOUNT_TYPES[k];
     var active=curFinAccType===k;
-    return'<button onclick="setFinAccType(\''+k+'\')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1.5px solid '+(active?t.color:t.border)+';background:'+(active?t.bg:'#fff')+';color:'+(active?t.color:'var(--t2)')+';font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">'+t.icon+' '+t.label+'</button>';
+    return'<button onclick="setFinAccType(\''+k+'\')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1.5px solid '+(active?t.color:t.border)+';background:'+(active?t.bg:'#fff')+';color:'+(active?t.color:'var(--t2)')+';font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">'+ico(t.icon,15)+t.label+'</button>';
   }).join('');
 }
 
@@ -4724,7 +4761,7 @@ function renderFinAccounts(){
         '<div style="font-size:40px;margin-bottom:12px">📂</div>'+
         '<div style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:6px">No accounts yet</div>'+
         '<div style="font-size:13px;color:var(--t2);margin-bottom:20px">Load the standard chart of accounts for a garage business, or create your own.</div>'+
-        '<button class="btn btn-primary" onclick="seedDefaultFinAccounts(this)">📋 Load Default Accounts</button>'+
+        '<button class="btn btn-primary" onclick="seedDefaultFinAccounts(this)"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>Load Default Accounts</button>'+
         '<div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="showAddFinAccount(null)">+ Create Manually</button></div>'+
       '</div>';
     return;
@@ -4740,14 +4777,14 @@ function renderFinAccounts(){
     var t=FIN_ACCOUNT_TYPES[k];
     html+='<div style="margin-bottom:20px">'+
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
-        '<span style="font-size:18px">'+t.icon+'</span>'+
+        ico(t.icon,18,t.color)+
         '<span style="font-size:13px;font-weight:800;color:'+t.color+';text-transform:uppercase;letter-spacing:.6px">'+t.label+' Accounts</span>'+
         '<span style="font-size:12px;font-weight:600;color:var(--t3);background:var(--bg2);padding:2px 8px;border-radius:99px">'+list.length+'</span>'+
       '</div>'+
       list.map(function(a){
         return'<div style="background:#fff;border:1.5px solid '+t.border+';border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;transition:box-shadow .15s" onclick="showAddFinAccount(\''+a.id+'\')" onmouseover="this.style.boxShadow=\'0 2px 10px rgba(0,0,0,.06)\'" onmouseout="this.style.boxShadow=\'none\'">'+
           '<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">'+
-            '<div style="width:40px;height:40px;border-radius:12px;background:'+t.bg+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+t.icon+'</div>'+
+            '<div style="width:40px;height:40px;border-radius:12px;background:'+t.bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(t.icon,20,t.color)+'</div>'+
             '<div style="min-width:0">'+
               '<div style="font-size:14px;font-weight:700;color:var(--t1)">'+esc(a.name)+'</div>'+
               (a.accountNumber?'<div style="font-size:11px;color:var(--t3);margin-top:2px">'+esc(a.accountNumber)+'</div>':'')+
@@ -4764,18 +4801,18 @@ function renderFinAccounts(){
               var balColor=bal>=0?t.color:'#DC2626';
               return'<div style="text-align:right;flex-shrink:0">'+
                 '<div style="font-size:11px;color:var(--t3);font-weight:600">Balance</div>'+
-                '<div style="font-size:15px;font-weight:800;color:'+balColor+'">AED '+Math.abs(bal).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+(bal<0?' CR':'')+'</div>'+
+                '<div style="font-size:15px;font-weight:800;color:'+balColor+'">'+cur()+' '+Math.abs(bal).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+(bal<0?' CR':'')+'</div>'+
                 (linked.length?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+linked.length+' txn'+(linked.length!==1?'s':'')+'</div>':'')+
               '</div>';
             } else if(linked.length){
               var tot=(k==='expense'?txExp:txInc)||txInc+txExp;
               return'<div style="text-align:right;flex-shrink:0">'+
                 '<div style="font-size:11px;color:var(--t3);font-weight:600">Total</div>'+
-                '<div style="font-size:15px;font-weight:800;color:'+t.color+'">AED '+tot.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'+
+                '<div style="font-size:15px;font-weight:800;color:'+t.color+'">'+cur()+' '+tot.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'+
                 '<div style="font-size:10px;color:var(--t3);margin-top:2px">'+linked.length+' txn'+(linked.length!==1?'s':'')+'</div>'+
               '</div>';
             } else if(ob){
-              return'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--t3);font-weight:600">Opening</div><div style="font-size:15px;font-weight:800;color:'+t.color+'">AED '+ob.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>';
+              return'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--t3);font-weight:600">Opening</div><div style="font-size:15px;font-weight:800;color:'+t.color+'">'+cur()+' '+ob.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>';
             }
             return'<div style="width:8px;height:8px;border-radius:50%;background:'+t.color+';flex-shrink:0"></div>';
           })()+
@@ -4907,7 +4944,7 @@ function populateGlAccounts(){
   } else if(glType==='employee'){
     opts=[{id:'',name:'All Employees'}].concat(technicians.map(function(t){return{id:t.id,name:t.name};}));
   } else {
-    opts=[{id:'',name:'All Accounts'}].concat(finAccounts.map(function(a){var ti=FIN_ACCOUNT_TYPES[a.type]||{icon:'📂'};return{id:a.id,name:ti.icon+' '+a.name};}));
+    opts=[{id:'',name:'All Accounts'}].concat(finAccounts.map(function(a){return{id:a.id,name:a.name};}));
   }
   sel.innerHTML=opts.map(function(o){return'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>';}).join('');
   renderGenLedger();
@@ -5065,7 +5102,7 @@ function renderGlAccounts(from,to,el){
   if(!accList.length){el.innerHTML='<div class="empty">No accounts in Chart of Accounts. Add accounts first.</div>';return;}
   var html='';
   accList.forEach(function(acc){
-    var ti=FIN_ACCOUNT_TYPES[acc.type]||{icon:'📂',label:'Account'};
+    var ti=FIN_ACCOUNT_TYPES[acc.type]||{label:'Account'};
     var txns=transactions.filter(function(t){return t.accountId===acc.id;});
     var ob=Number(acc.openingBalance||0);
     var openBal=ob+txns.filter(function(t){return t.date<from;}).reduce(function(s,t){return s+(t.type==='income'?Number(t.amount||0):-Number(t.amount||0));},0);
@@ -5077,7 +5114,7 @@ function renderGlAccounts(from,to,el){
     rows.sort(function(a,b){return a.date<b.date?-1:1;});
     var dr=rows.reduce(function(s,r){return s+r.debit;},0);
     var cr=rows.reduce(function(s,r){return s+r.credit;},0);
-    html+='<div style="margin-bottom:22px">'+glAccHeader(ti.icon+' '+acc.name,acc.accountNumber||'')+glTable(rows,openBal,true,dr,cr)+'</div>';
+    html+='<div style="margin-bottom:22px">'+glAccHeader(acc.name,acc.accountNumber||'')+glTable(rows,openBal,true,dr,cr)+'</div>';
   });
   el.innerHTML=html;
 }
@@ -5085,7 +5122,7 @@ function renderGlAccounts(from,to,el){
 function _gleAccOptions(types, selected){
   return finAccounts.filter(function(a){return types.indexOf(a.type)>-1&&a.isActive!==false;}).map(function(a){
     var ti=FIN_ACCOUNT_TYPES[a.type]||{};
-    return'<option value="'+a.id+'"'+(a.id===selected?' selected':'')+'>'+ti.icon+' '+esc(a.name)+'</option>';
+    return'<option value="'+a.id+'"'+(a.id===selected?' selected':'')+'>'+esc(a.name)+'</option>';
   }).join('');
 }
 
@@ -5217,7 +5254,7 @@ function renderTrialBalance(){
       if(ti.normalDr){dr=bal>0?bal:0;cr=bal<0?Math.abs(bal):0;}
       else{cr=bal>0?bal:0;dr=bal<0?Math.abs(bal):0;}
       totalDr+=dr;totalCr+=cr;
-      rows.push({name:ti.icon+' '+esc(acc.name),type:ti.label,dr:dr,cr:cr});
+      rows.push({name:esc(acc.name),type:ti.label,dr:dr,cr:cr});
     });
   });
 
@@ -5621,8 +5658,7 @@ function showAccStatement(accountId){
       sel.innerHTML='<option value="">— No accounts set up —</option>';
     } else {
       sel.innerHTML='<option value="">All Accounts</option>'+finAccounts.map(function(a){
-        var t=FIN_ACCOUNT_TYPES[a.type]||{icon:'📂',label:a.type};
-        return'<option value="'+a.id+'">'+t.icon+' '+esc(a.name)+'</option>';
+        return'<option value="'+a.id+'">'+esc(a.name)+'</option>';
       }).join('');
       if(accountId)sel.value=accountId;
     }
@@ -5640,8 +5676,7 @@ function renderAccStatement(){
   var sel=document.getElementById('stmt-account');
   if(sel&&!sel.options.length){
     sel.innerHTML='<option value="">All Accounts</option>'+finAccounts.map(function(a){
-      var t=FIN_ACCOUNT_TYPES[a.type]||{icon:'📂'};
-      return'<option value="'+a.id+'">'+t.icon+' '+esc(a.name)+'</option>';
+      return'<option value="'+a.id+'">'+esc(a.name)+'</option>';
     }).join('');
   }
   // Read current period from select
@@ -5683,9 +5718,9 @@ function renderAccStatement(){
           '<div style="font-size:12px;color:var(--t3);margin-top:2px">Period: '+esc(periodLabels[stmtPeriod]||stmtPeriod)+'</div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:right">'+
-          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Credits</div><div style="font-size:15px;font-weight:800;color:#15803D">AED '+fmtMoney(totalCredit)+'</div></div>'+
-          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Debits</div><div style="font-size:15px;font-weight:800;color:#DC2626">AED '+fmtMoney(totalDebit)+'</div></div>'+
-          (acc&&(accType==='cash'||accType==='bank')?'<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Closing Bal</div><div style="font-size:15px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+'">AED '+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</div></div>':'<div></div>')+
+          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Credits</div><div style="font-size:15px;font-weight:800;color:#15803D">'+fmtMoney(totalCredit)+'</div></div>'+
+          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Debits</div><div style="font-size:15px;font-weight:800;color:#DC2626">'+fmtMoney(totalDebit)+'</div></div>'+
+          (acc&&(accType==='cash'||accType==='bank')?'<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Closing Bal</div><div style="font-size:15px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+'">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</div></div>':'<div></div>')+
         '</div>'+
       '</div>'+
     '</div>';
@@ -5713,9 +5748,9 @@ function renderAccStatement(){
         (!accountId&&t.accountName?'<div style="font-size:11px;color:var(--t2);font-weight:600">'+esc(t.accountName)+'</div>':'')+
       '</td>'+
       '<td style="padding:10px 12px;font-size:12px;color:var(--t2);white-space:nowrap">'+esc(METHOD_LABELS[t.paymentMethod]||t.paymentMethod||'')+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#DC2626;text-align:right;white-space:nowrap">'+(debit?'AED '+fmtMoney(debit):'—')+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#15803D;text-align:right;white-space:nowrap">'+(credit?'AED '+fmtMoney(credit):'—')+'</td>'+
-      (acc&&(accType==='cash'||accType==='bank')?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(runBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">AED '+fmtMoney(Math.abs(runBal))+(runBal<0?' CR':'')+'</td>':'<td></td>')+
+      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#DC2626;text-align:right;white-space:nowrap">'+(debit?''+fmtMoney(debit):'—')+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#15803D;text-align:right;white-space:nowrap">'+(credit?''+fmtMoney(credit):'—')+'</td>'+
+      (acc&&(accType==='cash'||accType==='bank')?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(runBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">'+fmtMoney(Math.abs(runBal))+(runBal<0?' CR':'')+'</td>':'<td></td>')+
     '</tr>';
   }).join('');
 
@@ -5736,15 +5771,15 @@ function renderAccStatement(){
         '</thead>'+
         '<tbody>'+
           (acc&&(accType==='cash'||accType==='bank')&&ob?
-            '<tr style="background:#EFF6FF"><td style="padding:10px 12px;font-size:12px;color:var(--t3)">—</td><td colspan="3" style="padding:10px 12px;font-size:13px;font-weight:700;color:var(--t1)">Opening Balance</td><td style="padding:10px 12px;font-size:13px;font-weight:800;color:#1D4ED8;text-align:right">AED '+fmtMoney(ob)+'</td></tr>':'')+
+            '<tr style="background:#EFF6FF"><td style="padding:10px 12px;font-size:12px;color:var(--t3)">—</td><td colspan="3" style="padding:10px 12px;font-size:13px;font-weight:700;color:var(--t1)">Opening Balance</td><td style="padding:10px 12px;font-size:13px;font-weight:800;color:#1D4ED8;text-align:right">'+fmtMoney(ob)+'</td></tr>':'')+
           rowsHTML+
         '</tbody>'+
         '<tfoot>'+
           '<tr style="background:#F8FAFC;border-top:2px solid var(--b1)">'+
             '<td colspan="3" style="padding:10px 12px;font-size:12px;font-weight:800;color:var(--t1)">TOTAL ('+sorted.length+' transactions)</td>'+
-            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#DC2626;text-align:right;white-space:nowrap">AED '+fmtMoney(totalDebit)+'</td>'+
-            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#15803D;text-align:right;white-space:nowrap">AED '+fmtMoney(totalCredit)+'</td>'+
-            (showBalCol?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">AED '+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</td>':'')+
+            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#DC2626;text-align:right;white-space:nowrap">'+fmtMoney(totalDebit)+'</td>'+
+            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#15803D;text-align:right;white-space:nowrap">'+fmtMoney(totalCredit)+'</td>'+
+            (showBalCol?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</td>':'')+
           '</tr>'+
         '</tfoot>'+
       '</table>'+
@@ -5780,7 +5815,7 @@ function renderVehHistoryList(){
   el.innerHTML=list.map(function(v){
     var cnt=jobCards.filter(function(j){return j.vehicleId===v.id;}).length;
     return'<div class="list-item" onclick="selectVehHistory(vehicles.find(function(x){return x.id===\''+v.id+'\';}))">'+
-      '<div class="li-icon" style="background:#FFF7ED">🚗</div>'+
+      '<div class="li-icon" style="background:#FFF7ED"><span class="ico" style="width:20px;height:20px;color:#EA580C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span></div>'+
       '<div class="li-body">'+
         '<div class="li-title">'+esc(v.registrationNo)+' — '+esc([v.make,v.model].filter(Boolean).join(' '))+'</div>'+
         '<div class="li-sub">'+(v.customerName?'👤 '+esc(v.customerName)+' · ':'')+esc([v.year,v.color,v.fuelType].filter(Boolean).join(' · '))+'</div>'+
