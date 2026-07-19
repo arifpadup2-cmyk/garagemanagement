@@ -275,6 +275,15 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .dsh-in>.dsh-money{animation:dshUp .5s cubic-bezier(.2,.7,.2,1) .07s both}
 .dsh-in>.dash-panels{animation:dshUp .5s cubic-bezier(.2,.7,.2,1) .14s both}
 @media(prefers-reduced-motion:reduce){.dsh-in>*{animation:none!important}}
+/* Shared premium layer — Job Cards / Sales / Accounts */
+.premium-view .card{border-color:#E7ECF3;box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 26px -12px rgba(15,23,42,.10)}
+.premium-view .kpi-card{box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 20px -14px rgba(15,23,42,.12)}
+.premium-view .kpi-val,.premium-view .li-title,.premium-view .data-table td,.premium-view .data-table th{font-variant-numeric:tabular-nums}
+.premium-view .kpi-val{letter-spacing:-.5px}
+.premium-view .list-item{transition:transform .15s cubic-bezier(.2,.7,.2,1),box-shadow .15s,border-color .15s}
+.premium-view .list-item:hover{transform:translateY(-2px);box-shadow:0 8px 18px -8px rgba(15,23,42,.16);border-color:#E2E8F0}
+.premium-view.pv-in{animation:dshUp .45s cubic-bezier(.2,.7,.2,1)}
+@media(prefers-reduced-motion:reduce){.premium-view.pv-in{animation:none!important}}
 .avail-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
 
 /* JOB CARD */
@@ -851,7 +860,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     </div>
 
     <!-- JOB CARDS LIST -->
-    <div id="v-jobcards" class="view">
+    <div id="v-jobcards" class="view premium-view">
       <div class="page-header">
         <div><div class="page-title">Job Cards</div><div class="page-sub">Workshop job management</div></div>
         <div class="btn-group">
@@ -1022,7 +1031,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     </div>
 
     <!-- ACCOUNTS -->
-    <div id="v-accounts" class="view">
+    <div id="v-accounts" class="view premium-view">
       <div class="page-header">
         <div><div class="page-title">Accounts</div><div class="page-sub">Financial overview &amp; management</div></div>
       </div>
@@ -1286,7 +1295,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     </div>
 
     <!-- SALES HUB -->
-    <div id="v-sales" class="view">
+    <div id="v-sales" class="view premium-view">
       <div class="page-header">
         <div><div class="page-title">Sales</div><div class="page-sub">Invoicing &amp; billing</div></div>
       </div>
@@ -1808,6 +1817,8 @@ function navTo(tab){
     if(mhs)mhs.textContent=MOB_SECTION_TITLES[tab]||tab;
   }
   show('v-'+tab);
+  var _pv=document.getElementById('v-'+tab);
+  if(_pv&&_pv.classList.contains('premium-view')){_pv.classList.remove('pv-in');void _pv.offsetWidth;_pv.classList.add('pv-in');}
   if(tab==='mob-home')renderMobHome();
   else if(tab==='dashboard'){dashAnimate=true;renderDashboard();}
   else if(tab==='customers')renderCustomers();
