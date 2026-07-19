@@ -228,6 +228,34 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .kpi-green{border-color:#86EFAC;background:#DCFCE7}
 .kpi-red{border-color:#FCA5A5;background:#FEF2F2}
 .dash-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+/* Dashboard redesign — workshop pipeline + cash-flow */
+.dsh-pipeline{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden}
+.dsh-stage{padding:16px 18px;display:flex;flex-direction:column;gap:11px;cursor:pointer;position:relative;transition:background .15s;min-width:0;border:none;background:transparent;text-align:left;font-family:inherit}
+.dsh-stage:hover{background:var(--bg)}
+.dsh-stage+.dsh-stage{border-left:1px solid var(--b1)}
+.dsh-stage-head{display:flex;align-items:center;gap:9px;min-width:0}
+.dsh-stage-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dsh-stage-name{font-size:11.5px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsh-stage-count{font-size:32px;font-weight:800;color:var(--t1);line-height:1}
+.dsh-stage-count.zero{color:var(--t3)}
+.dsh-money{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.dsh-money-net{padding-right:20px;border-right:1.5px solid var(--b1);min-width:150px}
+.dsh-net-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.dsh-net-val{font-size:28px;font-weight:800;line-height:1}
+.dsh-money-stats{display:flex;gap:10px;flex:1;flex-wrap:wrap}
+.dsh-mstat{flex:1;min-width:112px;text-align:left;background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:11px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:all .15s;font-family:inherit}
+.dsh-mstat:hover{border-color:var(--b2);background:var(--bg)}
+.dsh-mstat .k{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.dsh-mstat .v{font-size:17px;font-weight:800;color:var(--t1)}
+.dsh-mstat.in .v{color:var(--green)}
+.dsh-mstat.out .v{color:var(--red)}
+@media(max-width:640px){
+  .dsh-pipeline{grid-template-columns:1fr 1fr}
+  .dsh-stage:nth-child(3){border-left:none}
+  .dsh-stage:nth-child(n+3){border-top:1px solid var(--b1)}
+  .dsh-stage-count{font-size:26px}
+  .dsh-money-net{border-right:none;border-bottom:1.5px solid var(--b1);padding:0 0 12px;width:100%}
+}
 .avail-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
 
 /* JOB CARD */
@@ -2030,18 +2058,31 @@ function renderDashboard(){
     '</div>'
   :'<div class="empty">No technicians added yet.</div>';
 
+  var net=mthIncome-mthExpense;
+  var netCol=net>=0?'var(--green)':'var(--red)';
+  var netStr=(net<0?'−':'')+fmtMoney(Math.abs(net));
+  function pstage(status,count,name,col){
+    return '<button class="dsh-stage" onclick="navTo(\'jobcards\');setJcFilter(\''+status+'\')">'+
+      '<span class="dsh-stage-head"><span class="dsh-stage-dot" style="background:'+col+'"></span><span class="dsh-stage-name">'+name+'</span></span>'+
+      '<span class="dsh-stage-count'+(count?'':' zero')+'">'+count+'</span>'+
+    '</button>';
+  }
+
   el.innerHTML=
-    '<div class="dash-kpi-grid">'+
-      '<div class="kpi-card kpi-accent" style="cursor:pointer" onclick="navTo(\'jobcards\');setJcFilter(\'pending\')"><div class="kpi-val">'+openCount+'</div><div class="kpi-label">Pending</div></div>'+
-      '<div class="kpi-card kpi-blue" style="cursor:pointer" onclick="navTo(\'jobcards\');setJcFilter(\'in_progress\')"><div class="kpi-val">'+inPrgCount+'</div><div class="kpi-label">Work In Progress</div></div>'+
-      '<div class="kpi-card" style="border-color:#93C5FD;background:#EFF6FF;cursor:pointer" onclick="navTo(\'jobcards\');setJcFilter(\'completed\')"><div class="kpi-val" style="color:#1E40AF">'+compCount+'</div><div class="kpi-label">Work Completed</div></div>'+
-      '<div class="kpi-card" style="border-color:#C4B5FD;background:#F5F3FF;cursor:pointer" onclick="navTo(\'jobcards\');setJcFilter(\'invoiced\')"><div class="kpi-val" style="color:#7C3AED">'+invCount+'</div><div class="kpi-label">Invoiced</div></div>'+
+    '<div class="dsh-pipeline">'+
+      pstage('pending',openCount,'Pending','#D97706')+
+      pstage('in_progress',inPrgCount,'In Progress','#2563EB')+
+      pstage('completed',compCount,'Completed','#16A34A')+
+      pstage('invoiced',invCount,'Invoiced','#7C3AED')+
     '</div>'+
-    '<div class="r4" style="gap:12px;margin-bottom:16px">'+
-      '<div class="kpi-card kpi-green" style="cursor:pointer" onclick="navTo(\'accounts\')"><div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:4px">'+pLabel+' Receipts</div><div style="font-size:18px;font-weight:800;color:var(--green)">'+fmtMoney(mthIncome)+'</div></div>'+
-      '<div class="kpi-card kpi-red" style="cursor:pointer" onclick="navTo(\'accounts\')"><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:4px">'+pLabel+' Payments</div><div style="font-size:18px;font-weight:800;color:var(--red)">'+fmtMoney(mthExpense)+'</div></div>'+
-      '<div class="kpi-card" style="border-color:#C4B5FD;background:#F5F3FF;cursor:pointer" onclick="navTo(\'sales\')"><div style="font-size:11px;font-weight:700;color:#7C3AED;text-transform:uppercase;margin-bottom:4px">'+pLabel+' Invoiced</div><div style="font-size:18px;font-weight:800;color:#7C3AED">'+fmtMoney(invAmount)+'</div></div>'+
-      '<div class="kpi-card" style="border-color:#FED7AA;background:#FFF7ED;cursor:pointer" onclick="navTo(\'jobcards\')"><div style="font-size:11px;font-weight:700;color:#EA580C;text-transform:uppercase;margin-bottom:4px">'+pLabel+' Job Cards</div><div style="font-size:18px;font-weight:800;color:#EA580C">'+fmtMoney(jcAmount)+'</div></div>'+
+    '<div class="card dsh-money">'+
+      '<div class="dsh-money-net"><div class="dsh-net-label">'+pLabel+' · Net cash</div><div class="dsh-net-val" style="color:'+netCol+'">'+netStr+'</div></div>'+
+      '<div class="dsh-money-stats">'+
+        '<button class="dsh-mstat in" onclick="navTo(\'accounts\')"><span class="k">Receipts</span><span class="v">'+fmtMoney(mthIncome)+'</span></button>'+
+        '<button class="dsh-mstat out" onclick="navTo(\'accounts\')"><span class="k">Payments</span><span class="v">'+fmtMoney(mthExpense)+'</span></button>'+
+        '<button class="dsh-mstat" onclick="navTo(\'sales\')"><span class="k">Invoiced</span><span class="v">'+fmtMoney(invAmount)+'</span></button>'+
+        '<button class="dsh-mstat" onclick="navTo(\'jobcards\')"><span class="k">Job value</span><span class="v">'+fmtMoney(jcAmount)+'</span></button>'+
+      '</div>'+
     '</div>'+
     '<div class="dash-panels">'+
       '<div class="card"><div class="card-title">'+(dashPeriod==='all'?'Recent Job Cards':pLabel+'\'s Job Cards')+'</div>'+recentHTML+'</div>'+
