@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0F172A">
 <title>GMS — Garage Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --accent:#F97316;--accent-lt:#FFF7ED;--accent-dk:#EA580C;--accent-text:#C2410C;--accent-press:#9A3412;
@@ -31,17 +34,69 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent-dk);box-shadow
 textarea{resize:vertical;min-height:80px}
 label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px}
 
-/* LOGIN */
-#v-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.02) 0 2px,transparent 2px 16px),linear-gradient(135deg,#0F172A 0%,#1E293B 55%,#1E3A8A 100%)}
-.login-card input,.login-card select{min-height:44px}
-.login-card .login-check{width:20px;height:20px;accent-color:var(--accent-text);cursor:pointer}
-.login-card .btn-primary{min-height:48px}
-.login-card{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-icon{display:block;margin:0 auto 12px;width:56px;height:56px;color:var(--accent-text);background:var(--accent-lt);border-radius:14px;padding:13px}
-.login-title{font-size:22px;font-weight:800;color:var(--t1);margin:0}
-.login-sub{font-size:13px;color:var(--t2);margin-top:4px}
-.login-error{background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+/* LOGIN — split-screen (hero + form) */
+#v-login{display:flex;min-height:100vh;background:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0F172A}
+#v-login *{box-sizing:border-box}
+.lg-hero{position:relative;flex:1 1 54%;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:56px 60px 40px;background:linear-gradient(160deg,#1C1712 0%,#0D0906 100%)}
+.lg-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(251,146,60,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(251,146,60,.05) 1px,transparent 1px);background-size:48px 48px}
+.lg-hero::after{content:'';position:absolute;left:-180px;bottom:-220px;width:640px;height:640px;background:radial-gradient(circle,rgba(249,115,22,.16) 0%,transparent 62%)}
+.lg-gear{position:absolute;color:#F59E0B;opacity:.10;pointer-events:none}
+.lg-gear.g1{top:-70px;right:-60px}
+.lg-gear.g2{bottom:120px;right:84px;opacity:.07}
+.lg-brand{position:relative;display:flex;align-items:center;gap:14px;z-index:2}
+.lg-logo{width:46px;height:46px;border-radius:13px;flex:none;background:linear-gradient(135deg,#F97316,#C2410C);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(194,65,12,.5)}
+.lg-brand-name{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;font-size:19px;color:#F8FAFC;letter-spacing:.2px}
+.lg-mid{position:relative;z-index:2;max-width:520px}
+.lg-eyebrow{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:99px;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.28);color:#FDBA74;font-size:12px;font-weight:700;letter-spacing:1.6px}
+.lg-hero h1{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:44px;line-height:1.14;color:#F8FAFC;margin:22px 0 18px;letter-spacing:-.5px;text-wrap:balance}
+.lg-hero h1 em{font-style:normal;color:#FB923C}
+.lg-sub{font-size:16px;line-height:1.65;color:#A8A29E;max-width:460px}
+.lg-features{margin-top:38px;display:flex;flex-direction:column;gap:18px}
+.lg-feature{display:flex;align-items:center;gap:14px}
+.lg-ficon{width:34px;height:34px;border-radius:10px;flex:none;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.28);display:flex;align-items:center;justify-content:center;color:#FB923C}
+.lg-feature span{font-size:14.5px;font-weight:500;color:#D6D3D1}
+.lg-hero-foot{position:relative;z-index:2;font-size:12.5px;color:#78716C}
+.lg-panel{flex:1 1 46%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px}
+.lg-form{width:100%;max-width:400px}
+.lg-form h2{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:29px;letter-spacing:-.3px;color:#0F172A}
+.lg-form-sub{margin-top:9px;font-size:15px;color:#64748B}
+.lg-seg{margin-top:28px;display:flex;background:#F1F5F9;border-radius:12px;padding:4px;gap:4px}
+.lg-seg-btn{flex:1;min-height:44px;border:none;border-radius:9px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#64748B;transition:.15s}
+.lg-seg-btn.active{background:#fff;color:#0F172A;box-shadow:0 1px 3px rgba(15,23,42,.1),0 1px 2px rgba(15,23,42,.06)}
+.lg-seg-btn.active svg{color:#C2410C}
+.lg-error{margin-top:20px;background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:500;display:none}
+.lg-fields{margin-top:24px;display:flex;flex-direction:column;gap:18px}
+.lg-field label{display:block;font-size:13.5px;font-weight:600;color:#334155;margin-bottom:7px}
+.lg-input{position:relative;display:flex;align-items:center}
+.lg-input>svg.lead{position:absolute;left:15px;color:#64748B;pointer-events:none}
+.lg-input input,.lg-input select{width:100%;min-height:48px;border:1.5px solid #CBD5E1;border-radius:12px;background:#fff;padding:0 44px;font-family:'Inter',sans-serif;font-size:15px;color:#0F172A;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+.lg-input select{cursor:pointer}
+.lg-input input::placeholder{color:#64748B}
+.lg-input input:focus,.lg-input select:focus{outline:none;border-color:#EA580C;box-shadow:0 0 0 3.5px rgba(234,88,12,.2)}
+.lg-input .tail{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#64748B;background:none;border:none;cursor:pointer;padding:9px;display:flex;border-radius:8px}
+.lg-input .caret{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#64748B;pointer-events:none}
+.lg-row{margin-top:16px;display:flex;align-items:center;justify-content:space-between}
+.lg-remember{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;min-height:44px}
+.lg-remember input{position:absolute;opacity:0;width:0;height:0}
+.lg-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #94A3B8;background:#fff;display:flex;align-items:center;justify-content:center;color:#fff;transition:.15s;flex:none}
+.lg-box svg{opacity:0}
+.lg-remember input:checked+.lg-box{background:#C2410C;border-color:#C2410C}
+.lg-remember input:checked+.lg-box svg{opacity:1}
+.lg-remember input:focus-visible+.lg-box{outline:2px solid #1E40AF;outline-offset:2px}
+.lg-remember span{font-size:14px;color:#334155}
+.lg-submit{margin-top:24px;width:100%;min-height:50px;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(180deg,#C2410C,#9A3412);color:#fff;font-family:'Inter',sans-serif;font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 10px 22px -8px rgba(194,65,12,.4);transition:filter .15s,transform .05s}
+.lg-submit:hover{filter:brightness(1.08)}
+.lg-submit:active{transform:translateY(1px)}
+.lg-help{margin-top:22px;text-align:center;font-size:13.5px;color:#64748B}
+@media (max-width:900px){
+  #v-login{flex-direction:column}
+  .lg-hero{min-height:auto;padding:32px 28px;flex:none}
+  .lg-mid{max-width:none}
+  .lg-hero h1{font-size:30px;margin:16px 0 12px}
+  .lg-features,.lg-gear,.lg-hero-foot{display:none}
+  .lg-panel{min-height:auto;padding:36px 26px 48px;flex:none}
+}
+@media (prefers-reduced-motion:reduce){#v-login *{transition:none!important}}
 
 /* APP LAYOUT */
 #app-wrap{display:none;min-height:100vh}
@@ -264,10 +319,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .tp-alarm-bell{font-size:52px;display:block;animation:bellShake .6s ease-in-out 4;transform-origin:top center;margin-bottom:14px}
 .tp-notif-progress{width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:16px;overflow:hidden}
 .tp-notif-bar{height:100%;background:#EF4444;border-radius:2px;width:100%;transition:none}
-/* Login tabs */
-.login-tabs{display:flex;border-bottom:1.5px solid var(--b1);margin-bottom:20px}
-.login-tab{flex:1;padding:13px 9px;min-height:44px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s}
-.login-tab.active{color:var(--accent-text);border-bottom-color:var(--accent-text)}
+/* (Login tabs replaced by .lg-seg segmented control in the LOGIN section) */
 
 /* ─── RESPONSIVE — must come AFTER all base styles ─── */
 @media(max-width:768px){
@@ -433,47 +485,122 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 
 <!-- LOGIN -->
 <div id="v-login">
-  <main class="login-card" aria-label="Sign in">
-    <div class="login-logo">
-      <svg class="login-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-      <h1 class="login-title">Garage Management</h1>
-      <div class="login-sub">Sign in to continue</div>
+  <!-- LEFT HERO -->
+  <section class="lg-hero">
+    <svg class="lg-gear g1" width="320" height="320" viewBox="-110 -110 220 220" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+      <circle r="72"/><circle r="30"/>
+      <g stroke-width="9" stroke-linecap="round">
+        <line y1="-82" y2="-98"/><line y1="82" y2="98"/><line x1="-82" x2="-98"/><line x1="82" x2="98"/>
+        <line x1="-58" y1="-58" x2="-69.3" y2="-69.3"/><line x1="58" y1="58" x2="69.3" y2="69.3"/>
+        <line x1="-58" y1="58" x2="-69.3" y2="69.3"/><line x1="58" y1="-58" x2="69.3" y2="-69.3"/>
+      </g>
+    </svg>
+    <svg class="lg-gear g2" width="150" height="150" viewBox="-110 -110 220 220" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true">
+      <circle r="72"/><circle r="30"/>
+      <g stroke-width="12" stroke-linecap="round">
+        <line y1="-82" y2="-100"/><line y1="82" y2="100"/><line x1="-82" x2="-100"/><line x1="82" x2="100"/>
+        <line x1="-58" y1="-58" x2="-70.7" y2="-70.7"/><line x1="58" y1="58" x2="70.7" y2="70.7"/>
+        <line x1="-58" y1="58" x2="-70.7" y2="70.7"/><line x1="58" y1="-58" x2="70.7" y2="-70.7"/>
+      </g>
+    </svg>
+    <div class="lg-brand">
+      <div class="lg-logo"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <div class="lg-brand-name">Garage Management</div>
     </div>
-    <div class="login-tabs" role="tablist" aria-label="Login type">
-      <button class="login-tab active" id="tab-admin" role="tab" aria-selected="true" aria-controls="login-admin-panel" onclick="switchLoginTab('admin')">Admin</button>
-      <button class="login-tab" id="tab-tech" role="tab" aria-selected="false" aria-controls="login-tech-panel" onclick="switchLoginTab('tech')">Technician</button>
+    <div class="lg-mid">
+      <div class="lg-eyebrow">WORKSHOP OS</div>
+      <h1>Run your workshop like <em>clockwork</em>.</h1>
+      <p class="lg-sub">Job cards, technicians, invoicing and accounts — everything your garage needs, in one place.</p>
+      <div class="lg-features">
+        <div class="lg-feature"><div class="lg-ficon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div><span>Track every job from intake to delivery</span></div>
+        <div class="lg-feature"><div class="lg-ficon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><span>Assign technicians and track work live</span></div>
+        <div class="lg-feature"><div class="lg-ficon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg></div><span>Invoices, payments and accounts in one place</span></div>
+      </div>
     </div>
-    <!-- Admin login -->
-    <div id="login-admin-panel" role="tabpanel" aria-labelledby="tab-admin">
-      <div class="login-error" id="login-error" role="alert"></div>
-      <div class="form-group">
-        <label for="l-user">Username</label>
-        <input type="text" id="l-user" placeholder="Enter username" autocomplete="username">
+    <div class="lg-hero-foot">© 2026 Tecido Garage Management</div>
+  </section>
+
+  <!-- RIGHT FORM -->
+  <section class="lg-panel">
+    <main class="lg-form" aria-label="Sign in">
+      <h2>Welcome back</h2>
+      <p class="lg-form-sub">Sign in to continue to your dashboard</p>
+
+      <div class="lg-seg" role="tablist" aria-label="Login type">
+        <button type="button" class="lg-seg-btn active" id="tab-admin" role="tab" aria-selected="true" aria-controls="login-admin-panel" onclick="switchLoginTab('admin')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+          Admin
+        </button>
+        <button type="button" class="lg-seg-btn" id="tab-tech" role="tab" aria-selected="false" aria-controls="login-tech-panel" onclick="switchLoginTab('tech')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Technician
+        </button>
       </div>
-      <div class="form-group">
-        <label for="l-pass">Password</label>
-        <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password">
+
+      <!-- Admin login -->
+      <div id="login-admin-panel" role="tabpanel" aria-labelledby="tab-admin">
+        <div class="lg-error" id="login-error" role="alert"></div>
+        <div class="lg-fields">
+          <div class="lg-field">
+            <label for="l-user">Username</label>
+            <div class="lg-input">
+              <svg class="lead" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="l-user" placeholder="Enter your username" autocomplete="username">
+            </div>
+          </div>
+          <div class="lg-field">
+            <label for="l-pass">Password</label>
+            <div class="lg-input">
+              <svg class="lead" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="l-pass" placeholder="Enter your password" autocomplete="current-password">
+              <button type="button" class="tail" id="togglePw" aria-label="Show password" onclick="toggleLoginPw(this,'l-pass')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="lg-row">
+          <label class="lg-remember">
+            <input type="checkbox" id="l-remember" checked>
+            <span class="lg-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span>Remember me</span>
+          </label>
+        </div>
+        <button class="lg-submit" id="login-btn" onclick="doLogin()">
+          Sign in
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
       </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:10px;min-height:44px">
-        <input type="checkbox" id="l-remember" class="login-check" style="width:20px;margin:0" checked>
-        <label for="l-remember" style="margin:0;font-weight:500;cursor:pointer;font-size:13px;flex:1;padding:12px 0">Remember me</label>
+
+      <!-- Technician login -->
+      <div id="login-tech-panel" role="tabpanel" aria-labelledby="tab-tech" style="display:none">
+        <div class="lg-error" id="tech-login-error" role="alert"></div>
+        <div class="lg-fields">
+          <div class="lg-field">
+            <label for="tl-name">Your Name</label>
+            <div class="lg-input">
+              <svg class="lead" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <select id="tl-name"><option value="">Loading technicians…</option></select>
+              <svg class="caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+          <div class="lg-field">
+            <label for="tl-pin">4-Digit PIN</label>
+            <div class="lg-input">
+              <svg class="lead" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="tl-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <button class="lg-submit" id="tech-login-btn" onclick="doTechLogin()">
+          Sign in as Technician
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-top:4px;padding:13px;font-size:15px" onclick="doLogin()" id="login-btn">Sign In</button>
-    </div>
-    <!-- Technician login -->
-    <div id="login-tech-panel" role="tabpanel" aria-labelledby="tab-tech" style="display:none">
-      <div class="login-error" id="tech-login-error" role="alert"></div>
-      <div class="form-group">
-        <label for="tl-name">Select Your Name</label>
-        <select id="tl-name" style="font-size:14px"><option value="">Loading technicians…</option></select>
-      </div>
-      <div class="form-group">
-        <label for="tl-pin">4-Digit PIN</label>
-        <input type="password" id="tl-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="off">
-      </div>
-      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:15px" onclick="doTechLogin()" id="tech-login-btn">Sign In as Technician</button>
-    </div>
-  </main>
+
+      <p class="lg-help">Trouble signing in? Contact your administrator.</p>
+    </main>
+  </section>
 </div>
 
 <!-- APP -->
@@ -6036,6 +6163,13 @@ function switchLoginTab(tab){
   document.getElementById('tab-admin').setAttribute('aria-selected',tab==='admin'?'true':'false');
   document.getElementById('tab-tech').setAttribute('aria-selected',tab==='tech'?'true':'false');
   if(tab==='tech')loadTechLoginList();
+}
+
+function toggleLoginPw(btn,inputId){
+  var inp=document.getElementById(inputId);
+  var show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.setAttribute('aria-label',show?'Hide password':'Show password');
 }
 
 function loadTechLoginList(){
