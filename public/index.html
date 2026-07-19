@@ -436,6 +436,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .data-table tfoot td{padding:13px 14px;font-weight:700;font-size:13px;background:var(--bg);border-top:1.5px solid var(--b1)}
 .data-table .num{text-align:right;font-variant-numeric:tabular-nums}
 .dt-wrap{border:1.5px solid var(--b1);border-radius:var(--r-md);overflow:hidden;background:var(--card)}
+/* ── SKELETON LOADING ── */
+.skel{position:relative;overflow:hidden;background:#E9EEF4;border-radius:7px;display:inline-block}
+.skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:skelShimmer 1.5s infinite}
+@keyframes skelShimmer{100%{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.skel::after{animation:none}}
+.skel-row{display:flex;align-items:center;gap:14px;padding:14px 15px;border-bottom:1px solid var(--b1)}
+.skel-row:last-child{border-bottom:none}
 .dt-scroll{overflow-x:auto}
 /* ── Service Order (job card detail) ── */
 .so-head{padding:0;overflow:hidden}
@@ -2534,6 +2541,21 @@ document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.ke
 document.getElementById('l-user').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('l-pass').focus();});
 document.getElementById('tl-pin').addEventListener('keydown',function(e){if(e.key==='Enter')doTechLogin();});
 
+// ── SKELETON LOADING (shown until first data snapshot arrives) ──
+var _fired={};
+function bootReady(){return _fired.jobCards&&_fired.invoices&&_fired.transactions;}
+function sk(w,h,extra){return '<span class="skel" style="width:'+w+';height:'+(h||12)+'px'+(extra||'')+'"></span>';}
+function skelRows(n){var s='';for(var i=0;i<(n||4);i++)s+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0">'+sk('100%',12,';flex:1')+sk('64px',12)+'</div>';return s;}
+function skelTable(n){var r='';for(var i=0;i<(n||6);i++)r+='<div class="skel-row">'+sk('34px',34,';border-radius:9px;flex:none')+sk('100%',12,';flex:1')+sk('90px',12)+sk('64px',12)+'</div>';return '<div class="dt-wrap">'+r+'</div>';}
+function skelKpis(n){var k='';for(var i=0;i<(n||4);i++)k+='<div class="stat-card">'+sk('55%',10,';margin-bottom:12px')+sk('45%',24)+'</div>';return k;}
+function skelDash(){
+  var pipe='';for(var i=0;i<4;i++)pipe+='<div style="padding:16px 18px;'+(i<3?'border-right:1px solid var(--b1)':'')+'">'+sk('68%',11,';margin-bottom:13px')+sk('42%',28)+'</div>';
+  return '<div class="dsh-pipeline" style="box-shadow:var(--shadow)">'+pipe+'</div>'+
+    '<div class="card dsh-money" style="min-height:76px;align-items:center">'+sk('170px',44)+sk('100%',56,';flex:1;margin-left:20px')+'</div>'+
+    '<div class="card">'+sk('200px',12,';display:block;margin-bottom:18px')+sk('100%',120,';display:block')+'</div>'+
+    '<div class="dash-panels"><div class="card">'+sk('150px',12,';display:block;margin-bottom:16px')+skelRows(4)+'</div><div class="card">'+sk('150px',12,';display:block;margin-bottom:16px')+skelRows(4)+'</div></div>';
+}
+
 // FIRESTORE
 function initFirestore(){
   db.collection('customers').orderBy('createdAt','desc').onSnapshot(function(snap){
@@ -2546,6 +2568,7 @@ function initFirestore(){
     if(activeNav==='vehicles')renderVehiclesSection();
   });
   db.collection('jobCards').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.jobCards=true;
     jobCards=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='jobcards')renderJobCards();
     if(activeNav==='workshop')renderWorkshop();
@@ -2568,13 +2591,16 @@ function initFirestore(){
     if(activeNav==='appointments')renderAppointments();
   });
   db.collection('parts').onSnapshot(function(snap){
+    _fired.parts=true;
     parts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='inventory')renderInventory();
     buildNotifs();
   });
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.invoices=true;
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='dashboard')renderDashboard();
+    if(activeNav==='sales')renderSales();
     if(activeNav==='cust-accs')renderCustAccounts();
     if(activeNav==='cust-acc-detail')renderCustAccDetail();
   });
@@ -2650,6 +2676,7 @@ function renderDashPeriodBar(){
 function renderDashboard(){
   var el=document.getElementById('dash-content');
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(!bootReady()){el.innerHTML=skelDash();return;}
 
   var range=dashPeriodRange();
   var from=range.from,to=range.to;
@@ -3256,6 +3283,12 @@ function renderJcFilterBar(){
 }
 
 function renderJobCards(){
+  if(!_fired.jobCards){
+    document.getElementById('jc-dash').innerHTML='<div class="dash-kpi-grid" style="margin-bottom:20px">'+skelKpis(3)+'</div>';
+    document.getElementById('jc-filter-bar').innerHTML='';
+    document.getElementById('jobcards-list').innerHTML=skelTable(6);
+    return;
+  }
   renderJcDash();
   renderJcFilterBar();
   var el=document.getElementById('jobcards-list');
@@ -3481,6 +3514,12 @@ function renderInvFilterBar(){
   el.innerHTML=pill('all','All',parts.length)+pill('low','Low',low||'')+pill('out','Out',out||'')+cats.map(function(c){return pill('cat:'+c,esc(c),'');}).join('');
 }
 function renderInventory(){
+  if(!_fired.parts){
+    document.getElementById('inv-kpis').innerHTML=skelKpis(4);
+    document.getElementById('inv-filter-bar').innerHTML='';
+    document.getElementById('inventory-list').innerHTML=skelTable(6);
+    return;
+  }
   renderInvKpis();renderInvFilterBar();
   var el=document.getElementById('inventory-list');if(!el)return;
   var q=(document.getElementById('inv-search').value||'').toLowerCase();
@@ -5262,6 +5301,7 @@ var CAT_COLORS={
 
 function initAccountsFirestore(){
   db.collection('transactions').orderBy('date','desc').onSnapshot(function(snap){
+    _fired.transactions=true;
     transactions=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='accounts')renderAccounts();
     if(activeNav==='dashboard')renderDashboard();
