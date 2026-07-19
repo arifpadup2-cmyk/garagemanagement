@@ -502,6 +502,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .cal-appt-cust{font-size:12px;font-weight:600;color:var(--t1);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-appt-veh{font-size:11px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-day-empty{font-size:18px;color:var(--b2);text-align:center;margin:auto;font-weight:700}
+/* ── INVENTORY ── */
+.stk-badge{display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.3px;margin-left:5px;vertical-align:1px}
+.stk-low{background:#FFFBEB;color:#B45309;border:1px solid #FCD34D}
+.stk-out{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5}
 /* ── Entity detail header (customer / vehicle) ── */
 .ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
@@ -893,6 +897,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-item" id="snav-jobcards" onclick="navTo('jobcards')" title="Job Cards"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span><span class="snav-label">Job Cards</span></div>
       <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
       <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
+      <div class="snav-item" id="snav-inventory" onclick="navTo('inventory')" title="Inventory"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span><span class="snav-label">Inventory</span></div>
       <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Sales"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Sales</span></div>
       <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
       <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
@@ -1195,6 +1200,71 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <button class="btn btn-red" id="appt-del-btn" onclick="deleteAppointment()" style="display:none;margin-left:auto">Delete</button>
         </div>
       </div>
+    </div>
+
+    <!-- INVENTORY (parts list) -->
+    <div id="v-inventory" class="view">
+      <div class="page-header">
+        <div><div class="page-title">Inventory</div><div class="page-sub">Parts &amp; stock management</div></div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="showAddPart(false)">+ Add Part</button>
+        </div>
+      </div>
+      <div id="inv-kpis" class="ent-kpis" style="margin-top:0;margin-bottom:18px"></div>
+      <div class="filter-bar" id="inv-filter-bar" style="margin-bottom:12px"></div>
+      <div class="search-wrap"><input type="text" id="inv-search" placeholder="Search by name, part no., barcode, brand…" oninput="renderInventory()"></div>
+      <div id="inventory-list"></div>
+    </div>
+
+    <!-- ADD/EDIT PART -->
+    <div id="v-add-part" class="view">
+      <div class="page-header">
+        <button class="back-btn" id="part-back-btn" onclick="navTo('inventory')">← Inventory</button>
+      </div>
+      <div class="card" style="max-width:720px">
+        <div class="card-title" id="part-form-title">New Part</div>
+        <div class="form-row">
+          <div class="form-group"><label>Part Name *</label><input type="text" id="pt-name" placeholder="e.g. Oil filter"></div>
+          <div class="form-group"><label>Part Number</label><input type="text" id="pt-number" placeholder="e.g. OF-1234"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Barcode</label><input type="text" id="pt-barcode" placeholder="Scan or type"></div>
+          <div class="form-group"><label>OEM Number</label><input type="text" id="pt-oem" placeholder="Manufacturer ref"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Category</label><input type="text" id="pt-category" placeholder="e.g. Filters, Brakes, Fluids" list="pt-cat-list"><datalist id="pt-cat-list"></datalist></div>
+          <div class="form-group"><label>Brand</label><input type="text" id="pt-brand" placeholder="e.g. Bosch"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Opening Stock</label><input type="number" id="pt-stock" placeholder="0" min="0" step="1"></div>
+          <div class="form-group"><label>Reorder Level (low-stock alert)</label><input type="number" id="pt-reorder" placeholder="5" min="0" step="1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Cost Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-cost" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="form-group"><label>Selling Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-price" placeholder="0.00" min="0" step="0.01"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Supplier</label><input type="text" id="pt-supplier" placeholder="Supplier name"></div>
+          <div class="form-group"><label>Location / Bin</label><input type="text" id="pt-location" placeholder="e.g. A-12, Shelf 3"></div>
+        </div>
+        <div class="form-group" id="pt-stock-note" style="display:none;font-size:12px;color:var(--t3)">Tip: use <b>Adjust Stock</b> on the part page to record stock in/out — editing here overwrites the on-hand quantity.</div>
+        <div class="btn-group" style="margin-top:6px">
+          <button class="btn btn-primary" id="pt-save-btn" onclick="savePart()">Save Part</button>
+          <button class="btn btn-secondary" onclick="navTo('inventory')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PART DETAIL -->
+    <div id="v-part" class="view">
+      <div class="page-header">
+        <button class="back-btn" onclick="navTo('inventory')">← Inventory</button>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="showAddPart(true)">Edit</button>
+          <button class="btn btn-primary btn-sm" onclick="openStockAdjust()">Adjust Stock</button>
+        </div>
+      </div>
+      <div id="part-detail"></div>
     </div>
 
     <!-- ADD/EDIT JOB CARD -->
@@ -2043,7 +2113,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});document.getElementById(id).style.display='block';window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2066,7 +2136,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2108,6 +2178,9 @@ var _I={
   chat:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6a8.5 8.5 0 0 1-.9-3.9A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>',
   chevL:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
   chevR:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  box:         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>',
+  boxes:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>',
+  truck:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg>',
 };
 // Render an icon at a fixed size in a color (used outside the nav's own sizing rules).
 function ico(name,size,color){size=size||18;return '<span class="ico" style="width:'+size+'px;height:'+size+'px'+(color?';color:'+color:'')+'">'+(_I[name]||'')+'</span>';}
@@ -2184,6 +2257,7 @@ function navTo(tab){
   else if(tab==='jobcards')renderJobCards();
   else if(tab==='workshop')renderWorkshop();
   else if(tab==='appointments')renderAppointments();
+  else if(tab==='inventory')renderInventory();
   else if(tab==='technicians')renderTechnicians();
   else if(tab==='advisors')renderAdvisors();
   else if(tab==='vehicles'){renderVehiclesSection();}
@@ -2201,7 +2275,7 @@ function navTo(tab){
 }
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
-var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
+var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-jobcard':['Job Cards','New Job Card'],
   'jobcard':['Job Cards','Detail'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
@@ -2210,7 +2284,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'add-fin-account':['Accounts','New Account'],'gen-ledger':['Accounts','General Ledger'],'trial-balance':['Accounts','Trial Balance'],
   'pl-statement':['Accounts','Profit & Loss'],'balance-sheet':['Accounts','Balance Sheet'],'cust-accs':['Accounts','Customer Accounts'],
   'cust-acc-detail':['Accounts','Customer Ledger'],'acc-statement':['Accounts','Statement'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
-  'add-appointment':['Appointments','New Appointment']
+  'add-appointment':['Appointments','New Appointment'],
+  'add-part':['Inventory','Part'],'part':['Inventory','Part Detail']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -2272,6 +2347,8 @@ function computeNotifs(){
   if(ready.length)out.push({icon:'plusCircle',col:'#16A34A',bg:'#F0FDF4',title:ready.length+' vehicle'+(ready.length>1?'s':'')+' ready',sub:'Completed — ready to invoice / deliver',go:function(){navTo('jobcards');setJcFilter('completed');}});
   var brk=(technicians||[]).filter(function(t){return t.status==='on_break';});
   if(brk.length)out.push({icon:'technicians',col:'#B45309',bg:'#FFFBEB',title:brk.length+' technician'+(brk.length>1?'s':'')+' on break',sub:brk.map(function(t){return t.name;}).slice(0,3).join(', '),go:function(){navTo('technicians');}});
+  var lowP=(parts||[]).filter(function(p){return typeof partLow==='function'&&partLow(p);});
+  if(lowP.length)out.push({icon:'box',col:'#B45309',bg:'#FFFBEB',title:lowP.length+' part'+(lowP.length>1?'s':'')+' low on stock',sub:lowP.map(function(p){return p.name;}).slice(0,3).join(', '),go:function(){navTo('inventory');invFilter='low';renderInventory();}});
   return out;
 }
 function buildNotifs(){
@@ -2476,6 +2553,11 @@ function initFirestore(){
   db.collection('appointments').onSnapshot(function(snap){
     appointments=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='appointments')renderAppointments();
+  });
+  db.collection('parts').onSnapshot(function(snap){
+    parts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='inventory')renderInventory();
+    buildNotifs();
   });
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -3363,6 +3445,147 @@ function deleteAppointment(){
   confirmDialog({title:'Delete appointment?',message:'This booking will be permanently removed.',confirmText:'Delete',onConfirm:function(){
     db.collection('appointments').doc(id).delete().then(function(){toast('Appointment deleted','success');navTo('appointments');});
   }});
+}
+
+// ── INVENTORY / PARTS ──
+var parts=[], editingPartId=null, curPart=null, invFilter='all';
+function partLow(p){var r=Number(p.reorderLevel||0),s=Number(p.stock||0);return r>0&&s<=r;}
+function partOut(p){return Number(p.stock||0)<=0;}
+function renderInvKpis(){
+  var el=document.getElementById('inv-kpis');if(!el)return;
+  var totalVal=parts.reduce(function(s,p){return s+Number(p.stock||0)*Number(p.costPrice||0);},0);
+  var low=parts.filter(function(p){return partLow(p)&&!partOut(p);}).length;
+  var out=parts.filter(partOut).length;
+  el.innerHTML=entStat('Total Parts',String(parts.length))+entStat('Stock Value',fmtMoney(totalVal))+
+    entStat('Low Stock',String(low),low>0?'#B45309':'var(--t1)')+entStat('Out of Stock',String(out),out>0?'var(--red)':'var(--t1)');
+}
+function renderInvFilterBar(){
+  var el=document.getElementById('inv-filter-bar');if(!el)return;
+  var cats=[];parts.forEach(function(p){var c=p.category||'Uncategorised';if(cats.indexOf(c)<0)cats.push(c);});cats.sort();
+  var low=parts.filter(function(p){return partLow(p)&&!partOut(p);}).length;
+  var out=parts.filter(partOut).length;
+  function pill(key,label,extra){return '<button class="jc-fpill'+(invFilter===key?' active':'')+'" style="'+(invFilter===key?'background:var(--t1);':'')+'" onclick="invFilter=\''+key.replace(/'/g,"\\'")+'\';renderInventory()">'+label+(extra!==''?'<span class="jc-fpill-count">'+extra+'</span>':'')+'</button>';}
+  el.innerHTML=pill('all','All',parts.length)+pill('low','Low',low||'')+pill('out','Out',out||'')+cats.map(function(c){return pill('cat:'+c,esc(c),'');}).join('');
+}
+function renderInventory(){
+  renderInvKpis();renderInvFilterBar();
+  var el=document.getElementById('inventory-list');if(!el)return;
+  var q=(document.getElementById('inv-search').value||'').toLowerCase();
+  var list=parts.slice();
+  if(invFilter==='low')list=list.filter(function(p){return partLow(p)&&!partOut(p);});
+  else if(invFilter==='out')list=list.filter(partOut);
+  else if(invFilter.indexOf('cat:')===0){var cat=invFilter.slice(4);list=list.filter(function(p){return (p.category||'Uncategorised')===cat;});}
+  if(q)list=list.filter(function(p){return [p.name,p.partNumber,p.barcode,p.oemNumber,p.brand,p.category,p.supplier].some(function(v){return v&&String(v).toLowerCase().indexOf(q)>-1;});});
+  if(!parts.length){el.innerHTML='<div class="empty">No parts yet. Add your first part to start tracking stock.</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty">No parts match your filter.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Part</th><th>Category · Brand</th><th class="num">Stock</th><th class="num">Cost</th><th class="num">Selling</th><th>Location</th><th class="num">Stock Value</th></tr></thead><tbody>'+
+    list.map(function(p){
+      var s=Number(p.stock||0);
+      var badge=partOut(p)?'<span class="stk-badge stk-out">Out</span>':(partLow(p)?'<span class="stk-badge stk-low">Low</span>':'');
+      return '<tr class="dt-row" onclick="openPartById(\''+p.id+'\')">'+
+        '<td><div style="font-weight:700;color:var(--t1)">'+esc(p.name)+'</div>'+(p.partNumber?'<div style="font-size:11px;color:var(--t3)">'+esc(p.partNumber)+'</div>':'')+'</td>'+
+        '<td style="color:var(--t2)">'+esc([p.category,p.brand].filter(Boolean).join(' · ')||'—')+'</td>'+
+        '<td class="num"><span style="font-weight:800">'+s+'</span>'+badge+'</td>'+
+        '<td class="num">'+(p.costPrice?fmtMoney(p.costPrice):'—')+'</td>'+
+        '<td class="num">'+(p.sellingPrice?fmtMoney(p.sellingPrice):'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(p.location||'—')+'</td>'+
+        '<td class="num" style="font-weight:700">'+fmtMoney(s*Number(p.costPrice||0))+'</td>'+
+      '</tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+function showAddPart(editing){
+  editingPartId=editing&&curPart?curPart.id:null;
+  var p=editingPartId?curPart:null;
+  document.getElementById('part-form-title').textContent=p?'Edit Part':'New Part';
+  document.getElementById('pt-save-btn').textContent=p?'Update Part':'Save Part';
+  document.getElementById('part-back-btn').onclick=p?function(){showPart(curPart);}:function(){navTo('inventory');};
+  document.getElementById('pt-stock-note').style.display=p?'':'none';
+  var cats=[];parts.forEach(function(x){if(x.category&&cats.indexOf(x.category)<0)cats.push(x.category);});
+  document.getElementById('pt-cat-list').innerHTML=cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('');
+  var f=function(id,v){document.getElementById(id).value=(v==null||v==='')?'':v;};
+  f('pt-name',p&&p.name);f('pt-number',p&&p.partNumber);f('pt-barcode',p&&p.barcode);f('pt-oem',p&&p.oemNumber);
+  f('pt-category',p&&p.category);f('pt-brand',p&&p.brand);f('pt-stock',p?p.stock:'');f('pt-reorder',p?p.reorderLevel:'');
+  f('pt-cost',p&&p.costPrice);f('pt-price',p&&p.sellingPrice);f('pt-supplier',p&&p.supplier);f('pt-location',p&&p.location);
+  show('v-add-part');
+}
+function savePart(){
+  var name=document.getElementById('pt-name').value.trim();
+  if(!name){toast('Please enter the part name.');return;}
+  var data={
+    name:name,partNumber:document.getElementById('pt-number').value.trim(),barcode:document.getElementById('pt-barcode').value.trim(),
+    oemNumber:document.getElementById('pt-oem').value.trim(),category:document.getElementById('pt-category').value.trim(),
+    brand:document.getElementById('pt-brand').value.trim(),stock:Number(document.getElementById('pt-stock').value||0),
+    reorderLevel:Number(document.getElementById('pt-reorder').value||0),costPrice:Number(document.getElementById('pt-cost').value||0),
+    sellingPrice:Number(document.getElementById('pt-price').value||0),supplier:document.getElementById('pt-supplier').value.trim(),
+    location:document.getElementById('pt-location').value.trim()
+  };
+  var btn=document.getElementById('pt-save-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent=editingPartId?'Update Part':'Save Part';toast('Error: '+e.message,'error');};
+  if(editingPartId){
+    db.collection('parts').doc(editingPartId).update(data).then(function(){curPart=Object.assign({},curPart,data);btn.disabled=false;btn.textContent='Update Part';toast('Part updated','success');showPart(curPart);}).catch(fail);
+  } else {
+    data.createdAt=Date.now();data.movements=[];
+    db.collection('parts').add(data).then(function(ref){curPart=Object.assign({id:ref.id},data);btn.disabled=false;btn.textContent='Save Part';toast('Part added','success');showPart(curPart);}).catch(fail);
+  }
+}
+function openPartById(id){var p=parts.find(function(x){return x.id===id;});if(p)showPart(p);}
+function showPart(p){curPart=p;renderPartDetail();show('v-part');}
+function renderPartDetail(){
+  var p=curPart;var el=document.getElementById('part-detail');if(!el)return;
+  var s=Number(p.stock||0);
+  var stockCol=partOut(p)?'var(--red)':(partLow(p)?'#B45309':'var(--green)');
+  var margin=Number(p.sellingPrice||0)-Number(p.costPrice||0);
+  function spec(icn,k,val){return '<div class="so-spec-item"><div class="so-spec-k">'+ico(icn,13,'var(--t3)')+k+'</div><div class="so-spec-v">'+val+'</div></div>';}
+  var movs=(p.movements||[]).slice().sort(function(a,b){return (b.at||0)-(a.at||0);});
+  var movTable=movs.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Date</th><th>Type</th><th class="num">Qty</th><th class="num">Balance</th><th>Note</th></tr></thead><tbody>'+
+    movs.map(function(m){var t=m.type==='in'?['Stock In','#15803D','+']:(m.type==='out'?['Stock Out','#DC2626','−']:['Set','#1D4ED8','']);
+      return '<tr><td style="color:var(--t2);white-space:nowrap">'+fmtTs(m.at)+'</td><td><span style="font-weight:700;color:'+t[1]+'">'+t[0]+'</span></td><td class="num" style="font-weight:700;color:'+t[1]+'">'+t[2]+m.qty+'</td><td class="num" style="font-weight:700">'+m.to+'</td><td style="color:var(--t2)">'+esc(m.note||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>':'<div class="empty" style="padding:20px 0">No stock movements recorded yet. Use Adjust Stock to log receipts and issues.</div>';
+  el.innerHTML=
+    '<div class="card so-head"><div class="so-vehicle" style="border-bottom:none">'+
+      '<span class="acc-fn-ic" style="width:48px;height:48px;border-radius:13px">'+ico('box',24,'var(--accent-text)')+'</span>'+
+      '<div class="so-veh-txt"><div class="so-veh-model" style="font-size:18px">'+esc(p.name)+'</div><div class="so-veh-cust">'+esc([p.partNumber,p.brand].filter(Boolean).join(' · ')||'No part number')+'</div></div>'+
+      '<div class="ent-actions" style="margin-left:auto;text-align:right"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">On hand</div><div style="font-size:26px;font-weight:800;color:'+stockCol+';font-variant-numeric:tabular-nums">'+s+' <span style="font-size:14px;color:var(--t3)">'+esc(p.unit||'pcs')+'</span></div></div>'+
+    '</div>'+
+    '<div class="so-spec">'+
+      spec('folder','Category',esc(p.category||'—'))+
+      spec('box','Barcode',esc(p.barcode||'—'))+
+      spec('statement','OEM No.',esc(p.oemNumber||'—'))+
+      spec('mapPin','Location',esc(p.location||'—'))+
+      spec('truck','Supplier',esc(p.supplier||'—'))+
+      spec('alertTri','Reorder At',String(p.reorderLevel||0))+
+    '</div></div>'+
+    '<div class="ent-kpis" style="margin-top:0">'+entStat('Cost Price',fmtMoney(p.costPrice||0))+entStat('Selling Price',fmtMoney(p.sellingPrice||0))+entStat('Margin / Unit',fmtMoney(margin),margin<0?'var(--red)':'var(--green)')+entStat('Stock Value',fmtMoney(s*Number(p.costPrice||0)))+'</div>'+
+    '<div class="card"><div class="card-title">Movement History ('+movs.length+')</div>'+movTable+'</div>';
+}
+function openStockAdjust(){
+  var p=curPart;if(!p)return;
+  var ov=document.getElementById('stock-modal');
+  if(!ov){ov=document.createElement('div');ov.id='stock-modal';ov.className='dlg-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:430px"><div class="dlg-title">Adjust Stock</div>'+
+    '<div style="font-size:13px;color:var(--t2);margin:-2px 0 16px">'+esc(p.name)+' — on hand <b>'+Number(p.stock||0)+'</b></div>'+
+    '<div class="form-group"><label>Movement</label><select id="sa-type"><option value="in">Stock In (+)</option><option value="out">Stock Out (−)</option><option value="set">Set exact count</option></select></div>'+
+    '<div class="form-group"><label>Quantity</label><input type="number" id="sa-qty" min="0" step="1" placeholder="0"></div>'+
+    '<div class="form-group" style="margin-bottom:0"><label>Reason / Note</label><input type="text" id="sa-note" placeholder="e.g. Purchase GRN, used on JC-0003"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'stock-modal\').classList.remove(\'open\')">Cancel</button><button class="btn btn-primary" onclick="applyStockAdjust()">Apply</button></div></div>';
+  ov.classList.add('open');
+  var q=document.getElementById('sa-qty');if(q)q.focus();
+}
+function applyStockAdjust(){
+  var p=curPart;if(!p)return;
+  var type=document.getElementById('sa-type').value;
+  var qty=Math.abs(Number(document.getElementById('sa-qty').value||0));
+  var note=document.getElementById('sa-note').value.trim();
+  if(!qty&&type!=='set'){toast('Enter a quantity.');return;}
+  var cur=Number(p.stock||0),next;
+  if(type==='in')next=cur+qty;else if(type==='out')next=Math.max(0,cur-qty);else next=qty;
+  var movements=(p.movements||[]).concat([{type:type,qty:qty,from:cur,to:next,note:note,at:Date.now()}]);
+  db.collection('parts').doc(p.id).update({stock:next,movements:movements}).then(function(){
+    p.stock=next;p.movements=movements;
+    var m=document.getElementById('stock-modal');if(m)m.classList.remove('open');
+    toast(esc(p.name)+' stock updated to '+next,'success');
+    renderPartDetail();
+  }).catch(function(e){toast('Error: '+e.message,'error');});
 }
 
 // ── JC VEHICLE STATE ──
