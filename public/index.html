@@ -453,6 +453,31 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .mini-bar{display:inline-block;width:58px;height:6px;border-radius:99px;background:var(--b1);overflow:hidden;flex-shrink:0;vertical-align:middle}
 .mini-fill{display:block;height:100%;border-radius:99px;transition:width .4s cubic-bezier(.2,.7,.2,1)}
 @media(prefers-reduced-motion:reduce){.mini-fill{transition:none}}
+/* ── WORKSHOP BOARD (kanban) ── */
+.wb-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch;align-items:flex-start}
+.wb-col{flex:1;min-width:255px;max-width:340px;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r-lg);display:flex;flex-direction:column;transition:background .15s,border-color .15s}
+.wb-col.wb-over{background:#EFF6FF;border-color:#93C5FD;box-shadow:inset 0 0 0 2px #BFDBFE}
+.wb-col-head{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid var(--b1)}
+.wb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.wb-col-title{font-size:12px;font-weight:800;color:var(--t1);text-transform:uppercase;letter-spacing:.5px}
+.wb-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--t2);background:var(--card);border:1px solid var(--b1);border-radius:99px;min-width:22px;text-align:center;padding:1px 7px}
+.wb-col-body{padding:10px;display:flex;flex-direction:column;gap:10px;min-height:90px;flex:1}
+.wb-empty{border:1.5px dashed var(--b2);border-radius:var(--r-md);padding:20px;text-align:center;font-size:12px;color:var(--t3)}
+.wb-card{background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r-md);padding:12px 13px;cursor:grab;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:box-shadow .15s,transform .12s,border-color .15s}
+.wb-card:hover{border-color:var(--b2);box-shadow:0 8px 18px -10px rgba(15,23,42,.22)}
+.wb-card:active{cursor:grabbing}
+.wb-card.wb-dragging{opacity:.4;transform:rotate(1.5deg)}
+.wb-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.wb-jc{font-size:12px;font-weight:800;color:var(--t3);font-variant-numeric:tabular-nums}
+.wb-plate-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.wb-model{font-size:13px;font-weight:700;color:var(--t1)}
+.wb-cust,.wb-techs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin-bottom:5px;min-width:0}
+.wb-cust span,.wb-techs span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-card-foot{display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)}
+.wb-prog{font-size:11px;font-weight:700;color:var(--t2);font-variant-numeric:tabular-nums}
+.wb-val{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.wb-hint{font-size:12px;color:var(--t3);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+@media(max-width:768px){.wb-hint .wb-hint-drag{display:none}}
 /* ── Entity detail header (customer / vehicle) ── */
 .ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
@@ -842,6 +867,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div class="snav">
       <div class="snav-item active" id="snav-dashboard" onclick="navTo('dashboard')" title="Dashboard"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="snav-label">Dashboard</span></div>
       <div class="snav-item" id="snav-jobcards" onclick="navTo('jobcards')" title="Job Cards"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span><span class="snav-label">Job Cards</span></div>
+      <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
       <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Sales"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Sales</span></div>
       <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
       <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
@@ -1085,6 +1111,17 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="filter-bar" id="jc-filter-bar" style="margin-bottom:14px"></div>
       <div class="search-wrap"><input type="text" id="jc-search" placeholder="Search job cards…" oninput="renderJobCards()"></div>
       <div id="jobcards-list"></div>
+    </div>
+
+    <!-- WORKSHOP BOARD (kanban) -->
+    <div id="v-workshop" class="view">
+      <div class="page-header">
+        <div><div class="page-title">Workshop Board</div><div class="page-sub">Drag a job across stages to update its status</div></div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="showAddJobCard(null,null)">+ New Job Card</button>
+        </div>
+      </div>
+      <div id="workshop-board"></div>
     </div>
 
     <!-- ADD/EDIT JOB CARD -->
@@ -1956,7 +1993,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2070,6 +2107,7 @@ function navTo(tab){
   else if(tab==='dashboard'){dashAnimate=true;renderDashboard();}
   else if(tab==='customers')renderCustomers();
   else if(tab==='jobcards')renderJobCards();
+  else if(tab==='workshop')renderWorkshop();
   else if(tab==='technicians')renderTechnicians();
   else if(tab==='advisors')renderAdvisors();
   else if(tab==='vehicles'){renderVehiclesSection();}
@@ -2087,7 +2125,7 @@ function navTo(tab){
 }
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
-var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
+var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Accounts',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-jobcard':['Job Cards','New Job Card'],
   'jobcard':['Job Cards','Detail'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
@@ -2343,6 +2381,7 @@ function initFirestore(){
   db.collection('jobCards').orderBy('createdAt','desc').onSnapshot(function(snap){
     jobCards=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='jobcards')renderJobCards();
+    if(activeNav==='workshop')renderWorkshop();
     if(activeNav==='dashboard')renderDashboard();
     if(activeNav==='mob-home')renderMobHome();
     if(curTech){checkTechNotifications();renderTechPortal();}
@@ -3071,6 +3110,63 @@ function renderJobCards(){
       '</tr>';
     }).join('')+
   '</tbody></table></div></div>';
+}
+
+// ── WORKSHOP BOARD (kanban) ──
+var WB_STAGES=[
+  {key:'pending',    label:'Pending',     col:'#94A3B8', match:function(s){return s==='pending'||s==='open'||!s;}},
+  {key:'in_progress',label:'In Progress', col:'#F97316', match:function(s){return s==='in_progress';}},
+  {key:'completed',  label:'Ready',       col:'#1E40AF', match:function(s){return s==='completed';}},
+  {key:'invoiced',   label:'Invoiced',    col:'#7C3AED', match:function(s){return s==='invoiced';}},
+  {key:'delivered',  label:'Delivered',   col:'#16A34A', match:function(s){return s==='delivered';}}
+];
+function wbCard(jc){
+  var works=jc.works||[];
+  var doneW=works.filter(function(w){return w.status==='done';}).length;
+  var pct=works.length?Math.round(doneW/works.length*100):0;
+  var total=works.reduce(function(s,w){return s+Number(w.cost||0);},0);
+  var techs=[];works.forEach(function(w){if(w.technicianName&&techs.indexOf(w.technicianName)<0)techs.push(w.technicianName);});
+  var activeStatus=(jc.status==='pending'||jc.status==='open'||jc.status==='in_progress'||jc.status==='completed');
+  var rem=activeStatus?fmtRemaining(jc.dateOut):null;
+  return '<div class="wb-card" draggable="true" ondragstart="wbStart(event,\''+jc.id+'\')" ondragend="wbEnd(event)" onclick="wbCardClick(\''+jc.id+'\')">'+
+    '<div class="wb-card-top"><span class="wb-jc">'+esc(jcNum(jc))+'</span>'+
+      (rem?'<span class="'+(rem.blink?'deadline-blink':'')+'" style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:'+rem.bg+';color:'+rem.color+';white-space:nowrap">'+esc(rem.text)+'</span>':'')+'</div>'+
+    '<div class="wb-plate-row">'+(jc.vehicleReg?'<span class="dt-plate">'+esc(jc.vehicleReg.toUpperCase())+'</span>':'')+
+      '<span class="wb-model">'+esc([jc.vehicleMake,jc.vehicleModel].filter(Boolean).join(' ')||'Vehicle')+'</span></div>'+
+    '<div class="wb-cust">'+ico('user',12,'var(--t3)')+'<span>'+esc(jc.customerName||'—')+'</span></div>'+
+    (techs.length?'<div class="wb-techs">'+ico('technicians',12,'var(--t3)')+'<span>'+esc(techs.join(', '))+'</span></div>':'')+
+    '<div class="wb-card-foot"><span class="mini-bar"><span class="mini-fill" style="width:'+pct+'%;background:'+(pct===100?'var(--green)':'#2563EB')+'"></span></span>'+
+      '<span class="wb-prog">'+doneW+'/'+works.length+'</span>'+(total?'<span class="wb-val">'+fmtMoney(total)+'</span>':'')+'</div>'+
+  '</div>';
+}
+function renderWorkshop(){
+  var el=document.getElementById('workshop-board');if(!el)return;
+  el.innerHTML='<div class="wb-hint">'+ico('info',15,'var(--t3)')+'<span><b>'+jobCards.length+'</b> job cards on the floor.<span class="wb-hint-drag"> Drag a card to another column to move it through the workflow.</span></span></div>'+
+    '<div class="wb-board">'+WB_STAGES.map(function(st){
+    var cards=jobCards.filter(function(j){return st.match(j.status);});
+    return '<div class="wb-col" ondragover="wbOver(event)" ondragleave="wbLeave(event)" ondrop="wbDrop(event,\''+st.key+'\')">'+
+      '<div class="wb-col-head"><span class="wb-dot" style="background:'+st.col+'"></span><span class="wb-col-title">'+st.label+'</span><span class="wb-count">'+cards.length+'</span></div>'+
+      '<div class="wb-col-body">'+(cards.length?cards.map(wbCard).join(''):'<div class="wb-empty">No vehicles</div>')+'</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+var wbDragId=null, wbJustDropped=0;
+function wbStart(e,id){wbDragId=id;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}catch(_){}var c=e.currentTarget;setTimeout(function(){if(c&&c.classList)c.classList.add('wb-dragging');},0);}
+function wbEnd(e){if(e.currentTarget&&e.currentTarget.classList)e.currentTarget.classList.remove('wb-dragging');document.querySelectorAll('.wb-col.wb-over').forEach(function(c){c.classList.remove('wb-over');});}
+function wbOver(e){e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(_){}e.currentTarget.classList.add('wb-over');}
+function wbLeave(e){if(!e.currentTarget.contains(e.relatedTarget))e.currentTarget.classList.remove('wb-over');}
+function wbDrop(e,stageKey){e.preventDefault();e.currentTarget.classList.remove('wb-over');var id=wbDragId||(e.dataTransfer&&e.dataTransfer.getData('text/plain'));wbDragId=null;wbJustDropped=Date.now();wbMove(id,stageKey);}
+function wbCardClick(id){if(Date.now()-wbJustDropped<250)return;openJobCardById(id);}
+function wbMove(id,stageKey){
+  var jc=jobCards.find(function(j){return j.id===id;});if(!jc)return;
+  var cur=jc.status==='open'?'pending':(jc.status||'pending');
+  if(cur===stageKey)return;
+  db.collection('jobCards').doc(id).update({status:stageKey}).then(function(){
+    jc.status=stageKey;
+    var lbl=(JC_STATUS[stageKey]||{}).label||stageKey;
+    toast(jcNum(jc)+' moved to '+lbl,'success');
+    renderWorkshop();
+  }).catch(function(err){toast('Could not move job card: '+err.message,'error');});
 }
 
 // ── JC VEHICLE STATE ──
