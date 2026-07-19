@@ -1647,10 +1647,8 @@ function navTo(tab){
   else if(tab==='settings')renderSettings();
 }
 
-// AUTH
-var ALLOWED_USERS={arifpadup:{name:'ARIF',password:'Qatar@2022'}};
+// AUTH — admin credentials are validated server-side (env vars), never stored in this file.
 var SESSION_KEY='gms_session';
-async function sha256(str){var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');}
 async function doLogin(){
   var btn=document.getElementById('login-btn');
   var err=document.getElementById('login-error');
@@ -1658,13 +1656,14 @@ async function doLogin(){
   var pass=document.getElementById('l-pass').value;
   var remember=document.getElementById('l-remember').checked;
   err.style.display='none';btn.disabled=true;btn.textContent='Signing in…';
-  var allowed=ALLOWED_USERS[user];
-  if(!allowed){err.textContent='Invalid username or password.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;}
-  var hash=await sha256(pass);var correctHash=await sha256(allowed.password);
-  if(hash!==correctHash){err.textContent='Invalid username or password.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;}
-  var session=JSON.stringify({username:user,name:allowed.name});
-  if(remember)localStorage.setItem(SESSION_KEY,session);else sessionStorage.setItem(SESSION_KEY,session);
-  showApp(allowed.name);btn.disabled=false;btn.textContent='Sign In';
+  try{
+    var res=await fetch(((window.GMS_API_BASE||'')+'/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    var data=await res.json().catch(function(){return {};});
+    if(!res.ok||!data.ok){err.textContent=(data&&data.error)||'Invalid username or password.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;}
+    var session=JSON.stringify({username:user,name:data.name});
+    if(remember)localStorage.setItem(SESSION_KEY,session);else sessionStorage.setItem(SESSION_KEY,session);
+    showApp(data.name);btn.disabled=false;btn.textContent='Sign In';
+  }catch(e){err.textContent='Cannot reach server. Try again.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function doLogout(){
   localStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_KEY);

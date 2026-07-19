@@ -186,6 +186,19 @@ app.delete('/api/image', asyncH(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---- Admin login (credentials from env, never from the repo) ----
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const U = (process.env.ADMIN_USER || 'arifpadup').toLowerCase();
+  const P = process.env.ADMIN_PASSWORD || '';
+  const NAME = process.env.ADMIN_NAME || 'ARIF';
+  if (!P) return res.status(500).json({ ok: false, error: 'Admin login not configured (set ADMIN_PASSWORD).' });
+  if (String(username || '').trim().toLowerCase() === U && String(password) === P) {
+    return res.json({ ok: true, name: NAME });
+  }
+  return res.status(401).json({ ok: false, error: 'Invalid username or password.' });
+});
+
 app.get('/api/health', asyncH(async (req, res) => {
   await pool.query('SELECT 1');
   res.json({ ok: true, ts: Date.now() });

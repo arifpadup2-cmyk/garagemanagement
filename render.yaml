@@ -9,5 +9,11 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false   # set in the Render dashboard (Neon connection string)
+      - key: ADMIN_PASSWORD
+        sync: false   # set in the Render dashboard (admin login password)
+      - key: ADMIN_USER
+        value: arifpadup
+      - key: ADMIN_NAME
+        value: ARIF
       - key: NODE_VERSION
         value: 22
