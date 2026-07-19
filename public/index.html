@@ -449,6 +449,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .so-totrow .num{font-variant-numeric:tabular-nums}
 .wst-select{font-size:12px;padding:5px 12px;border-radius:99px;font-weight:700;border:1.5px solid var(--b1);cursor:pointer;background:#fff;-webkit-appearance:none;appearance:none}
 .data-table tbody tr.dt-row{cursor:pointer}
+.dt-plate{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:1px;color:#1E293B;background:#FEF9C3;border:1.5px solid #EAB308;border-radius:5px;padding:2px 8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mini-bar{display:inline-block;width:58px;height:6px;border-radius:99px;background:var(--b1);overflow:hidden;flex-shrink:0;vertical-align:middle}
+.mini-fill{display:block;height:100%;border-radius:99px;transition:width .4s cubic-bezier(.2,.7,.2,1)}
+@media(prefers-reduced-motion:reduce){.mini-fill{transition:none}}
 /* ── Entity detail header (customer / vehicle) ── */
 .ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
@@ -3047,42 +3051,26 @@ function renderJobCards(){
   if(q)list=list.filter(function(j){return[j.customerName,j.vehicleReg,j.vehicleMake,j.vehicleModel,jcNum(j)].some(function(v){return v&&v.toLowerCase().includes(q);});});
   if(!jobCards.length){el.innerHTML='<div class="empty">No job cards yet.</div>';return;}
   if(!list.length){el.innerHTML='<div class="empty">No job cards match your filter.</div>';return;}
-  el.innerHTML=list.map(function(jc){
-    var jcs=JC_STATUS[jc.status||'pending']||JC_STATUS.pending;
-    var works=jc.works||[];
-    var doneW=works.filter(function(w){return w.status==='done';}).length;
-    var total=works.reduce(function(s,w){return s+Number(w.cost||0);},0);
-    var totalStr=total?fmtMoney(total):'';
-    var activeStatus=(jc.status==='pending'||jc.status==='open'||jc.status==='in_progress'||jc.status==='completed');
-    var rem=activeStatus?fmtRemaining(jc.dateOut):null;
-    var makeModel=[jc.vehicleMake,jc.vehicleModel,jc.vehicleYear].filter(Boolean).join(' ');
-    return'<div class="jc-card" onclick="openJobCardById(\''+jc.id+'\')" style="'+(rem&&rem.blink?'border-color:#DC2626;':'')+'">'+
-      '<div class="jc-bar" style="background:'+jcs.color+'"></div>'+
-      '<div class="jc-body">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">'+
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-            '<span style="font-size:12px;font-weight:700;color:var(--t3)">'+esc(jcNum(jc))+'</span>'+
-            jcStatusBadge(jc.status)+
-          '</div>'+
-          (rem?'<span class="'+(rem.blink?'deadline-blink':'')+'" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:'+rem.bg+';color:'+rem.color+';white-space:nowrap;display:inline-block;flex-shrink:0">'+rem.icon+' '+rem.text+'</span>':'')+
-        '</div>'+
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'+
-          (jc.vehicleReg?'<span style="font-family:monospace;font-size:15px;font-weight:800;letter-spacing:1.5px;color:#1E293B;background:#FEF9C3;border:2px solid #EAB308;border-radius:6px;padding:4px 10px;white-space:nowrap">'+esc(jc.vehicleReg.toUpperCase())+'</span>':'')+
-          (makeModel?'<span style="font-size:14px;font-weight:700;color:var(--t1)">'+esc(makeModel)+'</span>':'')+
-        '</div>'+
-        '<div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">'+
-          '<svg style="width:13px;height:13px;vertical-align:-2px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+
-          esc(jc.customerName||'—')+
-        '</div>'+
-        '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">'+
-          '<div style="font-size:11px;color:var(--t3)">'+fmtTs(jc.createdAt)+'</div>'+
-          '<div style="font-size:11px;color:var(--t3)">🔧 '+doneW+'/'+works.length+' done</div>'+
-          (totalStr?'<div style="font-size:12px;font-weight:800;color:var(--t1)">'+totalStr+'</div>':'')+
-          (jc.dateOut&&!rem?'<div style="font-size:11px;color:var(--t3)">Est: '+fmtDate(jc.dateOut)+'</div>':'')+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Job Card</th><th>Vehicle</th><th>Customer</th><th>Progress</th><th>Est. Out</th><th class="num">Value</th></tr></thead><tbody>'+
+    list.map(function(jc){
+      var works=jc.works||[];
+      var doneW=works.filter(function(w){return w.status==='done';}).length;
+      var total=works.reduce(function(s,w){return s+Number(w.cost||0);},0);
+      var activeStatus=(jc.status==='pending'||jc.status==='open'||jc.status==='in_progress'||jc.status==='completed');
+      var rem=activeStatus?fmtRemaining(jc.dateOut):null;
+      var makeModel=[jc.vehicleMake,jc.vehicleModel].filter(Boolean).join(' ');
+      var pct=works.length?Math.round(doneW/works.length*100):0;
+      return'<tr class="dt-row" onclick="openJobCardById(\''+jc.id+'\')">'+
+        '<td style="white-space:nowrap"><div style="font-weight:700">'+esc(jcNum(jc))+'</div><div style="margin-top:5px">'+jcStatusBadge(jc.status)+'</div></td>'+
+        '<td>'+(jc.vehicleReg?'<span class="dt-plate">'+esc(jc.vehicleReg.toUpperCase())+'</span>':'')+(makeModel?'<span style="color:var(--t2);margin-left:8px">'+esc(makeModel)+'</span>':'')+'</td>'+
+        '<td>'+esc(jc.customerName||'—')+'</td>'+
+        '<td><div style="display:flex;align-items:center;gap:9px"><span class="mini-bar"><span class="mini-fill" style="width:'+pct+'%;background:'+(pct===100?'var(--green)':'#2563EB')+'"></span></span><span style="font-size:11.5px;color:var(--t2);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums">'+doneW+'/'+works.length+'</span></div></td>'+
+        '<td style="white-space:nowrap;color:var(--t2)">'+(jc.dateOut?fmtDate(jc.dateOut):'—')+(rem?' <span class="'+(rem.blink?'deadline-blink':'')+'" style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:'+rem.bg+';color:'+rem.color+';white-space:nowrap">'+esc(rem.text)+'</span>':'')+'</td>'+
+        '<td class="num" style="font-weight:800">'+(total?fmtMoney(total):'—')+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</tbody></table></div></div>';
 }
 
 // ── JC VEHICLE STATE ──
@@ -5147,11 +5135,10 @@ function saveCompanySettings(){
   db.collection('settings').doc('company').set(data,{merge:true}).then(function(){
     Object.assign(companySettings,data);
     syncCurLabels();
-    btn.disabled=false;btn.textContent='✓ Save Settings';
-    btn.style.background='#16A34A';
-    setTimeout(function(){btn.style.background='';},2000);
+    btn.disabled=false;btn.textContent='Save Settings';
+    toast('Company settings saved','success');
   }).catch(function(e){
-    btn.disabled=false;btn.textContent='✓ Save Settings';
+    btn.disabled=false;btn.textContent='Save Settings';
     toast('Error saving: '+e.message);
   });
 }
