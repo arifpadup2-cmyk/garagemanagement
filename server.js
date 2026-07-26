@@ -12,6 +12,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const zlib = require('zlib');
 const crypto = require('crypto');
 const express = require('express');
 
@@ -48,6 +49,27 @@ app.use((req, res, next) => {
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  next();
+});
+
+// gzip large JSON responses — the full-collection fetches compress ~85%.
+// Async so a big payload never blocks the event loop; browsers auto-decompress.
+app.use((req, res, next) => {
+  const _json = res.json.bind(res);
+  res.json = (body) => {
+    const str = JSON.stringify(body === undefined ? null : body);
+    if (str.length > 1024 && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
+      zlib.gzip(str, (err, gz) => {
+        if (err) return _json(body);
+        res.set('Content-Type', 'application/json; charset=utf-8');
+        res.set('Content-Encoding', 'gzip');
+        res.set('Vary', 'Accept-Encoding');
+        res.end(gz);
+      });
+      return res;
+    }
+    return _json(body);
+  };
   next();
 });
 
@@ -332,11 +354,39 @@ function redactTechs(auth, docs) {
   return docs.map((d) => { const c = { ...d }; delete c.pin; c.hasPin = !!d.pin; return c; });
 }
 
+// Whitelisted JSONB filter fields per collection (indexed above). Any other
+// query param is ignored — no arbitrary JSONB access.
+const FILTERABLE = {
+  invoices: ['status', 'customerId', 'jobCardId'],
+  jobCards: ['status', 'customerId', 'vehicleId'],
+  vehicles: ['customerId'],
+  transactions: ['accountId', 'invoiceId', 'type'],
+  estimates: ['status', 'customerId'],
+  appointments: ['status'],
+  parts: ['category'],
+};
+
 // ---- List ----
+// Backward-compatible: with no query params, returns the full collection (the
+// SPA still relies on that). With ?limit / ?before / whitelisted filters, it
+// pages and filters server-side using the JSONB indexes — the capability large
+// screens and future client windowing use.
 app.get('/api/:coll', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
   if (!cfg) return next(); // fall through to specific routes (settings, image)
-  const { rows } = await pool.query(`SELECT id, data FROM ${cfg.table} ORDER BY ${cfg.order}`);
+  const where = [], params = [];
+  const allowed = FILTERABLE[req.params.coll] || [];
+  for (const f of allowed) {
+    if (req.query[f] != null && req.query[f] !== '') { params.push(String(req.query[f])); where.push(`data->>'${f}' = $${params.length}`); }
+  }
+  // Keyset pagination on the ordering column (created_at for most).
+  const limit = req.query.limit != null ? Math.min(Math.max(Number(req.query.limit) || 0, 1), 500) : null;
+  if (limit && req.query.before != null && /created_at/.test(cfg.order)) { params.push(Number(req.query.before)); where.push(`created_at < $${params.length}`); }
+  let sql = `SELECT id, data FROM ${cfg.table}`;
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ` ORDER BY ${cfg.order}`;
+  if (limit) sql += ` LIMIT ${limit}`;
+  const { rows } = await pool.query(sql, params);
   let docs = rows.map((r) => ({ ...r.data, id: r.id }));
   if (req.params.coll === 'technicians') docs = redactTechs(req.auth, docs);
   res.json(docs);

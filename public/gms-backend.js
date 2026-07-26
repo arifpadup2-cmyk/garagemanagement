@@ -83,12 +83,40 @@
     };
   }
 
+  // Per-collection cache of the last full fetch. Single-doc mutations patch it
+  // in place and re-emit — no full re-download per write (the old O(collection)
+  // write amplification). refreshColl is still used for a true resync and for
+  // multi-collection atomic operations.
+  var collCache = {};
+  function emitColl(name) {
+    var ls = collListeners[name]; if (!ls || !ls.length) return;
+    var arr = collCache[name] || [];
+    ls.forEach(function (l) { try { l.cb(querySnap(applyOrder(arr, l.order))); } catch (e) { console.error(e); } });
+  }
   function refreshColl(name) {
     var ls = collListeners[name];
     if (!ls || !ls.length) return Promise.resolve();
     return fetchList(name).then(function (arr) {
-      ls.forEach(function (l) { try { l.cb(querySnap(applyOrder(arr, l.order))); } catch (e) { console.error(e); } });
+      collCache[name] = arr;
+      emitColl(name);
     }).catch(function (e) { ls.forEach(function (l) { l.err && l.err(e); }); });
+  }
+  // Patch the cached collection from a mutation response (or remove by id) and
+  // re-emit, avoiding a full GET. Falls back to a full refresh if uncached, and
+  // never used for 'technicians' (list GET redacts the PIN) or 'settings'.
+  function patchColl(name, doc, removedId) {
+    if (name === 'technicians' || name === 'settings' || !collCache[name]) return refreshColl(name);
+    var arr = collCache[name].slice();
+    if (removedId) {
+      arr = arr.filter(function (d) { return d.id !== removedId; });
+    } else if (doc && doc.id) {
+      var found = false;
+      for (var i = 0; i < arr.length; i++) { if (arr[i].id === doc.id) { arr[i] = doc; found = true; break; } }
+      if (!found) arr.unshift(doc);
+    }
+    collCache[name] = arr;
+    emitColl(name);
+    return Promise.resolve();
   }
   function refreshDoc(name, id) {
     var key = name + '/' + id, ls = docListeners[key];
@@ -118,7 +146,7 @@
   DocRef.prototype.update = function (data) {
     var self = this;
     var url = (this._name === 'settings') ? '/settings/company' : '/' + this._name + '/' + this._id;
-    return req('PUT', url, data).then(function (r) { refreshColl(self._name); refreshDoc(self._name, self._id); return r; });
+    return req('PUT', url, data).then(function (r) { patchColl(self._name, r); refreshDoc(self._name, self._id); return r; });
   };
   DocRef.prototype.set = function (data, opts) {
     var self = this;
@@ -126,11 +154,11 @@
       return req('PUT', '/settings/company', data).then(function (r) { refreshDoc('settings', 'company'); refreshColl('settings'); return r; });
     }
     var body = {}; for (var k in data) body[k] = data[k]; body.id = this._id;
-    return req('POST', '/' + this._name, body).then(function (r) { refreshColl(self._name); refreshDoc(self._name, self._id); return r; });
+    return req('POST', '/' + this._name, body).then(function (r) { patchColl(self._name, r); refreshDoc(self._name, self._id); return r; });
   };
   DocRef.prototype.delete = function () {
     var self = this;
-    return req('DELETE', '/' + this._name + '/' + this._id).then(function (r) { refreshColl(self._name); return r; });
+    return req('DELETE', '/' + this._name + '/' + this._id).then(function (r) { patchColl(self._name, null, self._id); return r; });
   };
   DocRef.prototype.onSnapshot = function (cb, err) {
     var key = this._name + '/' + this._id;
@@ -147,8 +175,9 @@
   CollRef.prototype.add = function (data) {
     var self = this;
     return req('POST', '/' + this._name, data).then(function (r) {
-      refreshColl(self._name);
+      patchColl(self._name, r); // patch cache from the created doc — no full GET
       var ref = new DocRef(self._name, r.id);
+      ref.id = r.id; // callers read ref.id after add()
       // Expose the server-authoritative document (incl. assigned seq) so the
       // UI never displays/prints a locally guessed document number.
       ref.serverDoc = r;
