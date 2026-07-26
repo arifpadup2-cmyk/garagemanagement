@@ -1847,10 +1847,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <button class="back-btn" onclick="navTo('sales')">← Sales</button>
         <div class="page-title">Sales Reports</div>
       </div>
-      <div style="display:flex;gap:0;border:1.5px solid var(--b1);border-radius:var(--r-sm);overflow:hidden;margin-bottom:16px">
-        <button id="sr-tab-invoice" onclick="setSalesReport('invoice')" style="flex:1;padding:10px 6px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .15s">Invoice Report</button>
-        <button id="sr-tab-itemwise" onclick="setSalesReport('itemwise')" style="flex:1;padding:10px 6px;font-size:12px;font-weight:700;border:none;border-left:1.5px solid var(--b1);border-right:1.5px solid var(--b1);cursor:pointer;transition:all .15s">Item-wise</button>
-        <button id="sr-tab-servicewise" onclick="setSalesReport('servicewise')" style="flex:1;padding:10px 6px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .15s">Service-wise</button>
+      <div class="filter-bar" style="margin-bottom:16px">
+        <button id="sr-tab-invoice" class="jc-fpill" onclick="setSalesReport('invoice')">Invoice Report</button>
+        <button id="sr-tab-itemwise" class="jc-fpill" onclick="setSalesReport('itemwise')">Item-wise</button>
+        <button id="sr-tab-servicewise" class="jc-fpill" onclick="setSalesReport('servicewise')">Service-wise</button>
       </div>
       <div id="sr-date-bar" style="margin-bottom:14px"></div>
       <div id="sr-content"></div>
@@ -5888,14 +5888,11 @@ function renderFinAccounts(){
         '<span style="font-size:12px;font-weight:600;color:var(--t3);background:var(--bg2);padding:2px 8px;border-radius:99px">'+list.length+'</span>'+
       '</div>'+
       list.map(function(a){
-        return'<div style="background:#fff;border:1.5px solid '+t.border+';border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;transition:box-shadow .15s" onclick="showAddFinAccount(\''+a.id+'\')" onmouseover="this.style.boxShadow=\'0 2px 10px rgba(0,0,0,.06)\'" onmouseout="this.style.boxShadow=\'none\'">'+
-          '<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">'+
-            '<div style="width:40px;height:40px;border-radius:12px;background:'+t.bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ico(t.icon,20,t.color)+'</div>'+
-            '<div style="min-width:0">'+
-              '<div style="font-size:14px;font-weight:700;color:var(--t1)">'+esc(a.name)+'</div>'+
-              (a.accountNumber?'<div style="font-size:11px;color:var(--t3);margin-top:2px">'+esc(a.accountNumber)+'</div>':'')+
-              (a.description?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(a.description)+'</div>':'')+
-            '</div>'+
+        return'<div class="list-item" onclick="showAddFinAccount(\''+a.id+'\')">'+
+          '<div class="li-icon" style="background:'+t.bg+'">'+ico(t.icon,20,t.color)+'</div>'+
+          '<div class="li-body">'+
+            '<div class="li-title">'+esc(a.name)+'</div>'+
+            ((a.accountNumber||a.description)?'<div class="li-sub">'+[a.accountNumber?esc(a.accountNumber):'',a.description?esc(a.description):''].filter(Boolean).join(' · ')+'</div>':'')+
           '</div>'+
           (function(){
             var linked=transactions.filter(function(tx){return tx.accountId===a.id;});
@@ -5904,21 +5901,21 @@ function renderFinAccounts(){
             var ob=Number(a.openingBalance||0);
             if(k==='cash'||k==='bank'){
               var bal=ob+txInc-txExp;
-              var balColor=bal>=0?t.color:'#DC2626';
+              var balColor=bal>=0?t.color:'var(--red)';
               return'<div style="text-align:right;flex-shrink:0">'+
                 '<div style="font-size:11px;color:var(--t3);font-weight:600">Balance</div>'+
-                '<div style="font-size:15px;font-weight:800;color:'+balColor+'">'+cur()+' '+Math.abs(bal).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+(bal<0?' CR':'')+'</div>'+
+                '<div style="font-size:15px;font-weight:800;color:'+balColor+'">'+fmtMoney(Math.abs(bal))+(bal<0?' CR':'')+'</div>'+
                 (linked.length?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+linked.length+' txn'+(linked.length!==1?'s':'')+'</div>':'')+
               '</div>';
             } else if(linked.length){
               var tot=(k==='expense'?txExp:txInc)||txInc+txExp;
               return'<div style="text-align:right;flex-shrink:0">'+
                 '<div style="font-size:11px;color:var(--t3);font-weight:600">Total</div>'+
-                '<div style="font-size:15px;font-weight:800;color:'+t.color+'">'+cur()+' '+tot.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'+
+                '<div style="font-size:15px;font-weight:800;color:'+t.color+'">'+fmtMoney(tot)+'</div>'+
                 '<div style="font-size:10px;color:var(--t3);margin-top:2px">'+linked.length+' txn'+(linked.length!==1?'s':'')+'</div>'+
               '</div>';
             } else if(ob){
-              return'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--t3);font-weight:600">Opening</div><div style="font-size:15px;font-weight:800;color:'+t.color+'">'+cur()+' '+ob.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>';
+              return'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--t3);font-weight:600">Opening</div><div style="font-size:15px;font-weight:800;color:'+t.color+'">'+fmtMoney(ob)+'</div></div>';
             }
             return'<div style="width:8px;height:8px;border-radius:50%;background:'+t.color+';flex-shrink:0"></div>';
           })()+
@@ -6445,26 +6442,29 @@ function renderPLStatement(){
   var isProfit=netProfit>=0;
 
   function section(title, groups, total, color){
-    return'<div style="margin-bottom:18px">'+
-      '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:'+color+';padding:10px 16px;background:'+color+'15;border-radius:var(--r-md) var(--r-md) 0 0;border:1.5px solid '+color+'30">'+title+'</div>'+
-      '<div style="border:1.5px solid var(--b1);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:#fff">'+
-      groups.map(function(g,i){
-        return'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--b1);background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
-          '<span style="font-size:13px;color:var(--t1)">'+esc(g.name)+'</span>'+
-          '<span style="font-size:13px;font-weight:700;color:'+color+'">'+fmtMoney(g.amount)+'</span>'+
-        '</div>';
-      }).join('')+
-      (groups.length===0?'<div style="padding:14px 16px;font-size:13px;color:var(--t3)">No transactions in this period</div>':'')+
-      '<div style="display:flex;justify-content:space-between;padding:12px 16px;font-size:14px;font-weight:900;color:'+color+'">'+
-        '<span>Total '+title+'</span><span>'+fmtMoney(total)+'</span>'+
-      '</div></div></div>';
+    var body=groups.length?groups.map(function(g){
+      return'<tr>'+
+        '<td style="font-weight:600;color:var(--t1)">'+esc(g.name)+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+color+'">'+fmtMoney(g.amount)+'</td>'+
+      '</tr>';
+    }).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--t3);padding:20px">No transactions in this period</td></tr>';
+    return'<div class="dt-wrap" style="margin-bottom:18px"><div class="dt-scroll">'+
+      '<table class="data-table" style="min-width:320px">'+
+        '<thead><tr><th>'+esc(title)+'</th><th class="num" style="color:'+color+'">Amount</th></tr></thead>'+
+        '<tbody>'+body+'</tbody>'+
+        '<tfoot><tr>'+
+          '<td style="font-weight:800;color:var(--t1)">Total '+esc(title)+'</td>'+
+          '<td class="num" style="font-size:14px;font-weight:900;color:'+color+'">'+fmtMoney(total)+'</td>'+
+        '</tr></tfoot>'+
+      '</table></div></div>';
   }
 
-  var html=section('Revenue',revGroups,totalRev,'#0D9488')+
-    section('Payments',expGroups,totalExp,'#DC2626')+
-    '<div style="border:2px solid '+(isProfit?'#16A34A':'#DC2626')+';border-radius:var(--r-md);background:'+(isProfit?'#DCFCE7':'#FEF2F2')+';padding:16px 20px;display:flex;justify-content:space-between;align-items:center">'+
-      '<div><div style="font-size:14px;font-weight:900;color:'+(isProfit?'#15803D':'#DC2626')+'">Net '+(isProfit?'Profit':'Loss')+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+fmtDate(from)+' to '+fmtDate(to)+'</div></div>'+
-      '<div style="font-size:22px;font-weight:900;color:'+(isProfit?'#15803D':'#DC2626')+'">'+fmtMoney(Math.abs(netProfit))+'</div>'+
+  var npColor=isProfit?'var(--green)':'var(--red)';
+  var html=section('Revenue',revGroups,totalRev,'var(--green)')+
+    section('Payments',expGroups,totalExp,'var(--red)')+
+    '<div class="card" style="margin:0;border:2px solid '+npColor+';background:'+(isProfit?'var(--green-lt)':'var(--red-lt)')+';padding:16px 20px;display:flex;justify-content:space-between;align-items:center">'+
+      '<div><div style="font-size:14px;font-weight:900;color:'+npColor+'">Net '+(isProfit?'Profit':'Loss')+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+fmtDate(from)+' to '+fmtDate(to)+'</div></div>'+
+      '<div style="font-size:22px;font-weight:900;color:'+npColor+'">'+fmtMoney(Math.abs(netProfit))+'</div>'+
     '</div>';
   el.innerHTML=html;
 }
@@ -6518,18 +6518,22 @@ function renderBalanceSheet(){
   var check=totalAssets-(totalLiabilities+totalEquity);
 
   function bsSection(title, color, items, total){
-    return'<div style="margin-bottom:16px">'+
-      '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:'+color+';padding:10px 16px;background:'+color+'15;border-radius:var(--r-md) var(--r-md) 0 0;border:1.5px solid '+color+'30">'+title+'</div>'+
-      '<div style="border:1.5px solid var(--b1);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:#fff">'+
-      items.map(function(item,i){
-        return'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--b1);background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
-          '<span style="font-size:13px;color:var(--t1)">'+esc(item.name)+'</span>'+
-          '<span style="font-size:13px;font-weight:700;color:var(--t1)">'+fmtMoney(item.value)+'</span>'+
-        '</div>';
-      }).join('')+
-      '<div style="display:flex;justify-content:space-between;padding:12px 16px;font-size:14px;font-weight:900;color:'+color+'">'+
-        '<span>Total '+title+'</span><span>'+fmtMoney(total)+'</span>'+
-      '</div></div></div>';
+    return'<div class="dt-wrap" style="margin-bottom:16px"><div class="dt-scroll">'+
+      '<table class="data-table" style="min-width:320px">'+
+        '<thead><tr><th>'+esc(title)+'</th><th class="num" style="color:'+color+'">Amount</th></tr></thead>'+
+        '<tbody>'+
+        items.map(function(item){
+          return'<tr>'+
+            '<td style="font-weight:600;color:var(--t1)">'+esc(item.name)+'</td>'+
+            '<td class="num" style="font-weight:700;color:var(--t1)">'+fmtMoney(item.value)+'</td>'+
+          '</tr>';
+        }).join('')+
+        '</tbody>'+
+        '<tfoot><tr>'+
+          '<td style="font-weight:800;color:var(--t1)">Total '+esc(title)+'</td>'+
+          '<td class="num" style="font-size:14px;font-weight:900;color:'+color+'">'+fmtMoney(total)+'</td>'+
+        '</tr></tfoot>'+
+      '</table></div></div>';
   }
 
   var assetItems=[
@@ -6560,9 +6564,9 @@ function renderBalanceSheet(){
     'Difference of '+fmtMoney(Math.abs(check))+' — check opening balances and transaction postings')+
   '</div>';
 
-  el.innerHTML=bsSection('Assets','#7C3AED',assetItems,totalAssets)+
-    bsSection('Liabilities','#EA580C',liabItems,totalLiabilities)+
-    bsSection('Equity','#0369A1',equityItems,totalEquity)+
+  el.innerHTML=bsSection('Assets','var(--blue)',assetItems,totalAssets)+
+    bsSection('Liabilities','var(--accent-dk)',liabItems,totalLiabilities)+
+    bsSection('Equity','var(--t1)',equityItems,totalEquity)+
     checkHtml;
 }
 
@@ -6659,80 +6663,76 @@ function renderCustAccDetail(){
 
   var initials=(c.name||'?').trim().split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
   var headerHTML=
-    '<div style="background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:16px;margin-bottom:14px">'+
-      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">'+
-        '<div style="width:52px;height:52px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0">'+initials+'</div>'+
-        '<div>'+
-          '<div style="font-size:17px;font-weight:800;color:var(--t1)">'+esc(c.name||'')+'</div>'+
-          (c.phone?'<div style="font-size:13px;color:var(--t2);margin-top:2px">'+esc(c.phone)+'</div>':'')+
-          (c.email?'<div style="font-size:12px;color:var(--t3)">'+esc(c.email)+'</div>':'')+
-        '</div>'+
+    '<div class="card"><div class="ent-head">'+
+      '<div class="ent-avatar">'+esc(initials)+'</div>'+
+      '<div style="min-width:0"><div class="ent-title">'+esc(c.name||'')+'</div>'+
+        '<div class="ent-sub">'+
+          (c.phone?'<span class="ent-chip">'+ico('phone',14,'var(--t3)')+esc(c.phone)+'</span>':'')+
+          (c.email?'<span class="ent-chip">'+ico('mail',14,'var(--t3)')+esc(c.email)+'</span>':'')+
+        '</div></div>'+
       '</div>'+
-      '<div class="r3" style="gap:10px">'+
-        '<div style="background:#F0FDF4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Total Billed</div><div style="font-size:16px;font-weight:800;color:#15803D">'+fmtMoney(totalInvoiced)+'</div></div>'+
-        '<div style="background:#EFF6FF;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Total Paid</div><div style="font-size:16px;font-weight:800;color:#1D4ED8">'+fmtMoney(totalPaid)+'</div></div>'+
-        '<div style="background:'+(outstanding>0.005?'#FEF2F2':'#F0FDF4')+';border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:'+(outstanding>0.005?'#DC2626':'#15803D')+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">'+(outstanding>0.005?'Outstanding':'Cleared')+'</div><div style="font-size:16px;font-weight:800;color:'+(outstanding>0.005?'#DC2626':'#15803D')+'">'+fmtMoney(Math.abs(outstanding))+'</div></div>'+
+      '<div class="ent-kpis">'+
+        entStat('Total Billed',fmtMoney(totalInvoiced),'var(--green)')+
+        entStat('Total Paid',fmtMoney(totalPaid),'var(--blue)')+
+        entStat(outstanding>0.005?'Outstanding':'Cleared',fmtMoney(Math.abs(outstanding)),outstanding>0.005?'var(--red)':'var(--green)')+
       '</div>'+
     '</div>';
 
   if(!custInvs.length){el.innerHTML=headerHTML+'<div class="empty">No invoices for this customer.</div>';return;}
 
   var runBal=0;
-  var tableRows=custInvs.map(function(iv,i){
+  var tableRows=custInvs.map(function(iv){
     var ivTotal=Number(iv.total||0);
     var ivPaid=Number(iv.totalPaid||0);
     var ivBal=ivTotal-ivPaid;
     runBal+=ivBal;
     var ivSt=getInvSt(iv);
-    var sc=ivSt.color.replace('var(--green)','#15803D').replace('var(--red)','#DC2626').replace('var(--blue)','#1D4ED8').replace('var(--amber)','#D97706').replace('var(--accent)','#EA580C');
-    var sl=ivSt.label;
-    var rowBg=i%2===0?'#fff':'#FAFAFA';
     var paymentsHTML='';
     if(iv.payments&&iv.payments.length){
       paymentsHTML='<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--b1)">';
       paymentsHTML+=iv.payments.map(function(p){
         return'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:2px">'+
           '<span>'+esc(METHOD_LABELS[p.method]||p.method||'')+(p.paidAt?' · '+new Date(p.paidAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'')+'</span>'+
-          '<span style="color:#15803D;font-weight:700">+'+fmtMoney(p.amount)+'</span>'+
+          '<span style="color:var(--green);font-weight:700">+'+fmtMoney(p.amount)+'</span>'+
         '</div>';
       }).join('');
       paymentsHTML+='</div>';
     }
-    return'<tr style="background:'+rowBg+';border-bottom:1px solid var(--b1)">'+
-      '<td style="padding:10px 12px;font-size:12px;color:var(--t2);white-space:nowrap;vertical-align:top">'+esc(new Date(iv.createdAt||0).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}))+'</td>'+
-      '<td style="padding:10px 12px;min-width:140px;vertical-align:top">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--t1)">'+esc(invNum(iv))+'</div>'+
+    return'<tr>'+
+      '<td style="font-size:12px;color:var(--t2);white-space:nowrap;vertical-align:top">'+esc(new Date(iv.createdAt||0).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}))+'</td>'+
+      '<td style="min-width:140px;vertical-align:top">'+
+        '<div style="font-weight:700;color:var(--t1)">'+esc(invNum(iv))+'</div>'+
         '<div style="font-size:11px;color:var(--t3)">'+esc(iv.vehicleReg||'')+(iv.vehicleMake?' · '+esc(iv.vehicleMake):'')+' </div>'+
         paymentsHTML+
       '</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:var(--t1);text-align:right;white-space:nowrap;vertical-align:top">'+fmtMoney(ivTotal)+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#15803D;text-align:right;white-space:nowrap;vertical-align:top">'+fmtMoney(ivPaid)+'</td>'+
-      '<td style="padding:10px 12px;text-align:right;vertical-align:top">'+
-        '<span style="font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:'+sc+'22;color:'+sc+'">'+sl+'</span>'+
-        (ivBal>0.005?'<div style="font-size:12px;font-weight:800;color:#DC2626;margin-top:4px">'+fmtMoney(ivBal)+' due</div>':'')+
+      '<td class="num" style="font-weight:700;color:var(--t1);white-space:nowrap;vertical-align:top">'+fmtMoney(ivTotal)+'</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green);white-space:nowrap;vertical-align:top">'+fmtMoney(ivPaid)+'</td>'+
+      '<td class="num" style="vertical-align:top">'+
+        '<span class="badge '+ivSt.badge+'">'+ivSt.label+'</span>'+
+        (ivBal>0.005?'<div style="font-size:12px;font-weight:800;color:var(--red);margin-top:4px">'+fmtMoney(ivBal)+' due</div>':'')+
       '</td>'+
     '</tr>';
   }).join('');
 
   var tableHTML=
-    '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1.5px solid var(--b1);border-radius:var(--r-md);background:#fff">'+
-      '<table style="width:100%;border-collapse:collapse;min-width:520px">'+
-        '<thead><tr style="background:#F8FAFC;border-bottom:2px solid var(--b1)">'+
-          '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:left">Date</th>'+
-          '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:left">Invoice</th>'+
-          '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:right">Amount</th>'+
-          '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:.5px;text-align:right">Paid</th>'+
-          '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:right">Status</th>'+
+    '<div class="dt-wrap"><div class="dt-scroll">'+
+      '<table class="data-table" style="min-width:520px">'+
+        '<thead><tr>'+
+          '<th>Date</th>'+
+          '<th>Invoice</th>'+
+          '<th class="num">Amount</th>'+
+          '<th class="num" style="color:var(--green)">Paid</th>'+
+          '<th class="num">Status</th>'+
         '</tr></thead>'+
         '<tbody>'+tableRows+'</tbody>'+
-        '<tfoot><tr style="background:#F8FAFC;border-top:2px solid var(--b1)">'+
-          '<td colspan="2" style="padding:10px 12px;font-size:12px;font-weight:800;color:var(--t1)">TOTAL ('+custInvs.length+' invoice'+(custInvs.length!==1?'s':'')+')</td>'+
-          '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:var(--t1);text-align:right">'+fmtMoney(totalInvoiced)+'</td>'+
-          '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#15803D;text-align:right">'+fmtMoney(totalPaid)+'</td>'+
-          '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(outstanding>0.005?'#DC2626':'#15803D')+';text-align:right">'+(outstanding>0.005?fmtMoney(outstanding)+' due':'Cleared')+'</td>'+
+        '<tfoot><tr>'+
+          '<td colspan="2" style="font-weight:800;color:var(--t1)">TOTAL ('+custInvs.length+' invoice'+(custInvs.length!==1?'s':'')+')</td>'+
+          '<td class="num" style="font-weight:800;color:var(--t1)">'+fmtMoney(totalInvoiced)+'</td>'+
+          '<td class="num" style="font-weight:800;color:var(--green)">'+fmtMoney(totalPaid)+'</td>'+
+          '<td class="num" style="font-weight:800;color:'+(outstanding>0.005?'var(--red)':'var(--green)')+'">'+(outstanding>0.005?fmtMoney(outstanding)+' due':'Cleared')+'</td>'+
         '</tr></tfoot>'+
       '</table>'+
-    '</div>';
+    '</div></div>';
 
   el.innerHTML=headerHTML+tableHTML;
 }
@@ -6818,7 +6818,7 @@ function renderAccStatement(){
   var closingBal=ob+totalCredit-totalDebit;
 
   var headerHTML=
-    '<div style="background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:16px;margin-bottom:14px">'+
+    '<div class="card" style="margin-bottom:14px">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'+
         '<div>'+
           (acc?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+(typeInfo?ico(typeInfo.icon,22,typeInfo.color||'currentColor'):'')+'<span style="font-size:16px;font-weight:800;color:var(--t1)">'+esc(acc.name)+'</span></div>':'<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:4px">All Accounts</div>')+
@@ -6826,9 +6826,9 @@ function renderAccStatement(){
           '<div style="font-size:12px;color:var(--t3);margin-top:2px">Period: '+esc(periodLabels[stmtPeriod]||stmtPeriod)+'</div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:right">'+
-          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Credits</div><div style="font-size:15px;font-weight:800;color:#15803D">'+fmtMoney(totalCredit)+'</div></div>'+
-          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Debits</div><div style="font-size:15px;font-weight:800;color:#DC2626">'+fmtMoney(totalDebit)+'</div></div>'+
-          (acc&&(accType==='cash'||accType==='bank')?'<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Closing Bal</div><div style="font-size:15px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+'">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</div></div>':'<div></div>')+
+          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Credits</div><div style="font-size:15px;font-weight:800;color:var(--green)">'+fmtMoney(totalCredit)+'</div></div>'+
+          '<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Total Debits</div><div style="font-size:15px;font-weight:800;color:var(--red)">'+fmtMoney(totalDebit)+'</div></div>'+
+          (acc&&(accType==='cash'||accType==='bank')?'<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:3px">Closing Bal</div><div style="font-size:15px;font-weight:800;color:'+(closingBal>=0?'var(--blue)':'var(--red)')+'">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</div></div>':'<div></div>')+
         '</div>'+
       '</div>'+
     '</div>';
@@ -6839,59 +6839,56 @@ function renderAccStatement(){
   }
 
   // Build statement rows with running balance
+  var showBalCol=acc&&(accType==='cash'||accType==='bank');
   var runBal=ob;
-  var rowsHTML=sorted.map(function(t,i){
+  var rowsHTML=sorted.map(function(t){
     var isInc=t.type==='income';
     var debit=isInc?0:Number(t.amount||0);
     var credit=isInc?Number(t.amount||0):0;
-    if(acc&&(accType==='cash'||accType==='bank'))runBal+=credit-debit;
-    var rowBg=i%2===0?'#fff':'#FAFAFA';
-    var typeColor=isInc?'#15803D':'#DC2626';
-    return'<tr style="background:'+rowBg+'">'+
-      '<td style="padding:10px 12px;font-size:12px;color:var(--t2);white-space:nowrap">'+esc(fmtDate(t.date))+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:var(--t1);min-width:140px">'+
-        '<div style="font-weight:600">'+esc(t.description)+'</div>'+
+    if(showBalCol)runBal+=credit-debit;
+    return'<tr>'+
+      '<td style="font-size:12px;color:var(--t2);white-space:nowrap">'+esc(fmtDate(t.date))+'</td>'+
+      '<td style="min-width:140px">'+
+        '<div style="font-weight:600;color:var(--t1)">'+esc(t.description)+'</div>'+
         (t.reference?'<div style="font-size:12px;font-weight:600;color:var(--t2);margin-top:2px">'+esc(t.reference)+'</div>':'')+
         (t.category?'<div style="font-size:11px;color:var(--t3);margin-top:1px">'+esc(t.category)+'</div>':'')+
         (!accountId&&t.accountName?'<div style="font-size:11px;color:var(--t2);font-weight:600">'+esc(t.accountName)+'</div>':'')+
       '</td>'+
-      '<td style="padding:10px 12px;font-size:12px;color:var(--t2);white-space:nowrap">'+esc(METHOD_LABELS[t.paymentMethod]||t.paymentMethod||'')+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#DC2626;text-align:right;white-space:nowrap">'+(debit?''+fmtMoney(debit):'—')+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#15803D;text-align:right;white-space:nowrap">'+(credit?''+fmtMoney(credit):'—')+'</td>'+
-      (acc&&(accType==='cash'||accType==='bank')?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(runBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">'+fmtMoney(Math.abs(runBal))+(runBal<0?' CR':'')+'</td>':'<td></td>')+
+      '<td style="font-size:12px;color:var(--t2);white-space:nowrap">'+esc(METHOD_LABELS[t.paymentMethod]||t.paymentMethod||'')+'</td>'+
+      '<td class="num" style="font-weight:700;color:var(--red);white-space:nowrap">'+(debit?''+fmtMoney(debit):'—')+'</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green);white-space:nowrap">'+(credit?''+fmtMoney(credit):'—')+'</td>'+
+      (showBalCol?'<td class="num" style="font-weight:800;color:'+(runBal>=0?'var(--blue)':'var(--red)')+';white-space:nowrap">'+fmtMoney(Math.abs(runBal))+(runBal<0?' CR':'')+'</td>':'')+
     '</tr>';
   }).join('');
 
-  var showBalCol=acc&&(accType==='cash'||accType==='bank');
-
   var tableHTML=
-    '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1.5px solid var(--b1);border-radius:var(--r-md);background:#fff">'+
-      '<table style="width:100%;border-collapse:collapse;min-width:560px">'+
+    '<div class="dt-wrap"><div class="dt-scroll">'+
+      '<table class="data-table" style="min-width:560px">'+
         '<thead>'+
-          '<tr style="background:#F8FAFC;border-bottom:2px solid var(--b1)">'+
-            '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap">Date</th>'+
-            '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:left">Description</th>'+
-            '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap">Method</th>'+
-            '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:.5px;text-align:right;white-space:nowrap">Debit</th>'+
-            '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:.5px;text-align:right;white-space:nowrap">Credit</th>'+
-            (showBalCol?'<th style="padding:10px 12px;font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.5px;text-align:right;white-space:nowrap">Balance</th>':'')+
+          '<tr>'+
+            '<th>Date</th>'+
+            '<th>Description</th>'+
+            '<th>Method</th>'+
+            '<th class="num" style="color:var(--red)">Debit</th>'+
+            '<th class="num" style="color:var(--green)">Credit</th>'+
+            (showBalCol?'<th class="num" style="color:var(--blue)">Balance</th>':'')+
           '</tr>'+
         '</thead>'+
         '<tbody>'+
-          (acc&&(accType==='cash'||accType==='bank')&&ob?
-            '<tr style="background:#EFF6FF"><td style="padding:10px 12px;font-size:12px;color:var(--t3)">—</td><td colspan="3" style="padding:10px 12px;font-size:13px;font-weight:700;color:var(--t1)">Opening Balance</td><td style="padding:10px 12px;font-size:13px;font-weight:800;color:#1D4ED8;text-align:right">'+fmtMoney(ob)+'</td></tr>':'')+
+          (showBalCol&&ob?
+            '<tr style="background:var(--blue-lt)"><td style="font-size:12px;color:var(--t3)">—</td><td colspan="3" style="font-weight:700;color:var(--t1)">Opening Balance</td><td class="num" style="font-weight:800;color:var(--blue)">'+fmtMoney(ob)+'</td><td></td></tr>':'')+
           rowsHTML+
         '</tbody>'+
         '<tfoot>'+
-          '<tr style="background:#F8FAFC;border-top:2px solid var(--b1)">'+
-            '<td colspan="3" style="padding:10px 12px;font-size:12px;font-weight:800;color:var(--t1)">TOTAL ('+sorted.length+' transactions)</td>'+
-            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#DC2626;text-align:right;white-space:nowrap">'+fmtMoney(totalDebit)+'</td>'+
-            '<td style="padding:10px 12px;font-size:13px;font-weight:800;color:#15803D;text-align:right;white-space:nowrap">'+fmtMoney(totalCredit)+'</td>'+
-            (showBalCol?'<td style="padding:10px 12px;font-size:13px;font-weight:800;color:'+(closingBal>=0?'#1D4ED8':'#DC2626')+';text-align:right;white-space:nowrap">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</td>':'')+
+          '<tr>'+
+            '<td colspan="3" style="font-weight:800;color:var(--t1)">TOTAL ('+sorted.length+' transactions)</td>'+
+            '<td class="num" style="font-weight:800;color:var(--red);white-space:nowrap">'+fmtMoney(totalDebit)+'</td>'+
+            '<td class="num" style="font-weight:800;color:var(--green);white-space:nowrap">'+fmtMoney(totalCredit)+'</td>'+
+            (showBalCol?'<td class="num" style="font-weight:800;color:'+(closingBal>=0?'var(--blue)':'var(--red)')+';white-space:nowrap">'+fmtMoney(Math.abs(closingBal))+(closingBal<0?' CR':'')+'</td>':'')+
           '</tr>'+
         '</tfoot>'+
       '</table>'+
-    '</div>';
+    '</div></div>';
 
   el.innerHTML=headerHTML+tableHTML;
 }
@@ -7035,8 +7032,9 @@ function setSalesReport(type){
   salesReportType=type;
   ['invoice','itemwise','servicewise'].forEach(function(t){
     var btn=document.getElementById('sr-tab-'+t);if(!btn)return;
-    btn.style.background=t===type?'#0F172A':'';
-    btn.style.color=t===type?'#fff':'var(--t2)';
+    var isA=t===type;
+    btn.className='jc-fpill'+(isA?' active':'');
+    btn.style.background=isA?'#0F172A':'';
   });
   if(!srFrom)srFrom=new Date().toISOString().slice(0,7)+'-01';
   if(!srTo)srTo=new Date().toISOString().slice(0,10);
@@ -7105,14 +7103,14 @@ function renderInvoiceReport(el){
   var rows=list.map(function(iv){
     var st=getInvSt(iv);
     var paid=iv.totalPaid||0; var bal=iv.total-paid;
-    return'<tr onclick="goToInvoiceReport(\''+iv.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'#FFF7ED\'" onmouseout="this.style.background=\'\'">'+
+    return'<tr class="dt-row" onclick="goToInvoiceReport(\''+iv.id+'\')">'+
       '<td style="font-weight:700">'+esc(invNum(iv))+'</td>'+
       '<td>'+esc(iv.customerName||'')+'</td>'+
       '<td>'+esc(iv.vehicleReg||'')+'</td>'+
       '<td style="white-space:nowrap">'+fmtDate(new Date(iv.createdAt).toISOString().slice(0,10))+'</td>'+
-      '<td style="text-align:right;font-weight:600">'+fmtMoney(iv.total)+'</td>'+
-      '<td style="text-align:right;color:var(--green)">'+fmtMoney(paid)+'</td>'+
-      '<td style="text-align:right;color:'+(bal>0?'var(--red)':'var(--t3)')+'">'+fmtMoney(bal)+'</td>'+
+      '<td class="num" style="font-weight:600">'+fmtMoney(iv.total)+'</td>'+
+      '<td class="num" style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
+      '<td class="num" style="color:'+(bal>0?'var(--red)':'var(--t3)')+'">'+fmtMoney(bal)+'</td>'+
       '<td><span class="badge '+st.badge+'">'+st.label+'</span></td>'+
     '</tr>';
   }).join('');
@@ -7129,17 +7127,17 @@ function renderInvoiceReport(el){
       '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--amber)">'+creditC+'</div><div style="font-size:11px;font-weight:700;color:var(--amber)">CREDIT</div></div>'+
       '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--red)">'+unpaidC+'</div><div style="font-size:11px;font-weight:700;color:var(--red)">UNPAID</div></div>'+
     '</div>'+
-    '<div style="overflow-x:auto"><table class="works-tbl">'+
-      '<thead><tr><th>Invoice #</th><th>Customer</th><th>Vehicle</th><th>Date</th><th style="text-align:right">Total</th><th style="text-align:right">Paid</th><th style="text-align:right">Balance</th><th>Status</th></tr></thead>'+
+    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Invoice #</th><th>Customer</th><th>Vehicle</th><th>Date</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>'+
       '<tbody>'+rows+'</tbody>'+
       '<tfoot><tr>'+
-        '<td colspan="4" style="text-align:right;font-weight:700">Totals</td>'+
-        '<td style="text-align:right;font-weight:800">'+fmtMoney(totalAmt)+'</td>'+
-        '<td style="text-align:right;font-weight:800;color:var(--green)">'+fmtMoney(totalPaid)+'</td>'+
-        '<td style="text-align:right;font-weight:800;color:var(--red)">'+fmtMoney(totalAmt-totalPaid)+'</td>'+
+        '<td colspan="4" class="num" style="font-weight:700">Totals</td>'+
+        '<td class="num" style="font-weight:800">'+fmtMoney(totalAmt)+'</td>'+
+        '<td class="num" style="font-weight:800;color:var(--green)">'+fmtMoney(totalPaid)+'</td>'+
+        '<td class="num" style="font-weight:800;color:var(--red)">'+fmtMoney(totalAmt-totalPaid)+'</td>'+
         '<td></td>'+
       '</tr></tfoot>'+
-    '</table></div>';
+    '</table></div></div>';
 }
 
 function goToInvoiceReport(id){
@@ -7174,8 +7172,8 @@ function renderItemwiseReport(el){
       '</td>'+
       '<td style="text-align:center;font-weight:600">'+item.qty+'</td>'+
       '<td style="text-align:center;color:var(--t2)">'+item.invIds.length+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:var(--green)">'+fmtMoney(item.total)+'</td>'+
-      '<td style="text-align:right;color:var(--t2)">'+pct+'%</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(item.total)+'</td>'+
+      '<td class="num" style="color:var(--t2)">'+pct+'%</td>'+
     '</tr>';
   }).join('');
   el.innerHTML=
@@ -7184,11 +7182,11 @@ function renderItemwiseReport(el){
       '<div class="kpi-card kpi-green"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandTotal)+'</div><div class="kpi-label">Total Revenue</div></div>'+
       '<div class="kpi-card"><div class="kpi-val">'+items.reduce(function(s,i){return s+i.qty;},0)+'</div><div class="kpi-label">Line Items</div></div>'+
     '</div>'+
-    '<div style="overflow-x:auto"><table class="works-tbl">'+
-      '<thead><tr><th>#</th><th>Item / Service</th><th style="text-align:center">Qty</th><th style="text-align:center">Invoices</th><th style="text-align:right">Revenue</th><th style="text-align:right">Share</th></tr></thead>'+
+    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>#</th><th>Item / Service</th><th style="text-align:center">Qty</th><th style="text-align:center">Invoices</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>'+
       '<tbody>'+rows+'</tbody>'+
-      '<tfoot><tr><td colspan="4" style="text-align:right;font-weight:700">Total</td><td style="text-align:right;font-weight:800">'+fmtMoney(grandTotal)+'</td><td style="text-align:right">100%</td></tr></tfoot>'+
-    '</table></div>';
+      '<tfoot><tr><td colspan="4" class="num" style="font-weight:700">Total</td><td class="num" style="font-weight:800">'+fmtMoney(grandTotal)+'</td><td class="num">100%</td></tr></tfoot>'+
+    '</table></div></div>';
 }
 
 function renderServicewiseReport(el){
@@ -7230,8 +7228,8 @@ function renderServicewiseReport(el){
           '<div style="height:100%;border-radius:99px;background:var(--green);width:'+compPct+'%"></div></div>'+
       '</td>'+
       '<td style="font-size:12px;color:var(--t2);max-width:180px">'+topTechs+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:var(--green)">'+fmtMoney(sv.total)+'</td>'+
-      '<td style="text-align:right;color:var(--t2)">'+pct+'%</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(sv.total)+'</td>'+
+      '<td class="num" style="color:var(--t2)">'+pct+'%</td>'+
     '</tr>';
   }).join('');
   el.innerHTML=
@@ -7240,11 +7238,11 @@ function renderServicewiseReport(el){
       '<div class="kpi-card kpi-green"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandTotal)+'</div><div class="kpi-label">Total Revenue</div></div>'+
       '<div class="kpi-card"><div class="kpi-val">'+grandCount+'</div><div class="kpi-label">Services Performed</div></div>'+
     '</div>'+
-    '<div style="overflow-x:auto"><table class="works-tbl">'+
-      '<thead><tr><th>#</th><th>Service</th><th style="text-align:center">Count</th><th style="text-align:center">Completed</th><th>Top Technicians</th><th style="text-align:right">Revenue</th><th style="text-align:right">Share</th></tr></thead>'+
+    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>#</th><th>Service</th><th style="text-align:center">Count</th><th style="text-align:center">Completed</th><th>Top Technicians</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>'+
       '<tbody>'+rows+'</tbody>'+
-      '<tfoot><tr><td colspan="5" style="text-align:right;font-weight:700">Total</td><td style="text-align:right;font-weight:800">'+fmtMoney(grandTotal)+'</td><td style="text-align:right">100%</td></tr></tfoot>'+
-    '</table></div>';
+      '<tfoot><tr><td colspan="5" class="num" style="font-weight:700">Total</td><td class="num" style="font-weight:800">'+fmtMoney(grandTotal)+'</td><td class="num">100%</td></tr></tfoot>'+
+    '</table></div></div>';
 }
 
 // ── JC REPORT ──
@@ -7271,8 +7269,9 @@ function renderJcReport(){
   var months=Object.entries(monthMap).sort(function(a,b){return b[0].localeCompare(a[0]);}).slice(0,12);
   var mRows=months.map(function(m){
     var label=new Date(m[0]+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-    return'<tr><td style="font-weight:600">'+label+'</td><td style="text-align:center">'+m[1].count+'</td><td style="text-align:right;font-weight:700">'+fmtMoney(m[1].rev)+'</td></tr>';
+    return'<tr><td style="font-weight:600">'+label+'</td><td style="text-align:center">'+m[1].count+'</td><td class="num" style="font-weight:700">'+fmtMoney(m[1].rev)+'</td></tr>';
   }).join('');
+  function jcDot(key){var d=JC_FILTER_DEFS.filter(function(x){return x.key===key;})[0];return d?d.dot:'var(--t3)';}
   el.innerHTML=
     '<div class="r4" style="gap:10px;margin-bottom:14px">'+
       '<div class="kpi-card"><div class="kpi-val">'+total+'</div><div class="kpi-label">Total Job Cards</div></div>'+
@@ -7284,15 +7283,15 @@ function renderJcReport(){
       '<div class="card" style="margin:0">'+
         '<div class="card-title">Status Breakdown</div>'+
         '<div style="display:flex;flex-direction:column;gap:10px">'+
-          statRow('Pending',open,'#94A3B8')+statRow('Work In Progress',inPrg,'#F97316')+statRow('Work Completed',comp,'#1E40AF')+statRow('Invoiced',inv,'#7C3AED')+statRow('Delivered',del,'#16A34A')+
+          statRow('Pending',open,jcDot('pending'))+statRow('Work In Progress',inPrg,jcDot('in_progress'))+statRow('Work Completed',comp,jcDot('completed'))+statRow('Invoiced',inv,jcDot('invoiced'))+statRow('Delivered',del,jcDot('delivered'))+
         '</div>'+
       '</div>'+
       '<div class="card" style="margin:0">'+
         '<div class="card-title">Monthly Breakdown (Last 12 Months)</div>'+
-        '<div style="overflow-x:auto"><table class="works-tbl">'+
-          '<thead><tr><th>Month</th><th style="text-align:center">Jobs</th><th style="text-align:right">Revenue</th></tr></thead>'+
+        '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+          '<thead><tr><th>Month</th><th style="text-align:center">Jobs</th><th class="num">Revenue</th></tr></thead>'+
           '<tbody>'+(mRows||'<tr><td colspan="3" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
-        '</table></div>'+
+        '</table></div></div>'+
       '</div>'+
     '</div>';
 }
@@ -7314,13 +7313,13 @@ function renderCustReport(){
   var repeat=customers.filter(function(c){return jobCards.filter(function(j){return j.customerId===c.id;}).length>1;}).length;
   var grandRev=topCusts.reduce(function(s,c){return s+c.rev;},0);
   var rows=topCusts.slice(0,30).map(function(c,i){
-    return'<tr onclick="openCustomerById(\''+c.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'#FFF7ED\'" onmouseout="this.style.background=\'\'">'+
+    return'<tr class="dt-row" onclick="openCustomerById(\''+c.id+'\')">'+
       '<td style="color:var(--t3);font-size:12px">'+(i+1)+'</td>'+
       '<td style="font-weight:700">'+esc(c.name)+'</td>'+
       '<td>'+esc(c.phone)+'</td>'+
       '<td style="text-align:center">'+c.vehs+'</td>'+
       '<td style="text-align:center">'+c.jobs+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:var(--green)">'+fmtMoney(c.rev)+'</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(c.rev)+'</td>'+
     '</tr>';
   }).join('');
   el.innerHTML=
@@ -7331,10 +7330,10 @@ function renderCustReport(){
     '</div>'+
     '<div class="card">'+
       '<div class="card-title">Customer Revenue Report — Top 30</div>'+
-      '<div style="overflow-x:auto"><table class="works-tbl">'+
-        '<thead><tr><th>#</th><th>Customer</th><th>Phone</th><th style="text-align:center">Vehicles</th><th style="text-align:center">Job Cards</th><th style="text-align:right">Revenue</th></tr></thead>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>#</th><th>Customer</th><th>Phone</th><th style="text-align:center">Vehicles</th><th style="text-align:center">Job Cards</th><th class="num">Revenue</th></tr></thead>'+
         '<tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
-      '</table></div>'+
+      '</table></div></div>'+
     '</div>';
 }
 
@@ -7369,7 +7368,7 @@ function renderTechReport(){
         '<div style="background:var(--b1);border-radius:99px;height:4px;margin-top:3px;width:80px">'+
           '<div style="height:100%;border-radius:99px;background:var(--green);width:'+compPct+'%"></div></div>'+
       '</td>'+
-      '<td style="text-align:right;font-weight:700;color:var(--green)">'+fmtMoney(t.rev)+'</td>'+
+      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(t.rev)+'</td>'+
     '</tr>';
   }).join('');
   var grandRev=techStats.reduce(function(s,t){return s+t.rev;},0);
@@ -7381,10 +7380,10 @@ function renderTechReport(){
     '</div>'+
     '<div class="card">'+
       '<div class="card-title">Technician Performance Report</div>'+
-      '<div style="overflow-x:auto"><table class="works-tbl">'+
-        '<thead><tr><th>Technician</th><th>Specialization</th><th>Status</th><th style="text-align:center">Services</th><th style="text-align:center">Completed</th><th style="text-align:right">Revenue</th></tr></thead>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>Technician</th><th>Specialization</th><th>Status</th><th style="text-align:center">Services</th><th style="text-align:center">Completed</th><th class="num">Revenue</th></tr></thead>'+
         '<tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
-      '</table></div>'+
+      '</table></div></div>'+
     '</div>';
 }
 
