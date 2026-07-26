@@ -6494,44 +6494,78 @@ function _accBal(acc, upTo){
   return ob+inc-exp;
 }
 
+// ── ACCRUAL LEDGER HELPERS ──
+// The books are kept on an accrual basis so the Trial Balance and Balance Sheet
+// balance by construction (Assets = Liabilities + Equity + (Revenue − Expenses)).
+// Revenue is recognised at INVOICING (not on collection); a cash receipt against
+// an invoice clears Accounts Receivable rather than booking new revenue.
+function invSubtotal(iv){ return Number(iv.subtotal!=null?iv.subtotal:(Number(iv.total||0)-Number(iv.taxAmount||0))); }
+function invIsOpen(iv){ return iv.status==='unpaid'||iv.status==='partial'||iv.status==='credit'; }
+function txnIsInvoiceReceipt(t){ return !!t.invoiceId || t.category==='Invoice Payment'; }
+// Accounts Receivable outstanding as at a date (unpaid portion of invoices).
+function arBalanceAsAt(asAt){
+  return invoices.filter(function(iv){return tsToDs(iv.createdAt)<=asAt;}).reduce(function(s,iv){
+    var paid=(iv.payments||[]).filter(function(p){return tsToDs(p.paidAt)<=asAt;}).reduce(function(sp,p){return sp+Number(p.amount||0);},0);
+    return s+Math.max(0,Number(iv.total||0)-paid);
+  },0);
+}
+// VAT collected on invoices raised up to a date (output tax payable; no remittance tracking yet).
+function vatPayableAsAt(asAt){
+  return invoices.filter(function(iv){return tsToDs(iv.createdAt)<=asAt;}).reduce(function(s,iv){return s+Number(iv.taxAmount||0);},0);
+}
+// Accrual revenue in a period = invoice net (ex-VAT) raised in range + non-invoice cash income (e.g. Other Income).
+function accrualRevenue(from,to){
+  var invRev=invoices.filter(function(iv){var d=tsToDs(iv.createdAt);return d>=from&&d<=to;}).reduce(function(s,iv){return s+invSubtotal(iv);},0);
+  var otherInc=transactions.filter(function(t){return t.type==='income'&&!txnIsInvoiceReceipt(t)&&t.date>=from&&t.date<=to;}).reduce(function(s,t){return s+Number(t.amount||0);},0);
+  return invRev+otherInc;
+}
+function accrualExpense(from,to){
+  return transactions.filter(function(t){return t.type==='expense'&&t.date>=from&&t.date<=to;}).reduce(function(s,t){return s+Number(t.amount||0);},0);
+}
+// Opening Balance Equity (Xero/QuickBooks pattern): the balancing counterpart of
+// every opening balance entered on an asset/cash/bank/liability account, so the
+// books balance from day one. The owner reclassifies it to real capital later.
+function openingBalanceEquity(){
+  var openAssets=finAccounts.filter(function(a){return (a.type==='cash'||a.type==='bank'||a.type==='asset')&&a.isActive!==false;}).reduce(function(s,a){return s+Number(a.openingBalance||0);},0);
+  var openClaims=finAccounts.filter(function(a){return (a.type==='liability'||a.type==='equity')&&a.isActive!==false;}).reduce(function(s,a){return s+Number(a.openingBalance||0);},0);
+  return openAssets-openClaims; // net worth injected via opening balances
+}
+
 function renderTrialBalance(){
   var el=document.getElementById('tb-content');
   if(!el)return;
   var asAt=(document.getElementById('tb-date')||{}).value||new Date().toISOString().slice(0,10);
   var rows=[];
   var totalDr=0, totalCr=0;
+  function addRow(name,typeLabel,dr,cr){ if(dr<0.005&&cr<0.005)return; rows.push({name:name,type:typeLabel,dr:dr,cr:cr}); totalDr+=dr; totalCr+=cr; }
 
-  // Group accounts by type order
-  var typeOrder=['cash','bank','asset','income','expense','liability','equity','other'];
-  typeOrder.forEach(function(typeKey){
-    var accs=finAccounts.filter(function(a){return a.type===typeKey&&a.isActive!==false;});
-    accs.forEach(function(acc){
-      var ti=FIN_ACCOUNT_TYPES[typeKey]||{icon:'',label:typeKey,normalDr:true};
-      var bal=_accBal(acc,asAt);
-      var dr=0,cr=0;
-      if(ti.normalDr){dr=bal>0?bal:0;cr=bal<0?Math.abs(bal):0;}
-      else{cr=bal>0?bal:0;dr=bal<0?Math.abs(bal):0;}
-      totalDr+=dr;totalCr+=cr;
-      rows.push({name:esc(acc.name),type:ti.label,dr:dr,cr:cr});
+  // Real-money accounts (cash/bank/fixed assets) from their postings + opening.
+  ['cash','bank','asset'].forEach(function(typeKey){
+    if(typeKey==='asset'){ // AR is derived (see below) — skip the AR finAccount here to avoid double-count
+      finAccounts.filter(function(a){return a.type==='asset'&&a.isActive!==false&&a.name!=='Accounts Receivable';}).forEach(function(acc){
+        var b=_accBal(acc,asAt); addRow(acc.name,'Asset',b>0?b:0,b<0?-b:0);
+      });
+      return;
+    }
+    finAccounts.filter(function(a){return a.type===typeKey&&a.isActive!==false;}).forEach(function(acc){
+      var b=_accBal(acc,asAt), ti=FIN_ACCOUNT_TYPES[typeKey]; addRow(acc.name,ti.label,b>0?b:0,b<0?-b:0);
     });
   });
 
-  // Accounts Receivable from invoices (if no AR finAccount or as a cross-check)
-  var hasARAccount=finAccounts.some(function(a){return a.name==='Accounts Receivable'&&a.isActive!==false;});
-  if(!hasARAccount){
-    var arBal=invoices.filter(function(iv){
-      return (iv.status==='unpaid'||iv.status==='partial'||iv.status==='credit')&&tsToDs(iv.createdAt)<=asAt;
-    }).reduce(function(s,iv){
-      var paid=(iv.payments||[]).reduce(function(sp,p){return sp+Number(p.amount||0);},0);
-      return s+Math.max(0,Number(iv.total||0)-paid);
-    },0);
-    if(arBal>0){
-      rows.splice(2,0,{name:'Accounts Receivable',type:'Asset',dr:arBal,cr:0});
-      totalDr+=arBal;
-    }
-  }
+  // Derived accrual lines that make the sheet balance:
+  addRow('Accounts Receivable','Asset',arBalanceAsAt(asAt),0);                 // debit
+  addRow('Sales Revenue','Income',0,accrualRevenue('0000-00-00',asAt));        // credit
+  // Expenses grouped by category (debit)
+  var expByCat={};
+  transactions.filter(function(t){return t.type==='expense'&&t.date<=asAt;}).forEach(function(t){var k=t.category||'Other Expenses';expByCat[k]=(expByCat[k]||0)+Number(t.amount||0);});
+  Object.keys(expByCat).sort().forEach(function(k){ addRow(k,'Expense',expByCat[k],0); });
+  // VAT collected (credit / liability) + other liabilities & equity at opening (credit)
+  addRow('VAT Payable','Liability',0,vatPayableAsAt(asAt));
+  finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).forEach(function(acc){var ob=Number(acc.openingBalance||0);if(ob)addRow(acc.name,'Liability',ob<0?-ob:0,ob>0?ob:0);});
+  finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).forEach(function(acc){var ob=Number(acc.openingBalance||0);if(ob)addRow(acc.name,'Equity',ob<0?-ob:0,ob>0?ob:0);});
+  var obe=openingBalanceEquity(); if(Math.abs(obe)>0.005)addRow('Opening Balance Equity','Equity',obe<0?-obe:0,obe>0?obe:0);
 
-  if(!rows.length){el.innerHTML='<div class="empty">No accounts found. Add accounts in Chart of Accounts first.</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="empty">No ledger activity yet. Add accounts and record transactions first.</div>';return;}
 
   var diff=Math.abs(totalDr-totalCr);
   var balHtml=diff<0.01?
@@ -6576,20 +6610,24 @@ function renderPLStatement(){
   var to=(document.getElementById('pl-to')||{}).value||'';
   if(!from||!to){el.innerHTML='<div class="empty">Select a date range above.</div>';return;}
 
-  var inRange=transactions.filter(function(t){return t.date>=from&&t.date<=to;});
-  var incTxns=inRange.filter(function(t){return t.type==='income';});
-  var expTxns=inRange.filter(function(t){return t.type==='expense';});
-
-  function groupByCategory(txns){
-    var map={};
-    txns.forEach(function(t){var k=t.category||'Uncategorised';map[k]=(map[k]||0)+Number(t.amount||0);});
-    return Object.keys(map).sort().map(function(k){return{name:k,amount:map[k]};});
-  }
-
-  var revGroups=groupByCategory(incTxns);
-  var expGroups=groupByCategory(expTxns);
-  var totalRev=incTxns.reduce(function(s,t){return s+Number(t.amount||0);},0);
-  var totalExp=expTxns.reduce(function(s,t){return s+Number(t.amount||0);},0);
+  // ACCRUAL P&L: revenue is recognised when invoiced (ex-VAT), not when collected,
+  // plus any non-invoice income; expenses are the payments in the period.
+  var revMap={};
+  invoices.filter(function(iv){var d=tsToDs(iv.createdAt);return d>=from&&d<=to;}).forEach(function(iv){
+    var k=iv.jobCardId?'Service Invoices':'Counter Sales';
+    revMap[k]=(revMap[k]||0)+invSubtotal(iv);
+  });
+  transactions.filter(function(t){return t.type==='income'&&!txnIsInvoiceReceipt(t)&&t.date>=from&&t.date<=to;}).forEach(function(t){
+    var k=t.category||'Other Income';revMap[k]=(revMap[k]||0)+Number(t.amount||0);
+  });
+  var expMap={};
+  transactions.filter(function(t){return t.type==='expense'&&t.date>=from&&t.date<=to;}).forEach(function(t){
+    var k=t.category||'Uncategorised';expMap[k]=(expMap[k]||0)+Number(t.amount||0);
+  });
+  function toGroups(map){return Object.keys(map).sort().map(function(k){return{name:k,amount:map[k]};});}
+  var revGroups=toGroups(revMap), expGroups=toGroups(expMap);
+  var totalRev=revGroups.reduce(function(s,g){return s+g.amount;},0);
+  var totalExp=expGroups.reduce(function(s,g){return s+g.amount;},0);
   var netProfit=totalRev-totalExp;
   var isProfit=netProfit>=0;
 
@@ -6613,7 +6651,7 @@ function renderPLStatement(){
 
   var npColor=isProfit?'var(--green)':'var(--red)';
   var html=section('Revenue',revGroups,totalRev,'var(--green)')+
-    section('Payments',expGroups,totalExp,'var(--red)')+
+    section('Expenses',expGroups,totalExp,'var(--red)')+
     '<div class="card" style="margin:0;border:2px solid '+npColor+';background:'+(isProfit?'var(--green-lt)':'var(--red-lt)')+';padding:16px 20px;display:flex;justify-content:space-between;align-items:center">'+
       '<div><div style="font-size:14px;font-weight:900;color:'+npColor+'">Net '+(isProfit?'Profit':'Loss')+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+fmtDate(from)+' to '+fmtDate(to)+'</div></div>'+
       '<div style="font-size:22px;font-weight:900;color:'+npColor+'">'+fmtMoney(Math.abs(netProfit))+'</div>'+
@@ -6639,33 +6677,24 @@ function renderBalanceSheet(){
     return finAccounts.filter(function(a){return types.indexOf(a.type)>-1&&a.isActive!==false;}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
   }
 
-  // ASSETS
+  // ASSETS (accrual basis — see the accrual ledger helpers)
   var cashTotal=typeTotal(['cash']);
   var bankTotal=typeTotal(['bank']);
-  var assetTotal=typeTotal(['asset']);
-  // Accounts Receivable: unpaid invoice balances up to asAt
-  var arBal=invoices.filter(function(iv){
-    return(iv.status==='unpaid'||iv.status==='partial'||iv.status==='credit')&&tsToDs(iv.createdAt)<=asAt;
-  }).reduce(function(s,iv){
-    var paid=(iv.payments||[]).filter(function(p){return tsToDs(p.paidAt)<=asAt;}).reduce(function(sp,p){return sp+Number(p.amount||0);},0);
-    return s+Math.max(0,Number(iv.total||0)-paid);
-  },0);
-  // Check if we have an explicit AR finAccount
-  var arAccBal=finAccounts.filter(function(a){return a.name==='Accounts Receivable'&&a.isActive!==false;}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
-  var totalAR=arAccBal>0?arAccBal:arBal;
+  // Fixed assets exclude the derived AR line (that finAccount stays at opening).
+  var assetTotal=finAccounts.filter(function(a){return a.type==='asset'&&a.isActive!==false&&a.name!=='Accounts Receivable';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
+  var totalAR=arBalanceAsAt(asAt);
   var totalAssets=cashTotal+bankTotal+assetTotal+totalAR;
 
-  // LIABILITIES
-  var liabilityTotal=typeTotal(['liability']);
-  var totalLiabilities=liabilityTotal;
+  // LIABILITIES: VAT collected on invoices + any other liability openings.
+  var vatPayable=vatPayableAsAt(asAt);
+  var otherLiab=finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
+  var totalLiabilities=vatPayable+otherLiab;
 
-  // EQUITY
-  var equityAccsTotal=typeTotal(['equity']);
-  // Retained earnings = all-time net profit up to asAt
-  var allIncome=transactions.filter(function(t){return t.type==='income'&&t.date<=asAt;}).reduce(function(s,t){return s+Number(t.amount||0);},0);
-  var allExpense=transactions.filter(function(t){return t.type==='expense'&&t.date<=asAt;}).reduce(function(s,t){return s+Number(t.amount||0);},0);
-  var retainedEarnings=allIncome-allExpense;
-  var totalEquity=equityAccsTotal+retainedEarnings;
+  // EQUITY: contributed capital + accrual retained earnings (revenue − expenses).
+  var equityAccsTotal=finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
+  var retainedEarnings=accrualRevenue('0000-00-00',asAt)-accrualExpense('0000-00-00',asAt);
+  var obEquity=openingBalanceEquity();
+  var totalEquity=equityAccsTotal+retainedEarnings+obEquity;
 
   var check=totalAssets-(totalLiabilities+totalEquity);
 
@@ -6696,17 +6725,19 @@ function renderBalanceSheet(){
   ].filter(function(i){return i.value!==0;});
 
   var liabItems=[];
-  finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false;}).forEach(function(a){
+  if(vatPayable>0.005)liabItems.push({name:'VAT Payable',value:vatPayable});
+  finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).forEach(function(a){
     var b=_accBal(a,asAt);
-    if(b!==0)liabItems.push({name:a.name,value:b});
+    if(Math.abs(b)>0.005)liabItems.push({name:a.name,value:b});
   });
   if(!liabItems.length)liabItems.push({name:'No liabilities recorded',value:0});
 
   var equityItems=[];
-  finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false;}).forEach(function(a){
+  finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).forEach(function(a){
     var b=_accBal(a,asAt);
-    if(b!==0)equityItems.push({name:a.name,value:b});
+    if(Math.abs(b)>0.005)equityItems.push({name:a.name,value:b});
   });
+  if(Math.abs(obEquity)>0.005)equityItems.push({name:'Opening Balance Equity',value:obEquity});
   equityItems.push({name:'Retained Earnings (Net Profit)',value:retainedEarnings});
 
   var balanced=Math.abs(check)<0.01;
