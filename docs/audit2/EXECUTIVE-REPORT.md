@@ -76,12 +76,14 @@ Also fixed pre-sprint (commit d989f0d): server-recomputed invoice totals (SEC-F5
 
 Remaining from 4B (deferred to 4C, lower urgency): aged-payables, VAT Payable posted as a real journal (currently derived), period lock/close, and full client-side windowing of list screens (renderers assume full in-memory arrays — the server capability is now in place for it).
 
-### 4C. Future Enhancement Roadmap
-- Supplier master + PO→GRN→bill→payment procurement side.
-- DVI/digital inspection with photos; appointment→job-card conversion; service reminders.
-- Multi-branch (branch scoping, transfers, inter-branch billing, central reporting).
-- Payroll/commission/technician incentives; loyalty; two-way WhatsApp/SMS; customer portal.
-- Server-side report aggregation (materialized daily summaries); move `movements[]`/`payments[]` to child tables; images to object storage; real PWA (manifest+service worker+offline) + thermal/PDF/barcode printing.
+### 4C. Future Enhancement Roadmap — ✅ PARTIALLY DELIVERED 2026-07-26 (commits 15c0095 → d0007b6)
+Delivered this sprint:
+1. ✅ **Appointment → Job Card conversion** + **service reminders** (vehicle next-service-due date/km → notifications).
+2. ✅ **DVI / digital vehicle inspection** — 27-point checklist (OK/Attention/Fail + notes) on job cards, with advisory summary.
+3. ✅ **Supplier master + Purchase Orders** — full procurement: suppliers, POs, atomic receive-to-stock with weighted-average costing, Mark-Paid supplier payments.
+4. ✅ **PWA** (manifest + service worker + installable/offline shell), **period lock** (books-locked-up-to date enforced server-side), **Aged Payables** report.
+
+Still open (larger programs / need infrastructure): multi-branch (scoping, transfers, inter-branch billing, central reporting); payroll/commission/technician incentives; loyalty; two-way WhatsApp/SMS; customer portal; server-side report aggregation (materialized daily summaries); move `movements[]`/`payments[]` to child tables; images to object storage; thermal/PDF/barcode printing; full client-side list windowing; VAT Payable/COGS as posted journals (currently derived).
 
 ---
 
