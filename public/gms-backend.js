@@ -247,6 +247,20 @@
         return r;
       });
     },
+    // Counter-sale: create invoice + cash-book entry in one server transaction.
+    quickInvoice: function (body) {
+      return req('POST', '/invoices/quick', body).then(function (r) {
+        refreshColl('invoices'); refreshColl('transactions');
+        return r;
+      });
+    },
+    // Atomic update of a single job-card work item (technician clock in/out).
+    updateWork: function (jcId, workId, patch, recomputeStatus) {
+      return req('POST', '/jobCards/' + jcId + '/work', { workId: workId, patch: patch, recomputeStatus: !!recomputeStatus }).then(function (r) {
+        refreshColl('jobCards');
+        return r;
+      });
+    },
     // Full data backup as a downloadable JSON blob (admin only).
     exportBackup: function () {
       var tok = authToken();

@@ -279,6 +279,8 @@ function authorize(req, res, next) {
       if (coll === 'jobCards' && id) return next();
       if (coll === 'technicians' && id === req.auth.techId) return next();
     }
+    // Atomic single-work-item update (technician clock in/out on the shop floor).
+    if (req.method === 'POST' && coll === 'jobCards' && id && sub === 'work') return next();
     return res.status(403).json({ error: 'Not permitted for this account.' });
   }
   return res.status(403).json({ error: 'Not permitted.' });
@@ -314,6 +316,24 @@ app.get('/api/:coll/:id', asyncH(async (req, res, next) => {
   res.json(doc);
 }));
 
+// Allocate a race-free document number for a seq-bearing collection, inside an
+// already-open transaction `client`. Reused by create and the quick-invoice
+// endpoint so numbering behaves identically everywhere.
+async function allocSeq(client, coll, table, lock, id) {
+  await client.query('SELECT pg_advisory_xact_lock($1)', [lock]);
+  const existing = await client.query(`SELECT seq FROM ${table} WHERE id = $1`, [id]);
+  if (existing.rows.length && existing.rows[0].seq != null) return Number(existing.rows[0].seq);
+  const r = await client.query(
+    `INSERT INTO seqs (coll, last)
+     VALUES ($1, (SELECT COALESCE(MAX(seq),0) FROM ${table}) + 1)
+     ON CONFLICT (coll) DO UPDATE
+       SET last = GREATEST(seqs.last, (SELECT COALESCE(MAX(seq),0) FROM ${table})) + 1
+     RETURNING last`,
+    [coll]
+  );
+  return Number(r.rows[0].last);
+}
+
 // ---- Create (upsert by id) ----
 app.post('/api/:coll', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
@@ -329,24 +349,8 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
   try {
     await client.query('BEGIN');
     if (cfg.seq) {
-      // Serialize concurrent creators so seq is race-free. Numbers come from a
-      // monotonic per-collection counter (seqs table) so a deleted document's
-      // number is never reissued.
-      await client.query('SELECT pg_advisory_xact_lock($1)', [cfg.lock]);
-      const existing = await client.query(`SELECT seq FROM ${cfg.table} WHERE id = $1`, [id]);
-      if (existing.rows.length && existing.rows[0].seq != null) {
-        body.seq = existing.rows[0].seq; // re-set of an existing doc keeps its number
-      } else {
-        const r = await client.query(
-          `INSERT INTO seqs (coll, last)
-           VALUES ($1, (SELECT COALESCE(MAX(seq),0) FROM ${cfg.table}) + 1)
-           ON CONFLICT (coll) DO UPDATE
-             SET last = GREATEST(seqs.last, (SELECT COALESCE(MAX(seq),0) FROM ${cfg.table})) + 1
-           RETURNING last`,
-          [req.params.coll]
-        );
-        body.seq = Number(r.rows[0].last);
-      }
+      // Race-free monotonic number (never reissues a deleted doc's number).
+      body.seq = await allocSeq(client, req.params.coll, cfg.table, cfg.lock, id);
     }
     const cols = extractedColumns(cfg, body);
     const colNames = ['id', 'data', ...Object.keys(cols)];
@@ -413,6 +417,91 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
         );
       }
     }
+    await client.query('COMMIT');
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Quick Invoice (counter sale): invoice + optional cash-book entry, atomic ----
+// Creates the invoice (with a race-free number, totals recomputed from lines)
+// and its cash-book transaction in ONE DB transaction — the walk-in POS flow no
+// longer writes the two as separate calls that can half-succeed.
+app.post('/api/invoices/quick', asyncH(async (req, res) => {
+  const invoice = (req.body && req.body.invoice) || null;
+  const transaction = (req.body && req.body.transaction) || null;
+  if (!invoice || !Array.isArray(invoice.items) || !invoice.items.length) {
+    return res.status(400).json({ error: 'Invoice with at least one item is required.' });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const inv = sanitizeDoc('invoices', { ...invoice }); // recomputes total/subtotal/tax
+    delete inv.id;
+    const id = crypto.randomUUID();
+    inv.seq = await allocSeq(client, 'invoices', 'invoices', COLL.invoices.lock, id);
+    // Never trust a client-supplied totalPaid beyond the invoice total.
+    if (inv.totalPaid != null) inv.totalPaid = Math.min(round2(inv.totalPaid), inv.total);
+    await client.query(
+      `INSERT INTO invoices (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(inv), inv.seq, Number.isFinite(inv.createdAt) ? inv.createdAt : Date.now()]
+    );
+    if (transaction && Number(transaction.amount) > 0) {
+      const t = sanitizeDoc('transactions', { ...transaction, invoiceId: id });
+      const invNo = 'INV-' + String(inv.seq).padStart(4, '0');
+      t.description = 'Invoice Payment – ' + invNo; // stamp the real, server-assigned number
+      // Cash recorded can never exceed what was actually paid on the invoice.
+      t.amount = round2(Math.min(Number(t.amount) || 0, Number(inv.totalPaid) || inv.total));
+      const tid = crypto.randomUUID();
+      delete t.id;
+      await client.query(
+        `INSERT INTO transactions (id, data, txn_date, created_at) VALUES ($1,$2,$3,$4)`,
+        [tid, JSON.stringify(t), t.date || null, Number.isFinite(t.createdAt) ? t.createdAt : Date.now()]
+      );
+    }
+    await client.query('COMMIT');
+    res.json({ id, ...inv });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    if (e.code === '23505') return res.status(409).json({ error: 'An invoice already exists for this job card.' });
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Update ONE work item on a job card, atomically ----
+// Row-locked so two technicians on two devices updating different work items of
+// the same job card can't erase each other (the old whole-array PUT race).
+app.post('/api/jobCards/:id/work', asyncH(async (req, res) => {
+  const { workId, patch } = req.body || {};
+  if (!workId || !patch || typeof patch !== 'object') return res.status(400).json({ error: 'workId and patch required' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const cur = await client.query(`SELECT data FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!cur.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
+    const jc = cur.rows[0].data;
+    const works = Array.isArray(jc.works) ? jc.works : [];
+    const idx = works.findIndex((w) => w.id === workId);
+    if (idx < 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Work item not found' }); }
+    const safe = { ...patch }; delete safe.id; delete safe.cost; // cost is owner-set, never client-mutated here
+    works[idx] = { ...works[idx], ...safe };
+    const merged = { ...jc, works };
+    // Recompute the card's rollup status from its work items (same rule as the
+    // client's calcJcStatus: item statuses are pending/in_progress/done → card
+    // rollup pending/in_progress/completed). Never downgrade invoiced/delivered.
+    if (req.body.recomputeStatus && merged.status !== 'invoiced' && merged.status !== 'delivered') {
+      merged.status = works.length === 0 ? 'pending'
+        : works.every((w) => w.status === 'done') ? 'completed'
+        : works.some((w) => w.status === 'in_progress' || w.status === 'done') ? 'in_progress'
+        : 'pending';
+    }
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
     await client.query('COMMIT');
     res.json({ id: req.params.id, ...merged });
   } catch (e) {

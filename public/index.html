@@ -4848,16 +4848,14 @@ function saveQuickInvoice(){
     payments:(!isCredit&&amount>0)?[{method:method,amount:amount,notes:notes,paidAt:Date.now()}]:[],
     createdAt:Date.now(),source:'quick_invoice'
   };
-  db.collection('invoices').add(invData).then(function(ref){
-    // The server assigns the authoritative invoice number — use it, never the
-    // locally guessed one, so screen/print always match the register.
-    curInvoice=Object.assign({id:ref.id},invData,ref.serverDoc||{});
-    if(!isCredit&&amount>0){
-      db.collection('transactions').add(buildInvoiceTxnDoc(curInvoice,method,amount,notes))
-        .catch(function(e){toast('Invoice saved, but the cash entry failed: '+e.message+' — record it in Accounts.','error');});
-    }
+  // Invoice + cash-book entry created in ONE atomic server transaction — no
+  // more half-succeed where the invoice exists but the cash entry doesn't.
+  var txn=(!isCredit&&amount>0)?buildInvoiceTxnDoc({customerName:custName},method,amount,notes):null;
+  gmsApi.quickInvoice({invoice:invData,transaction:txn}).then(function(saved){
+    curInvoice=saved;
+    // Backfill the txn description with the real invoice number now it exists.
     showInvoice(curInvoice);
-  }).catch(function(e){btn.disabled=false;btn.textContent='✓ Create Invoice & Collect Payment';toast('Error: '+e.message,'error');});
+  }).catch(function(e){btn.disabled=false;btn.textContent='✓ Create Invoice & Collect Payment';toast(e.message||'Could not create invoice.','error');});
 }
 
 // INVOICE
@@ -7819,19 +7817,13 @@ function updateTechElapsedTimers(){
 function techStartWork(jcId,workId){
   var jc=jobCards.find(function(j){return j.id===jcId;});
   if(!jc)return;
-  var now=Date.now();
-  var works=(jc.works||[]).map(function(w){
-    return w.id===workId?Object.assign({},w,{status:'in_progress',startedAt:now}):w;
-  });
-  var newJcStatus=calcJcStatus(works,jc);
-  var update={works:works};
-  if(newJcStatus!==jc.status)update.status=newJcStatus;
-  db.collection('jobCards').doc(jcId).update(update).then(function(){
-    jc.works=works;if(update.status)jc.status=update.status;
-    // Auto-set technician status to busy when work starts
+  // Atomic single-work-item update — two technicians on two devices working
+  // different items of the same card can no longer erase each other.
+  gmsApi.updateWork(jcId,workId,{status:'in_progress',startedAt:Date.now()},true).then(function(saved){
+    var local=jobCards.find(function(j){return j.id===jcId;});if(local){local.works=saved.works;local.status=saved.status;}
     if(curTech&&curTech.status!=='on_break')techUpdateStatus('busy');
     renderTechPortal();
-  });
+  }).catch(function(e){toast(e.message||'Could not start work.','error');});
 }
 
 function techCompleteWork(jcId,workId){
@@ -7839,26 +7831,19 @@ function techCompleteWork(jcId,workId){
   if(!jc)return;
   var rem=document.getElementById('rem-'+workId);
   var remarks=rem?rem.value.trim():'';
+  var w=(jc.works||[]).find(function(x){return x.id===workId;})||{};
   var now=Date.now();
-  var works=(jc.works||[]).map(function(w){
-    if(w.id!==workId)return w;
-    var timeTaken=w.startedAt?(now-w.startedAt):0;
-    return Object.assign({},w,{status:'done',completedAt:now,timeTaken:timeTaken,techRemarks:remarks});
-  });
-  var newJcStatus=calcJcStatus(works,jc);
-  var update={works:works};
-  if(newJcStatus!==jc.status)update.status=newJcStatus;
-  db.collection('jobCards').doc(jcId).update(update).then(function(){
-    jc.works=works;if(update.status)jc.status=update.status;
-    // Auto-set available if no more in-progress works (don't override break)
+  var patch={status:'done',completedAt:now,timeTaken:w.startedAt?(now-w.startedAt):0,techRemarks:remarks};
+  gmsApi.updateWork(jcId,workId,patch,true).then(function(saved){
+    var local=jobCards.find(function(j){return j.id===jcId;});if(local){local.works=saved.works;local.status=saved.status;}
     if(curTech&&curTech.status!=='on_break'){
       var stillActive=jobCards.some(function(card){
-        return(card.works||[]).some(function(w){return w.technicianId===curTech.id&&w.status==='in_progress';});
+        return(card.works||[]).some(function(ww){return ww.technicianId===curTech.id&&ww.status==='in_progress';});
       });
       techUpdateStatus(stillActive?'busy':'available');
     }
     renderTechPortal();
-  });
+  }).catch(function(e){toast(e.message||'Could not complete work.','error');});
 }
 
 function getTechAckedIds(){
