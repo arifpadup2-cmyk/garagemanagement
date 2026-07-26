@@ -497,10 +497,39 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
   }
 }));
 
+// Referential-integrity guard: refuse to hard-delete a record that other
+// records still point at (there are no DB foreign keys), so a delete can never
+// silently orphan vehicles/invoices/job-cards or a referenced ledger account.
+async function deleteBlocker(coll, id) {
+  const has = async (sql, params) => (await pool.query(sql + ' LIMIT 1', params)).rows.length > 0;
+  if (coll === 'customers') {
+    if (await has(`SELECT 1 FROM vehicles WHERE data->>'customerId'=$1`, [id])) return 'this customer still has vehicles';
+    if (await has(`SELECT 1 FROM job_cards WHERE data->>'customerId'=$1`, [id])) return 'this customer still has job cards';
+    if (await has(`SELECT 1 FROM invoices WHERE data->>'customerId'=$1`, [id])) return 'this customer still has invoices';
+  } else if (coll === 'vehicles') {
+    if (await has(`SELECT 1 FROM job_cards WHERE data->>'vehicleId'=$1`, [id])) return 'this vehicle still has job cards';
+    if (await has(`SELECT 1 FROM invoices WHERE data->>'vehicleId'=$1`, [id])) return 'this vehicle still has invoices';
+  } else if (coll === 'jobCards') {
+    if (await has(`SELECT 1 FROM invoices WHERE data->>'jobCardId'=$1`, [id])) return 'this job card has been invoiced';
+  } else if (coll === 'invoices') {
+    const { rows } = await pool.query(`SELECT data FROM invoices WHERE id=$1`, [id]);
+    if (rows.length && Number(rows[0].data.totalPaid || 0) > 0) return 'this invoice has recorded payments — void it instead of deleting';
+  } else if (coll === 'technicians') {
+    if (await has(`SELECT 1 FROM job_cards jc WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(jc.data->'works','[]'::jsonb)) w WHERE w->>'technicianId'=$1)`, [id])) return 'this technician is assigned to job cards';
+  } else if (coll === 'advisors') {
+    if (await has(`SELECT 1 FROM job_cards WHERE data->>'advisorId'=$1`, [id])) return 'this advisor is linked to job cards';
+  } else if (coll === 'finAccounts') {
+    if (await has(`SELECT 1 FROM transactions WHERE data->>'accountId'=$1 OR data->>'debitAccountId'=$1 OR data->>'creditAccountId'=$1`, [id])) return 'this account has posted transactions';
+  }
+  return null;
+}
+
 // ---- Delete ----
 app.delete('/api/:coll/:id', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
   if (!cfg) return next();
+  const blocker = await deleteBlocker(req.params.coll, req.params.id);
+  if (blocker) return res.status(409).json({ error: 'Cannot delete — ' + blocker + '. Remove or reassign those first.' });
   await pool.query(`DELETE FROM ${cfg.table} WHERE id = $1`, [req.params.id]);
   res.json({ ok: true });
 }));
