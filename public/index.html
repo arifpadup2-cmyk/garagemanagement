@@ -1945,21 +1945,34 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group">
             <label>Currency</label>
             <select id="set-currency">
+              <option value="QAR">QAR — Qatari Riyal</option>
               <option value="AED">AED — UAE Dirham</option>
+              <option value="SAR">SAR — Saudi Riyal</option>
+              <option value="OMR">OMR — Omani Rial</option>
+              <option value="KWD">KWD — Kuwaiti Dinar</option>
+              <option value="BHD">BHD — Bahraini Dinar</option>
               <option value="USD">USD — US Dollar</option>
               <option value="GBP">GBP — British Pound</option>
               <option value="EUR">EUR — Euro</option>
-              <option value="SAR">SAR — Saudi Riyal</option>
-              <option value="OMR">OMR — Omani Rial</option>
-              <option value="QAR">QAR — Qatari Riyal</option>
-              <option value="KWD">KWD — Kuwaiti Dinar</option>
-              <option value="BHD">BHD — Bahraini Dinar</option>
               <option value="INR">INR — Indian Rupee</option>
             </select>
           </div>
           <div class="form-group">
             <label>Logo URL <span style="font-size:11px;color:var(--t3)">(optional — shown on invoices)</span></label>
             <input type="url" id="set-logo" placeholder="https://…/logo.png">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="set-vat-enabled" style="width:16px;height:16px;accent-color:var(--accent)" onchange="document.getElementById('set-vat-rate-wrap').style.opacity=this.checked?'1':'.45'">
+              Charge VAT on invoices
+            </label>
+            <div style="font-size:11px;color:var(--t3);margin-top:4px">When on, new invoices show Subtotal + VAT and the tax is added to the total. Existing invoices are not changed.</div>
+          </div>
+          <div class="form-group" id="set-vat-rate-wrap" style="opacity:.45">
+            <label>VAT Rate (%)</label>
+            <input type="number" id="set-vat-rate" min="0" max="100" step="0.5" placeholder="5">
           </div>
         </div>
       </div>
@@ -4504,6 +4517,17 @@ function saveTechnician(){
 }
 
 // SHARED INVOICE HELPERS
+// VAT is applied at invoice creation from company settings (toggle + rate).
+// Existing invoices keep whatever they were issued with.
+function invTaxTotals(subtotal){
+  var sub=Math.round(subtotal*100)/100;
+  if(!companySettings.vatEnabled||!(Number(companySettings.vatRate)>0)){
+    return {subtotal:sub,taxRate:0,taxAmount:0,total:sub};
+  }
+  var rate=Number(companySettings.vatRate);
+  var tax=Math.round(sub*rate)/100;
+  return {subtotal:sub,taxRate:rate,taxAmount:tax,total:Math.round((sub+tax)*100)/100};
+}
 function isInvPaid(iv){
   if(iv.status==='paid'||(typeof iv.status==='string'&&iv.status.startsWith('paid_')))return true;
   // 'delivered' is a logistics state, not a settlement state — only treat it
@@ -4710,11 +4734,11 @@ function qiAddWork(){
 function qiRemoveWork(i){qiWorkItems.splice(i,1);qiRenderWorks();}
 
 function qiUpdateWorksTotal(){
-  var total=qiWorkItems.reduce(function(s,w){return s+Number(w.cost||0);},0);
+  var tt=invTaxTotals(qiWorkItems.reduce(function(s,w){return s+Number(w.cost||0);},0));
   var el=document.getElementById('qi-works-total');
-  if(el)el.textContent=total?'Total: '+fmtMoney(total):'';
+  if(el)el.textContent=tt.total?(tt.taxAmount?'Total: '+fmtMoney(tt.total)+' (incl. VAT '+tt.taxRate+'%: '+fmtMoney(tt.taxAmount)+')':'Total: '+fmtMoney(tt.total)):'';
   var amtEl=document.getElementById('qi-pay-amount');
-  if(amtEl&&!amtEl.value)amtEl.value=total?total.toFixed(2):'';
+  if(amtEl&&!amtEl.value)amtEl.value=tt.total?tt.total.toFixed(2):'';
 }
 
 function qiToggleAmountField(){
@@ -4731,7 +4755,8 @@ function saveQuickInvoice(){
   var isCredit=method==='credit';
   var amount=isCredit?0:Number((document.getElementById('qi-pay-amount')||{}).value||0);
   var notes=((document.getElementById('qi-notes')||{}).value||'').trim();
-  var total=Math.round(items.reduce(function(s,i){return s+i.cost;},0)*100)/100;
+  var tt=invTaxTotals(items.reduce(function(s,i){return s+i.cost;},0));
+  var total=tt.total;
   if(!isCredit&&amount>total+0.005){toast('Payment ('+fmtMoney(amount)+') exceeds the invoice total ('+fmtMoney(total)+').');return;}
   var btn=document.getElementById('qi-save-btn');
   btn.disabled=true;btn.textContent='Creating…';
@@ -4743,7 +4768,7 @@ function saveQuickInvoice(){
     customerId:custId,customerName:custName,
     vehicleId:qiSelVehicle.id,vehicleReg:qiSelVehicle.registrationNo,
     vehicleMake:qiSelVehicle.make||'',vehicleModel:qiSelVehicle.model||'',
-    items:items,total:total,
+    items:items,subtotal:tt.subtotal,taxRate:tt.taxRate,taxAmount:tt.taxAmount,total:total,
     status:isCredit?'credit':(isPaidFull?'paid':'unpaid'),
     totalPaid:isCredit?0:amount,
     paymentType:isCredit?'':method,
@@ -4767,13 +4792,14 @@ function convertToInvoice(){
   var jc=curJobCard;if(!jc)return;
   var existing=invoices.find(function(iv){return iv.jobCardId===jc.id;});
   if(existing){showInvoice(existing);return;}
-  var total=Math.round((jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0)*100)/100;
+  var tt=invTaxTotals((jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0));
   var data={
     jobCardId:jc.id,jobNumber:jcNum(jc),
     customerId:jc.customerId,customerName:jc.customerName,
     vehicleId:jc.vehicleId,vehicleReg:jc.vehicleReg,vehicleMake:jc.vehicleMake,vehicleModel:jc.vehicleModel,
     items:(jc.works||[]).map(function(w){return{description:w.description||'',cost:Number(w.cost)||0};}),
-    total:total,status:'unpaid',createdAt:Date.now()
+    subtotal:tt.subtotal,taxRate:tt.taxRate,taxAmount:tt.taxAmount,
+    total:tt.total,status:'unpaid',createdAt:Date.now()
   };
   db.collection('invoices').add(data).then(function(ref){
     // Server-assigned number (a DB unique index also blocks a second invoice
@@ -4894,6 +4920,9 @@ function renderInvoiceDetail(){
         '<tbody>'+itemRows+'</tbody>'+
       '</table></div>'+
       '<div class="inv-totals">'+
+        (iv.taxAmount>0?
+          '<div class="inv-total-row"><span>Subtotal</span><span>'+fmtMoney(iv.subtotal!=null?iv.subtotal:(iv.total-iv.taxAmount))+'</span></div>'+
+          '<div class="inv-total-row"><span>VAT ('+(iv.taxRate||0)+'%)</span><span>'+fmtMoney(iv.taxAmount)+'</span></div>':'')+
         '<div class="inv-total-row inv-grand"><span>Total</span><span>'+fmtMoney(iv.total)+'</span></div>'+
         (totalPaid&&iv.status!=='paid'?'<div class="inv-total-row" style="color:var(--green)"><span>Paid</span><span>'+fmtMoney(totalPaid)+'</span></div>':'')+
         (iv.status==='partial'?'<div class="inv-total-row" style="color:var(--red);font-weight:700"><span>Balance</span><span>'+fmtMoney(balance)+'</span></div>':'')+
@@ -5714,6 +5743,9 @@ function renderSettings(){
   f('set-country',s.country);f('set-vat',s.vatNumber);f('set-website',s.website);
   f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);
   var curSel=document.getElementById('set-currency');if(curSel)curSel.value=s.currency||'QAR';
+  var vatChk=document.getElementById('set-vat-enabled');
+  if(vatChk){vatChk.checked=!!s.vatEnabled;document.getElementById('set-vat-rate-wrap').style.opacity=s.vatEnabled?'1':'.45';}
+  var vatRate=document.getElementById('set-vat-rate');if(vatRate)vatRate.value=(s.vatRate!=null?s.vatRate:5);
   show('v-settings');
 }
 
@@ -5748,6 +5780,8 @@ function saveCompanySettings(){
     city:document.getElementById('set-city').value.trim(),
     country:document.getElementById('set-country').value.trim(),
     vatNumber:document.getElementById('set-vat').value.trim(),
+    vatEnabled:document.getElementById('set-vat-enabled').checked,
+    vatRate:Number(document.getElementById('set-vat-rate').value||0),
     currency:document.getElementById('set-currency').value,
     website:document.getElementById('set-website').value.trim(),
     logoUrl:document.getElementById('set-logo').value.trim(),
