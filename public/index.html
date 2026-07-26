@@ -177,6 +177,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 /* Mini sidebar */
 #sidebar.sidebar-mini{width:54px}
 #sidebar.sidebar-mini .snav-label{display:none}
+/* Brand lockup matches the boot intro: the "viwo" wordmark alone when expanded; the W-mark only when collapsed */
+.sidebar-logo-title img.snav-label{display:block}
+.sidebar-logo-title .logo-icon{display:none}
+#sidebar.sidebar-mini .sidebar-logo-title .logo-icon{display:block}
 #sidebar.sidebar-mini .sidebar-logo{padding:14px 0}
 #sidebar.sidebar-mini .sidebar-logo-top{justify-content:center;flex-direction:column;gap:8px}
 #sidebar.sidebar-mini .snav-item{padding:12px 0;justify-content:center;gap:0}
@@ -1031,7 +1035,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   <nav id="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-top">
-        <div class="sidebar-logo-title"><img src="/brand/viwo-icon.png" alt="" style="width:22px;height:22px;flex-shrink:0"> <img src="/brand/viwo-word-white.png" alt="VIWO" class="snav-label" style="height:13px;width:auto;display:block"></div>
+        <div class="sidebar-logo-title"><img src="/brand/viwo-icon.png" alt="" class="logo-icon" style="width:26px;height:26px;flex-shrink:0"> <img src="/brand/viwo-word-white.png" alt="VIWO" class="snav-label" style="height:17px;width:auto"></div>
         <button class="snav-toggle-btn" id="snav-toggle-btn" onclick="toggleSidebar()" title="Collapse sidebar">‹</button>
       </div>
       <div class="sidebar-logo-sub snav-label">Garage Management System</div>
@@ -1134,7 +1138,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="mob-hdr-brand" class="mob-hdr-brand" style="display:none">
       <span class="mob-hdr-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
       <div>
-        <div class="mob-hdr-name" style="display:flex;align-items:center;gap:7px"><img src="/brand/viwo-icon.png" alt="" style="width:18px;height:18px"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:11px;width:auto"></div>
+        <div class="mob-hdr-name" style="display:flex;align-items:center;gap:7px"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:15px;width:auto"></div>
         <div class="mob-hdr-user" id="mob-hdr-user"></div>
       </div>
     </div>
@@ -1194,7 +1198,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-mob-home" class="view">
       <div class="mob-home-hdr">
         <div class="mob-home-toprow">
-          <div class="mob-home-brand"><img src="/brand/viwo-icon.png" alt="" style="width:20px;height:20px;flex-shrink:0"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:12px;width:auto"></div>
+          <div class="mob-home-brand"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:18px;width:auto"></div>
           <button class="mob-home-logoutbtn" onclick="doLogout()">Sign Out</button>
         </div>
         <div class="mob-home-greet" id="mob-home-greet">Welcome!</div>
