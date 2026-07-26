@@ -67,13 +67,14 @@ Fixed during this audit turn: server-recomputed invoice totals (SEC-F5/ACC-INV1-
 
 Also fixed pre-sprint (commit d989f0d): server-recomputed invoice totals (SEC-F5), print-chrome leak, Sales `createdAt` crash. **Re-score after sprint: Security ~62, Accounting Compliance ~70, Data Integrity substantially hardened.** Remaining gaps are now in 4B/4C (not go-live blockers): token revocation, audit trail, security headers (partial done), parts↔job-card COGS linkage, estimates/procurement, and the load-everything scale model.
 
-### 4B. High-Priority Roadmap (30 days)
-- Parts→job-card linkage + auto stock deduction + COGS posting (INV-W7).
-- Estimate/Quotation stage + customer approval capture (business W5).
-- Server-side pagination + whitelisted filters on `GET /api/:coll`; stop full-collection refetch after single writes (PERF-01/02).
-- Missing sort/JSONB indexes; `seq` index; connection + statement timeouts; Neon pooled endpoint (DB).
-- Token revocation, audit trail (createdBy/updatedBy + log), helmet/CSP/HSTS, `esc()` single-quote fix (SEC-F4/6/8/9).
-- Aged-payables, VAT Payable actually posted, period lock/close.
+### 4B. High-Priority Roadmap (30 days) — ✅ COMPLETED 2026-07-26 (commits 192e163 → 443eb45)
+1. ✅ **DB indexes + timeouts** — 22 indexes (sort cols, seq, JSONB expression) + connection/statement timeouts; Neon pooled-endpoint documented.
+2. ✅ **Security** — token revocation ("Sign Out All Devices" + authEpoch), audit trail (audit_log + createdBy/updatedBy + Activity Log view), CSP/HSTS/X-Frame headers, `esc()` single-quote + number-coercion fix (SEC-F4/6/8/9).
+3. ✅ **Parts on job cards** — atomic issue/return with stock deduction, parts on invoices, per-job margin visibility (INV-W7).
+4. ✅ **Estimates/Quotations** — full quote → approve → convert-to-job-card flow with a new collection (business W5).
+5. ✅ **Scale** — response gzip (~85% payload cut), opt-in server pagination/filtering on `GET /api/:coll`, and shim cache-patch to end the full-refetch-per-write amplification (PERF-01/02).
+
+Remaining from 4B (deferred to 4C, lower urgency): aged-payables, VAT Payable posted as a real journal (currently derived), period lock/close, and full client-side windowing of list screens (renderers assume full in-memory arrays — the server capability is now in place for it).
 
 ### 4C. Future Enhancement Roadmap
 - Supplier master + PO→GRN→bill→payment procurement side.
