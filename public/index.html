@@ -4554,6 +4554,7 @@ function showAddTechnician(id){
   document.getElementById('t-spec').value=t?t.specialization||'':'';
   document.getElementById('t-status').value=t?t.status||'available':'available';
   document.getElementById('t-pin').value='';
+  document.getElementById('t-pin').placeholder=(t&&t.hasPin)?'Leave blank to keep current PIN':'Enter 4-digit PIN';
   document.getElementById('t-photo-input').value='';
   renderStaffPhotoPreview('t-photo-preview',techExistingPhotoUrl,staffInitials(t?t.name:''));
   show('v-add-technician');

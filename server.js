@@ -31,8 +31,16 @@ const { pool, initSchema } = require('./db');
 
 const app = express();
 app.disable('x-powered-by');
+// Trust one proxy hop (Render/nginx) so req.ip is the real client, not the
+// spoofable X-Forwarded-For — the brute-force lock depends on this.
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '15mb' })); // room for base64 images
-app.use((req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); next(); });
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('Referrer-Policy', 'same-origin');
+  next();
+});
 
 // Collection registry: route name -> table + ordering + extracted columns.
 const COLL = {
@@ -79,6 +87,10 @@ function sanitizeDoc(coll, doc) {
     }
   }
   if (coll === 'transactions' && typeof doc.amount === 'number') doc.amount = round2(doc.amount);
+  // Never store a technician PIN in plaintext — hash any incoming plaintext PIN.
+  if (coll === 'technicians' && doc.pin != null && isLegacyPin(doc.pin) && String(doc.pin).length) {
+    doc.pin = hashPin(String(doc.pin));
+  }
   return doc;
 }
 
@@ -89,10 +101,41 @@ const asyncH = (fn) => (req, res, next) => fn(req, res, next).catch((e) => {
 });
 
 // ---- Auth (stateless HMAC tokens; survive server restarts) ----
-const SECRET = process.env.SESSION_SECRET
-  ? Buffer.from(process.env.SESSION_SECRET)
-  : crypto.createHash('sha256').update('gms:' + (process.env.ADMIN_PASSWORD || '')).digest();
+// SESSION_SECRET is the token-signing key and MUST be set independently of the
+// admin password (else a leaked token enables offline password cracking). We
+// warn loudly if it's missing and fall back to a random per-boot secret, which
+// invalidates all tokens on restart rather than using a weak derived key.
+let SECRET;
+if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16) {
+  SECRET = Buffer.from(process.env.SESSION_SECRET);
+} else {
+  console.warn('[gms] WARNING: SESSION_SECRET is unset or too short — using a random per-boot secret. Set a strong SESSION_SECRET in .env so sessions survive restarts. See .env.example.');
+  SECRET = crypto.randomBytes(32);
+}
 const TOKEN_TTL = 30 * 24 * 3600 * 1000; // 30 days
+
+// ---- PIN hashing (scrypt; no external deps) ----
+// Stored form: "scrypt$<saltHex>$<hashHex>". Legacy plaintext PINs are migrated
+// transparently on first successful login.
+function hashPin(pin) {
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(String(pin), salt, 32);
+  return 'scrypt$' + salt.toString('hex') + '$' + hash.toString('hex');
+}
+function verifyPin(pin, stored) {
+  if (!stored) return false;
+  if (typeof stored === 'string' && stored.startsWith('scrypt$')) {
+    const [, saltHex, hashHex] = stored.split('$');
+    try {
+      const hash = crypto.scryptSync(String(pin), Buffer.from(saltHex, 'hex'), 32);
+      const good = Buffer.from(hashHex, 'hex');
+      return hash.length === good.length && crypto.timingSafeEqual(hash, good);
+    } catch (_) { return false; }
+  }
+  // legacy plaintext
+  return String(stored) === String(pin);
+}
+function isLegacyPin(stored) { return stored && !(typeof stored === 'string' && stored.startsWith('scrypt$')); }
 
 function signToken(payload) {
   const body = Buffer.from(JSON.stringify({ ...payload, iat: Date.now(), exp: Date.now() + TOKEN_TTL })).toString('base64url');
@@ -121,34 +164,48 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Light brute-force guard on the two login routes.
-const loginFails = new Map(); // ip -> { n, until }
-function loginGuard(req, res, next) {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '?';
-  const f = loginFails.get(ip);
-  if (f && f.until > Date.now()) return res.status(429).json({ ok: false, error: 'Too many attempts. Try again in a few minutes.' });
-  req._loginIp = ip;
-  next();
+// Brute-force guard. Keyed on BOTH source IP and the target account, so an
+// attacker who spoofs X-Forwarded-For still can't bypass the per-account lock.
+// `app.set('trust proxy', 1)` (below) makes req.ip the real client on Render.
+const loginFails = new Map(); // key -> { n, until }
+const LOCK_MS = 15 * 60 * 1000, MAX_FAILS = 5;
+function keyLocked(key) { const f = loginFails.get(key); return f && f.until > Date.now(); }
+function loginGuard(accountKeyFn) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket.remoteAddress || '?';
+    const acct = accountKeyFn ? accountKeyFn(req) : '';
+    req._lockKeys = ['ip:' + ip].concat(acct ? ['acct:' + acct] : []);
+    if (req._lockKeys.some(keyLocked)) return res.status(429).json({ ok: false, error: 'Too many attempts. Please wait a few minutes and try again.' });
+    next();
+  };
 }
-function noteLoginFail(ip) {
-  const f = loginFails.get(ip) || { n: 0, until: 0 };
-  f.n += 1;
-  if (f.n >= 5) { f.until = Date.now() + 15 * 60 * 1000; f.n = 0; }
-  loginFails.set(ip, f);
+function noteLoginFail(req) {
+  (req._lockKeys || []).forEach((key) => {
+    const f = loginFails.get(key) || { n: 0, until: 0 };
+    f.n += 1;
+    if (f.n >= MAX_FAILS) { f.until = Date.now() + LOCK_MS; f.n = 0; }
+    loginFails.set(key, f);
+  });
 }
+function clearLoginFail(req) { (req._lockKeys || []).forEach((k) => loginFails.delete(k)); }
+// Evict stale lock entries hourly so the map can't grow unbounded.
+setInterval(() => { const now = Date.now(); for (const [k, f] of loginFails) if (!f.until || f.until < now) loginFails.delete(k); }, 3600 * 1000).unref();
 
 // ---- Public routes (registered before the auth gate) ----
 
-app.post('/api/login', loginGuard, (req, res) => {
+app.post('/api/login', loginGuard((req) => String((req.body || {}).username || '').trim().toLowerCase()), (req, res) => {
   const { username, password } = req.body || {};
   const U = (process.env.ADMIN_USER || 'arifpadup').toLowerCase();
   const P = process.env.ADMIN_PASSWORD || '';
   const NAME = process.env.ADMIN_NAME || 'ARIF';
   if (!P) return res.status(500).json({ ok: false, error: 'Admin login not configured (set ADMIN_PASSWORD).' });
-  if (String(username || '').trim().toLowerCase() === U && String(password) === P) {
+  const uOk = String(username || '').trim().toLowerCase() === U;
+  const pOk = P.length === String(password || '').length && crypto.timingSafeEqual(Buffer.from(P), Buffer.from(String(password || '')));
+  if (uOk && pOk) {
+    clearLoginFail(req);
     return res.json({ ok: true, name: NAME, token: signToken({ role: 'admin', name: NAME }) });
   }
-  noteLoginFail(req._loginIp);
+  noteLoginFail(req);
   return res.status(401).json({ ok: false, error: 'Invalid username or password.' });
 });
 
@@ -163,13 +220,18 @@ app.get('/api/tech-list', asyncH(async (req, res) => {
     photoUrl: r.data.photoUrl || '',
   })));
 }));
-app.post('/api/tech-login', loginGuard, asyncH(async (req, res) => {
+app.post('/api/tech-login', loginGuard((req) => 'tech:' + String((req.body || {}).id || '')), asyncH(async (req, res) => {
   const { id, pin } = req.body || {};
   const { rows } = await pool.query(`SELECT id, data FROM technicians WHERE id = $1`, [id]);
   const t = rows.length ? rows[0].data : null;
-  if (!t || String(t.pin || '') !== String(pin || '')) {
-    noteLoginFail(req._loginIp);
+  if (!t || !verifyPin(pin, t.pin)) {
+    noteLoginFail(req);
     return res.status(401).json({ ok: false, error: 'Incorrect PIN. Please try again.' });
+  }
+  clearLoginFail(req);
+  // Transparently upgrade a legacy plaintext PIN to a scrypt hash on login.
+  if (isLegacyPin(t.pin)) {
+    try { await pool.query(`UPDATE technicians SET data = data || $2 WHERE id = $1`, [id, JSON.stringify({ pin: hashPin(pin) })]); } catch (_) {}
   }
   res.json({ ok: true, id: rows[0].id, name: t.name || '', token: signToken({ role: 'tech', techId: rows[0].id, name: t.name || '' }) });
 }));
@@ -195,10 +257,11 @@ app.get('/api/image', asyncH(async (req, res) => {
 // ---- Everything below requires a valid token ----
 app.use('/api', requireAuth);
 
-// Technician PINs never leave the server for non-admin sessions.
+// Technician PINs (now scrypt hashes) never leave the server for ANY session —
+// nobody needs to read them back; the edit form leaves the PIN field blank and
+// only re-sets it when the admin types a new one.
 function redactTechs(auth, docs) {
-  if (auth && auth.role === 'admin') return docs;
-  return docs.map((d) => { const c = { ...d }; delete c.pin; return c; });
+  return docs.map((d) => { const c = { ...d }; delete c.pin; c.hasPin = !!d.pin; return c; });
 }
 
 // ---- List ----

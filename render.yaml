@@ -11,6 +11,8 @@ services:
         sync: false   # set in the Render dashboard (Neon connection string)
       - key: ADMIN_PASSWORD
         sync: false   # set in the Render dashboard (admin login password)
+      - key: SESSION_SECRET
+        generateValue: true   # Render generates a strong random secret and keeps it stable across deploys
       - key: ADMIN_USER
         value: arifpadup
       - key: ADMIN_NAME
