@@ -1145,6 +1145,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
             <select id="v-fuel"><option value="">Select…</option><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option></select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group"><label>Next Service Due (date) <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="date" id="v-nextservice-date"></div>
+          <div class="form-group"><label>Next Service Due (km) <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="number" id="v-nextservice-km" placeholder="e.g. 50000"></div>
+        </div>
         <div class="form-group"><label>Notes</label><textarea id="v-notes" placeholder="Any additional notes…"></textarea></div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-veh-btn" onclick="saveVehicle()">Save Vehicle</button>
@@ -1234,6 +1238,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="form-group"><label>Notes</label><textarea id="appt-notes" placeholder="Any additional details…"></textarea></div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="appt-save-btn" onclick="saveAppointment()">Save Appointment</button>
+          <button class="btn btn-blue" id="appt-convert-btn" onclick="convertAppointmentToJobCard()" style="display:none">→ Job Card</button>
           <button class="btn btn-secondary" onclick="navTo('appointments')">Cancel</button>
           <button class="btn btn-red" id="appt-del-btn" onclick="deleteAppointment()" style="display:none;margin-left:auto">Delete</button>
         </div>
@@ -2503,6 +2508,14 @@ function computeNotifs(){
   if(brk.length)out.push({icon:'technicians',col:'#B45309',bg:'#FFFBEB',title:brk.length+' technician'+(brk.length>1?'s':'')+' on break',sub:brk.map(function(t){return t.name;}).slice(0,3).join(', '),go:function(){navTo('technicians');}});
   var lowP=(parts||[]).filter(function(p){return typeof partLow==='function'&&partLow(p);});
   if(lowP.length)out.push({icon:'box',col:'#B45309',bg:'#FFFBEB',title:lowP.length+' part'+(lowP.length>1?'s':'')+' low on stock',sub:lowP.map(function(p){return p.name;}).slice(0,3).join(', '),go:function(){navTo('inventory');invFilter='low';renderInventory();}});
+  // Service reminders: vehicles due (by date) within 14 days or overdue.
+  var todayStr=new Date().toISOString().slice(0,10);
+  var soon=new Date();soon.setDate(soon.getDate()+14);var soonStr=soon.toISOString().slice(0,10);
+  var due=(vehicles||[]).filter(function(v){return v.nextServiceDate&&v.nextServiceDate<=soonStr;});
+  if(due.length){
+    var overdue=due.filter(function(v){return v.nextServiceDate<todayStr;}).length;
+    out.push({icon:'calendar',col:'#7C3AED',bg:'#F5F3FF',title:due.length+' vehicle'+(due.length>1?'s':'')+' due for service',sub:(overdue?overdue+' overdue · ':'')+due.map(function(v){return v.registrationNo;}).slice(0,3).join(', '),go:function(){navTo('vehicles');}});
+  }
   return out;
 }
 function buildNotifs(){
@@ -3361,9 +3374,11 @@ function showAddVehicle(editing){
     document.getElementById('v-color').value=curVehicle.color||'';
     document.getElementById('v-mileage').value=curVehicle.mileage||'';
     document.getElementById('v-fuel').value=curVehicle.fuelType||'';
+    document.getElementById('v-nextservice-date').value=curVehicle.nextServiceDate||'';
+    document.getElementById('v-nextservice-km').value=curVehicle.nextServiceKm||'';
     document.getElementById('v-notes').value=curVehicle.notes||'';
   } else {
-    ['v-reg','v-vin','v-make','v-model','v-year','v-color','v-mileage','v-notes'].forEach(function(id){document.getElementById(id).value='';});
+    ['v-reg','v-vin','v-make','v-model','v-year','v-color','v-mileage','v-nextservice-date','v-nextservice-km','v-notes'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('v-fuel').value='';
   }
   show('v-add-vehicle');
@@ -3388,6 +3403,8 @@ function saveVehicle(){
     color:document.getElementById('v-color').value.trim(),
     mileage:document.getElementById('v-mileage').value,
     fuelType:document.getElementById('v-fuel').value,
+    nextServiceDate:document.getElementById('v-nextservice-date').value,
+    nextServiceKm:document.getElementById('v-nextservice-km').value,
     notes:document.getElementById('v-notes').value.trim(),
     customerId:curCustomer.id,customerName:curCustomer.name
   };
@@ -3598,6 +3615,9 @@ function showAddAppointment(id){
   document.getElementById('appt-form-title').textContent=a?'Edit Appointment':'New Appointment';
   document.getElementById('appt-save-btn').textContent=a?'Update Appointment':'Save Appointment';
   document.getElementById('appt-del-btn').style.display=a?'':'none';
+  // Offer conversion once an appointment exists and hasn't been converted yet.
+  var cvBtn=document.getElementById('appt-convert-btn');
+  if(cvBtn)cvBtn.style.display=(a&&!a.jobCardId&&a.status!=='cancelled')?'':'none';
   var cSel=document.getElementById('appt-customer');
   cSel.innerHTML='<option value="">— Walk-in / other —</option>'+customers.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('');
   var adSel=document.getElementById('appt-advisor');
@@ -3656,6 +3676,26 @@ function deleteAppointment(){
     db.collection('appointments').doc(id).delete().then(function(){toast('Appointment deleted','success');navTo('appointments');})
       .catch(function(e){toast('Could not delete appointment: '+e.message,'error');});
   }});
+}
+function convertAppointmentToJobCard(){
+  var a=editingApptId?appointments.find(function(x){return x.id===editingApptId;}):null;
+  if(!a)return;
+  if(a.jobCardId){var jc=jobCards.find(function(j){return j.id===a.jobCardId;});if(jc){showJobCard(jc);return;}}
+  var data={
+    customerId:a.customerId||'',customerName:a.customerName||'',
+    vehicleId:a.vehicleId||'',vehicleReg:a.vehicleReg||'',vehicleMake:a.vehicleMake||'',vehicleModel:a.vehicleModel||'',
+    dateIn:a.date||new Date().toISOString().slice(0,10),dateOut:'',mileageIn:'',
+    advisorId:a.advisorId||'',advisorName:a.advisorName||'',status:'pending',
+    complaints:a.service||'',notes:'From appointment '+(a.date||'')+' '+(a.time||''),
+    works:a.service?[{id:uid(),description:a.service,technicianId:'',technicianName:'',cost:0,status:'pending'}]:[],
+    appointmentId:a.id,createdAt:Date.now()
+  };
+  db.collection('jobCards').add(data).then(function(ref){
+    var jc=Object.assign({id:ref.id},data,ref.serverDoc||{});
+    db.collection('appointments').doc(a.id).update({status:'arrived',jobCardId:ref.id}).catch(function(){});
+    toast('Job card '+jcNum(jc)+' created from appointment','success');
+    showJobCard(jc);
+  }).catch(function(e){toast('Could not convert: '+e.message,'error');});
 }
 
 // ── INVENTORY / PARTS ──
