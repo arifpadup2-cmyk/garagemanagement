@@ -1378,6 +1378,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div id="jobcard-detail"></div>
     </div>
 
+    <!-- VEHICLE INSPECTION (DVI) -->
+    <div id="v-inspection" class="view">
+      <div class="page-header"><button class="back-btn" onclick="showJobCard(jobCards.find(function(j){return j.id===_inspJcId;}))">← Job Card</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">Vehicle Inspection</div><div class="page-sub">Mark each item OK, Attention or Fail — flag advisories for the customer</div></div>
+      <div id="inspection-content"></div>
+    </div>
+
     <!-- ESTIMATES LIST -->
     <div id="v-estimates" class="view premium-view">
       <div class="page-header">
@@ -2261,7 +2268,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2428,7 +2435,7 @@ function navTo(tab){
 var TB_SECTIONS={dashboard:'Dashboard',estimates:'Estimates',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-estimate':['Estimates','New Estimate'],'estimate':['Estimates','Detail'],'add-jobcard':['Job Cards','New Job Card'],
-  'jobcard':['Job Cards','Detail'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
+  'jobcard':['Job Cards','Detail'],'inspection':['Job Cards','Inspection'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
   'add-vehicle':['Vehicles','Add Vehicle'],'vehicle':['Vehicles','Detail'],'add-technician':['Technicians','Add Technician'],
   'add-advisor':['Service Advisors','Add Advisor'],'add-transaction':['Finance','Transaction'],'fin-accounts':['Finance','Chart of Accounts'],
   'add-fin-account':['Finance','New Account'],'gen-ledger':['Finance','General Ledger'],'trial-balance':['Finance','Trial Balance'],
@@ -4338,7 +4345,86 @@ function renderJobCardDetail(){
       '</div></div>':'')+
     '</div>'+
     renderJcPartsCard(jc)+
+    renderJcInspectionCard(jc)+
     (jc.notes?'<div class="card"><div class="card-title">Internal Notes</div><div style="font-size:13px;color:var(--t2);white-space:pre-wrap">'+esc(jc.notes)+'</div></div>':'');
+}
+
+// ── DIGITAL VEHICLE INSPECTION (DVI / VHC) ──
+var VHC_TEMPLATE=[
+  {group:'Under Bonnet',items:['Engine oil level & condition','Coolant level','Brake fluid','Power steering fluid','Battery & terminals','Drive belts','Air filter']},
+  {group:'Brakes & Tyres',items:['Front brake pads','Rear brake pads','Brake discs','Front tyres (tread/pressure)','Rear tyres (tread/pressure)','Spare tyre','Wheel alignment']},
+  {group:'Lights & Electrical',items:['Headlights','Indicators & hazards','Brake lights','Horn','Wipers & washers','Dashboard warning lights','AC / heating']},
+  {group:'Underneath & Body',items:['Suspension','Exhaust system','Steering & linkages','Leaks (oil/fluid)','Bodywork & glass']}
+];
+var VHC_STAT={ok:{label:'OK',col:'#15803D',bg:'#F0FDF4'},attention:{label:'Attention',col:'#B45309',bg:'#FFFBEB'},fail:{label:'Fail',col:'#DC2626',bg:'#FEF2F2'}};
+var _inspJcId=null, _inspData=null;
+
+function renderJcInspectionCard(jc){
+  var ins=jc.inspection;
+  var locked=jc.status==='invoiced'||jc.status==='delivered';
+  if(!ins||!ins.items||!ins.items.length){
+    return'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><div class="card-title" style="margin:0">Vehicle Inspection</div>'+
+      (locked?'':'<button class="btn btn-secondary btn-sm" onclick="openInspection(\''+jc.id+'\')">Start Inspection</button>')+'</div>'+
+      '<div class="empty" style="padding:16px 0">No inspection recorded'+(locked?'':' — run a digital vehicle inspection to flag advisories for the customer.')+'</div></div>';
+  }
+  var ok=ins.items.filter(function(i){return i.status==='ok';}).length;
+  var att=ins.items.filter(function(i){return i.status==='attention';}).length;
+  var fail=ins.items.filter(function(i){return i.status==='fail';}).length;
+  var flagged=ins.items.filter(function(i){return i.status==='attention'||i.status==='fail';});
+  return'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="card-title" style="margin:0">Vehicle Inspection</div>'+
+    (locked?'':'<button class="btn btn-secondary btn-sm" onclick="openInspection(\''+jc.id+'\')">Edit Inspection</button>')+'</div>'+
+    '<div style="display:flex;gap:10px;margin-bottom:'+(flagged.length?'14':'0')+'px;flex-wrap:wrap">'+
+      '<span class="badge badge-green">'+ok+' OK</span>'+
+      (att?'<span class="badge badge-amber">'+att+' Attention</span>':'')+
+      (fail?'<span class="badge badge-red">'+fail+' Fail</span>':'')+
+      '<span style="font-size:12px;color:var(--t3);align-self:center">Inspected '+fmtTs(ins.at)+(ins.by?' · '+esc(ins.by):'')+'</span>'+
+    '</div>'+
+    (flagged.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>'+
+      flagged.map(function(i){var s=VHC_STAT[i.status];return'<tr><td style="font-weight:600">'+esc(i.label)+'</td><td><span class="badge" style="background:'+s.bg+';color:'+s.col+'">'+s.label+'</span></td><td style="color:var(--t2)">'+esc(i.note||'—')+'</td></tr>';}).join('')+
+      '</tbody></table></div></div>':'')+
+  '</div>';
+}
+function openInspection(jcId){
+  _inspJcId=jcId;
+  var jc=jobCards.find(function(j){return j.id===jcId;});if(!jc)return;
+  // Seed from existing inspection or a fresh template (all pending).
+  var existing={};if(jc.inspection&&jc.inspection.items)jc.inspection.items.forEach(function(i){existing[i.label]={status:i.status,note:i.note};});
+  _inspData=VHC_TEMPLATE.map(function(g){return{group:g.group,items:g.items.map(function(label){var e=existing[label]||{};return{label:label,status:e.status||'pending',note:e.note||''};})};});
+  renderInspection();
+  show('v-inspection');
+}
+function inspSet(gi,ii,status){_inspData[gi].items[ii].status=status;renderInspection();}
+function inspNote(gi,ii,val){_inspData[gi].items[ii].note=val;}
+function renderInspection(){
+  var el=document.getElementById('inspection-content');if(!el)return;
+  var jc=jobCards.find(function(j){return j.id===_inspJcId;})||{};
+  el.innerHTML='<div class="card so-head"><div class="so-vehicle" style="border-bottom:none"><span class="so-plate">'+esc(jc.vehicleReg||'—')+'</span><div class="so-veh-txt"><div class="so-veh-model">'+esc(((jc.vehicleMake||'')+' '+(jc.vehicleModel||'')).trim()||'Vehicle')+'</div><div class="so-veh-cust">'+esc(jcNum(jc))+' · '+esc(jc.customerName||'')+'</div></div></div></div>'+
+    _inspData.map(function(g,gi){
+      return'<div class="card"><div class="card-title">'+esc(g.group)+'</div>'+
+        g.items.map(function(it,ii){
+          var btns=['ok','attention','fail'].map(function(s){var st=VHC_STAT[s];var on=it.status===s;
+            return'<button class="btn btn-sm" style="padding:4px 10px;'+(on?'background:'+st.bg+';color:'+st.col+';border-color:'+st.col:'background:#fff;color:var(--t3)')+'" onclick="inspSet('+gi+','+ii+',\''+s+'\')">'+st.label+'</button>';
+          }).join('');
+          return'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);flex-wrap:wrap">'+
+            '<div style="flex:1;min-width:160px;font-size:13px;font-weight:600;color:var(--t1)">'+esc(it.label)+'</div>'+
+            '<div class="btn-group" style="gap:4px">'+btns+'</div>'+
+            '<input type="text" placeholder="Note (optional)" value="'+esc(it.note)+'" oninput="inspNote('+gi+','+ii+',this.value)" style="width:200px;font-size:12px">'+
+          '</div>';
+        }).join('')+'</div>';
+    }).join('')+
+    '<div class="btn-group" style="margin:4px 0 20px"><button class="btn btn-primary" id="insp-save-btn" onclick="saveInspection()">Save Inspection</button><button class="btn btn-secondary" onclick="showJobCard(jobCards.find(function(j){return j.id===_inspJcId;}))">Cancel</button></div>';
+}
+function saveInspection(){
+  var items=[];_inspData.forEach(function(g){g.items.forEach(function(it){if(it.status!=='pending'||it.note)items.push({group:g.group,label:it.label,status:it.status==='pending'?'ok':it.status,note:it.note});});});
+  if(!items.length){toast('Mark at least one item.');return;}
+  var btn=document.getElementById('insp-save-btn');btn.disabled=true;btn.textContent='Saving…';
+  var inspection={items:items,at:Date.now(),by:curAdminName||''};
+  db.collection('jobCards').doc(_inspJcId).update({inspection:inspection}).then(function(){
+    var jc=jobCards.find(function(j){return j.id===_inspJcId;});if(jc)jc.inspection=inspection;
+    if(curJobCard&&curJobCard.id===_inspJcId)curJobCard.inspection=inspection;
+    toast('Inspection saved','success');
+    showJobCard(jobCards.find(function(j){return j.id===_inspJcId;}));
+  }).catch(function(e){btn.disabled=false;btn.textContent='Save Inspection';toast('Could not save inspection: '+e.message,'error');});
 }
 
 // Parts issued to a job card — with per-line margin and grand total (labour+parts).
