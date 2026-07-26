@@ -475,6 +475,36 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .dt-edit.saving{opacity:.6}
 .dt-scroll{max-height:calc(100vh - 260px)}
 .dt-wrap{border:1.5px solid var(--b1);border-radius:var(--r-md);overflow:hidden;background:var(--card)}
+/* ── POS / Quick Invoice workspace ── */
+.pos-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+@media(max-width:1080px){.pos-grid{grid-template-columns:1fr}}
+.pos-side{position:sticky;top:82px}
+@media(max-width:1080px){.pos-side{position:static}}
+.pos-statuspill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;background:var(--amber-lt);color:var(--amber);border:1px solid #FDE68A}
+.pos-ctx{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r-md);padding:14px 16px}
+.pos-tabs{display:inline-flex;gap:4px;background:var(--bg);border-radius:9px;padding:4px}
+.pos-tab{border:none;background:none;font-size:12.5px;font-weight:700;color:var(--t3);padding:6px 14px;border-radius:7px;cursor:pointer;transition:all .15s}
+.pos-tab.on{background:var(--card);color:var(--t1);box-shadow:var(--shadow-xs)}
+.pos-line{display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px 64px 96px 96px 32px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--b1)}
+.pos-line:last-child{border-bottom:none}
+.pos-line input,.pos-line select{padding:7px 9px;font-size:13px;min-height:38px}
+.pos-line .pos-total{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--t1)}
+.pos-typetag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:99px;text-align:center}
+.pos-typetag.labor{background:var(--blue-lt);color:var(--blue)}
+.pos-typetag.part{background:#F5F3FF;color:#7C3AED}
+.pos-linehead{display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px 64px 96px 96px 32px;gap:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);padding:0 0 8px}
+@media(max-width:720px){.pos-linehead{display:none}.pos-line{grid-template-columns:1fr 1fr;gap:8px;padding:12px 0}}
+.pos-sumrow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:6px 0;color:var(--t2)}
+.pos-sumrow.total{border-top:1.5px solid var(--b1);margin-top:6px;padding-top:14px}
+.pos-total-num{font-size:30px;font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.pay-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay-tile{display:flex;align-items:center;gap:9px;padding:11px 12px;border:1.5px solid var(--b1);border-radius:10px;background:var(--card);cursor:pointer;font-size:13px;font-weight:600;color:var(--t2);min-height:46px;transition:all .15s}
+.pay-tile:hover{border-color:var(--b2)}
+.pay-tile.on{border-color:var(--accent);background:var(--accent-lt);color:var(--accent-text)}
+.pay-tile .pt-ic{width:20px;height:20px;flex-shrink:0}
+.btn-emerald{background:#10B981;color:#fff;border:none}
+.btn-emerald:hover{background:#059669}
+.pos-rowdel{color:var(--red);border:1.5px solid #FCA5A5;background:var(--red-lt);border-radius:7px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;line-height:1;min-height:36px}
 /* ── SKELETON LOADING ── */
 .skel{position:relative;overflow:hidden;background:#E9EEF4;border-radius:7px;display:inline-block}
 .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:skelShimmer 1.5s infinite}
@@ -1951,60 +1981,90 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <!-- QUICK INVOICE -->
     <div id="v-quick-invoice" class="view">
       <div class="page-header">
-        <button class="back-btn" onclick="navTo('sales')">← Sales</button>
-      </div>
-      <div class="card">
-        <div class="card-title">Quick Invoice</div>
-        <div class="form-group" style="position:relative">
-          <label>Vehicle Plate / Chassis Number *</label>
-          <input type="text" id="qi-veh-search" placeholder="Type plate number or chassis number to search…" oninput="searchVehicleInQI(this.value)" autocomplete="off">
-          <div id="qi-veh-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--r-sm);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:50;max-height:240px;overflow-y:auto;margin-top:2px"></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="page-title" style="margin:0">Quick Invoice</div>
+          <span class="pos-statuspill" id="qi-status-pill">Draft · New sale</span>
         </div>
-        <div id="qi-veh-card" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-            <div id="qi-veh-card-content" style="flex:1;min-width:0"></div>
-            <button onclick="clearQiVehicle()" style="font-size:12px;color:var(--t2);border:1.5px solid var(--b2);background:#fff;border-radius:6px;padding:5px 12px;white-space:nowrap;cursor:pointer;flex-shrink:0">✕ Change</button>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="qiClearForm()">Clear Form</button>
+          <button class="btn btn-secondary btn-sm" onclick="qiPrintPreview()">Print Preview</button>
+        </div>
+      </div>
+      <div class="pos-grid">
+        <!-- LEFT: composition -->
+        <div>
+          <!-- Vehicle & customer context -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="form-group" style="position:relative;margin-bottom:0">
+              <label>Vehicle</label>
+              <input type="text" id="qi-veh-search" placeholder="Enter plate no., chassis no., or phone…" oninput="searchVehicleInQI(this.value)" autocomplete="off">
+              <div id="qi-veh-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--r-sm);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:50;max-height:240px;overflow-y:auto;margin-top:2px"></div>
+            </div>
+            <div id="qi-veh-card" style="display:none;margin-top:14px">
+              <div class="pos-ctx">
+                <div id="qi-veh-card-content" style="min-width:0"></div>
+                <div style="min-width:170px">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Advisor &amp; intake</div>
+                  <select id="qi-advisor" style="margin-bottom:8px"><option value="">— Service advisor —</option></select>
+                  <input type="number" id="qi-mileage" placeholder="Mileage (km)">
+                  <button onclick="clearQiVehicle()" style="font-size:12px;color:var(--t2);border:1.5px solid var(--b2);background:#fff;border-radius:6px;padding:6px 12px;margin-top:8px;cursor:pointer;width:100%">✕ Change vehicle</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Items grid -->
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+              <div class="card-title" style="margin:0">Job Items &amp; Services</div>
+              <div class="pos-tabs">
+                <button class="pos-tab on" id="qi-tab-all" onclick="qiSetTab('all')">All Items</button>
+                <button class="pos-tab" id="qi-tab-labor" onclick="qiSetTab('labor')">Labour</button>
+                <button class="pos-tab" id="qi-tab-part" onclick="qiSetTab('part')">Parts</button>
+              </div>
+            </div>
+            <div class="pos-linehead"><span>Item / Service</span><span>Type</span><span>Technician</span><span style="text-align:center">Qty</span><span style="text-align:right">Unit</span><span style="text-align:right">Total</span><span></span></div>
+            <div id="qi-lines"></div>
+            <datalist id="qi-parts-list"></datalist>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button class="btn btn-secondary btn-sm" onclick="qiAddLine('labor')">+ Add Service Row</button>
+              <button class="btn btn-secondary btn-sm" onclick="qiAddLine('part')">+ Add Inventory Part</button>
+            </div>
+          </div>
+          <!-- Notes -->
+          <div class="card">
+            <div class="card-title">Customer Remarks / Advisor Notes</div>
+            <textarea id="qi-notes" placeholder="Diagnostic remarks, receipt number, advisory notes…" rows="2" style="min-height:60px"></textarea>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Invoice Date *</label><input type="datetime-local" id="qi-date"></div>
-          <div class="form-group"><label>Mileage (km)</label><input type="number" id="qi-mileage" placeholder="e.g. 45000"></div>
-        </div>
-        <div class="form-group"><label>Service Advisor</label>
-          <select id="qi-advisor"><option value="">— Select Advisor —</option></select>
-        </div>
-        <div class="form-group"><label>Notes (optional)</label><textarea id="qi-notes" placeholder="Remarks, receipt number…"></textarea></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div class="card-title" style="margin:0">Works / Services</div>
-          <button class="btn btn-secondary btn-sm" onclick="qiAddWork()">+ Add Work</button>
-        </div>
-        <div id="qi-works-editor"></div>
-        <div id="qi-works-total" style="text-align:right;margin-top:10px;font-size:14px;font-weight:700;color:var(--t1)"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Payment</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Payment Method *</label>
-            <select id="qi-pay-method" onchange="qiToggleAmountField()">
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="cheque">Cheque</option>
-              <option value="credit">Credit (No Payment Now)</option>
-            </select>
+        <!-- RIGHT: checkout -->
+        <div class="pos-side">
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Total Payable</div>
+            <div class="pos-total-num" id="qi-total-num">QAR 0.00</div>
+            <div style="margin-top:14px">
+              <div class="pos-sumrow"><span>Subtotal</span><span id="qi-sum-subtotal" style="font-weight:600;color:var(--t1)">QAR 0.00</span></div>
+              <div class="pos-sumrow" id="qi-discount-row" style="display:none"><span>Discount <span id="qi-disc-label" style="color:var(--t3)"></span></span><span id="qi-sum-discount" style="font-weight:600;color:var(--red)">− QAR 0.00</span></div>
+              <div class="pos-sumrow"><span id="qi-vat-label">VAT</span><span id="qi-sum-vat" style="font-weight:600;color:var(--t1)">QAR 0.00</span></div>
+              <div style="margin-top:4px"><button class="btn btn-secondary btn-sm" id="qi-disc-btn" onclick="qiToggleDiscount()" style="font-size:12px;padding:5px 10px">+ Apply Discount</button>
+                <div id="qi-disc-inputs" style="display:none;gap:8px;margin-top:8px;align-items:center">
+                  <select id="qi-disc-type" onchange="qiRecalc()" style="width:90px;display:inline-block"><option value="amount">Amount</option><option value="pct">%</option></select>
+                  <input type="number" id="qi-disc-value" min="0" step="0.01" placeholder="0" oninput="qiRecalc()" style="width:110px;display:inline-block">
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="form-group" id="qi-amount-wrap">
-            <label>Amount Received (<span class="cur-lbl">QAR</span>)</label>
-            <input type="number" id="qi-pay-amount" placeholder="0.00" min="0" step="0.01">
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Payment</div>
+            <div class="pay-tiles" id="qi-pay-tiles"></div>
+            <div id="qi-amount-wrap" style="margin-top:12px">
+              <label>Amount Received (<span class="cur-lbl">QAR</span>)</label>
+              <input type="number" id="qi-pay-amount" placeholder="0.00" min="0" step="0.01" oninput="qiRecalc()">
+              <div id="qi-change-row" style="display:none;margin-top:8px;font-size:13.5px;font-weight:700;display:flex;justify-content:space-between"><span id="qi-change-label">Change to return</span><span id="qi-change-val">QAR 0.00</span></div>
+            </div>
           </div>
+          <button class="btn btn-emerald" id="qi-save-btn" onclick="saveQuickInvoice(false)" style="width:100%;font-size:15px;padding:13px;font-weight:800;margin-bottom:10px">Complete Sale &amp; Print Invoice</button>
+          <button class="btn btn-secondary" onclick="saveQuickInvoice(true)" style="width:100%;padding:11px;font-weight:600">Save as Draft (Unpaid)</button>
         </div>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:24px">
-        <button class="btn btn-secondary" onclick="navTo('sales')">Cancel</button>
-        <button class="btn btn-green" id="qi-save-btn" onclick="saveQuickInvoice()" style="font-size:15px;padding:12px 28px;font-weight:800">✓ Create Invoice &amp; Collect Payment</button>
       </div>
     </div>
 
@@ -5287,24 +5347,37 @@ function renderSalesRecent(){
 }
 
 // QUICK INVOICE
-var qiSelVehicle=null, qiSelCustomer=null, qiWorkItems=[];
+var qiSelVehicle=null, qiSelCustomer=null, qiLines=[], qiTab='all', qiPayMethod='cash';
+var QI_PAY=[{k:'cash',label:'Cash',ic:'cash'},{k:'card',label:'Credit Card',ic:'bank'},{k:'bank_transfer',label:'QR / Transfer',ic:'statement'},{k:'credit',label:'Credit Account',ic:'book'}];
 
 function showQuickInvoice(){
-  qiSelVehicle=null; qiSelCustomer=null;
-  qiWorkItems=[{id:uid(),description:'',technicianId:'',technicianName:'',cost:'',status:'pending'}];
-  document.getElementById('qi-date').value=nowDtLocal();
+  qiSelVehicle=null; qiSelCustomer=null; qiTab='all'; qiPayMethod='cash';
+  qiLines=[{id:uid(),kind:'labor',name:'',partId:'',technicianId:'',technicianName:'',qty:1,unitPrice:''}];
   document.getElementById('qi-mileage').value='';
   document.getElementById('qi-notes').value='';
-  document.getElementById('qi-pay-method').value='cash';
   document.getElementById('qi-pay-amount').value='';
-  document.getElementById('qi-amount-wrap').style.display='';
   document.getElementById('qi-veh-search').value='';
   document.getElementById('qi-veh-results').style.display='none';
   document.getElementById('qi-veh-card').style.display='none';
-  populateQiAdvisorSelect();
-  qiRenderWorks();
+  document.getElementById('qi-status-pill').textContent='Draft · New sale';
+  document.getElementById('qi-disc-inputs').style.display='none';document.getElementById('qi-disc-btn').style.display='';
+  document.getElementById('qi-disc-value').value='';
+  var pl=document.getElementById('qi-parts-list');if(pl)pl.innerHTML=parts.map(function(p){return '<option value="'+esc(p.name)+'">';}).join('');
+  ['all','labor','part'].forEach(function(t){var b=document.getElementById('qi-tab-'+t);if(b)b.classList.toggle('on',t==='all');});
+  qiRenderPayTiles();qiRenderLines();qiRecalc();
   show('v-quick-invoice');
 }
+function qiRenderPayTiles(){
+  var el=document.getElementById('qi-pay-tiles');if(!el)return;
+  el.innerHTML=QI_PAY.map(function(p){
+    return '<button type="button" class="pay-tile'+(qiPayMethod===p.k?' on':'')+'" onclick="qiSetPay(\''+p.k+'\')"><span class="pt-ic">'+ico(p.ic,20,qiPayMethod===p.k?'var(--accent)':'var(--t3)')+'</span>'+p.label+'</button>';
+  }).join('');
+}
+function qiSetPay(k){qiPayMethod=k;qiRenderPayTiles();document.getElementById('qi-amount-wrap').style.display=(k==='credit')?'none':'';qiRecalc();}
+function qiSetTab(t){qiTab=t;['all','labor','part'].forEach(function(x){document.getElementById('qi-tab-'+x).classList.toggle('on',x===t);});qiRenderLines();}
+function qiToggleDiscount(){document.getElementById('qi-disc-btn').style.display='none';document.getElementById('qi-disc-inputs').style.display='block';document.getElementById('qi-disc-value').focus();}
+function qiClearForm(){confirmDialog({title:'Clear the form?',message:'This resets the whole invoice.',confirmText:'Clear',onConfirm:function(){showQuickInvoice();}});}
+function qiPrintPreview(){var t=qiTotals();if(!qiSelVehicle||!t.subtotal){toast('Add a vehicle and at least one item first.');return;}toast('Complete the sale to print the invoice.','info');}
 
 function populateQiAdvisorSelect(){
   var sel=document.getElementById('qi-advisor');
@@ -5365,6 +5438,8 @@ function setQiVehicle(v,c){
       '</div>'+
     '</div>';
   document.getElementById('qi-veh-card').style.display='block';
+  populateQiAdvisorSelect();
+  document.getElementById('qi-status-pill').textContent='Draft · '+esc(v.registrationNo||'');
 }
 
 function clearQiVehicle(){
@@ -5384,101 +5459,113 @@ function openQiModal(searchVal){
   document.getElementById('jc-modal-overlay').style.display='flex';
 }
 
-function qiRenderWorks(){
-  var el=document.getElementById('qi-works-editor');
-  if(!el)return;
-  var techOpts=technicians.map(function(t){
-    var ts=TECH_STATUS[t.status||'available'];
-    return'<option value="'+t.id+'">'+esc(t.name)+' ('+ts.label+')</option>';
+function qiLineCost(l){return Math.round((Number(l.qty||0)*Number(l.unitPrice||0))*100)/100;}
+function qiRenderLines(){
+  var el=document.getElementById('qi-lines');if(!el)return;
+  var techOpts=technicians.map(function(t){return'<option value="'+t.id+'">'+esc(t.name)+'</option>';}).join('');
+  var shown=qiLines.map(function(l,i){return{l:l,i:i};}).filter(function(x){return qiTab==='all'||x.l.kind===qiTab;});
+  if(!shown.length){el.innerHTML='<div class="empty" style="padding:18px 0">No '+(qiTab==='all'?'items':qiTab==='labor'?'labour lines':'parts')+' yet. Use the buttons below to add.</div>';return;}
+  el.innerHTML=shown.map(function(x){
+    var l=x.l,i=x.i,isPart=l.kind==='part';
+    return'<div class="pos-line">'+
+      '<input type="text" value="'+esc(l.name||'')+'"'+(isPart?' list="qi-parts-list"':'')+' placeholder="'+(isPart?'Search part…':'Service description')+'" oninput="qiLineName('+i+',this.value)">'+
+      '<span class="pos-typetag '+(isPart?'part':'labor')+'">'+(isPart?'Spare Part':'Labour')+'</span>'+
+      '<select onchange="qiLineTech('+i+',this)"><option value="">Technician…</option>'+techOpts+'</select>'+
+      '<input type="number" min="1" step="1" value="'+esc(l.qty)+'" oninput="qiLines['+i+'].qty=this.value;qiRecalc()" style="text-align:center">'+
+      '<input type="number" min="0" step="0.01" value="'+(l.unitPrice===''?'':esc(l.unitPrice))+'" placeholder="0.00" oninput="qiLines['+i+'].unitPrice=this.value;qiRecalc()" style="text-align:right">'+
+      '<span class="pos-total">'+fmtMoney(qiLineCost(l))+'</span>'+
+      '<button class="pos-rowdel" onclick="qiRemoveLine(\''+l.id+'\')" title="Remove" aria-label="Remove row">✕</button>'+
+    '</div>';
   }).join('');
-  if(!qiWorkItems.length){
-    el.innerHTML='<div style="text-align:center;padding:20px;background:var(--bg);border-radius:var(--r-sm);color:var(--t3);font-size:13px">No works added. Click "+ Add Work" to add services.</div>';
-    document.getElementById('qi-works-total').textContent='';return;
+  // restore technician selections
+  var sels=el.querySelectorAll('.pos-line select');var k=0;
+  shown.forEach(function(x){var s=sels[k++];if(s&&x.l.technicianId)s.value=x.l.technicianId;});
+}
+function qiLineName(i,val){
+  qiLines[i].name=val;
+  if(qiLines[i].kind==='part'){
+    var p=parts.find(function(x){return x.name===val;});
+    if(p){qiLines[i].partId=p.id;if(!qiLines[i].unitPrice)qiLines[i].unitPrice=p.sellingPrice||'';qiRenderLines();}
   }
-  var rows=qiWorkItems.map(function(w,i){
-    return'<tr>'+
-      '<td><input type="text" value="'+esc(w.description||'')+'" onchange="qiWorkItems['+i+'].description=this.value" placeholder="Service description" style="min-width:130px"></td>'+
-      '<td><select onchange="qiWorkItems['+i+'].technicianId=this.value;var o=this.options[this.selectedIndex].text;qiWorkItems['+i+'].technicianName=o.split(\' (\')[0]" style="min-width:140px">'+
-        '<option value="">Unassigned</option>'+techOpts+
-      '</select></td>'+
-      '<td><select onchange="qiWorkItems['+i+'].status=this.value" style="min-width:120px">'+
-        '<option value="pending"'+(w.status==='pending'||!w.status?' selected':'')+'>Pending</option>'+
-        '<option value="in_progress"'+(w.status==='in_progress'?' selected':'')+'>In Progress</option>'+
-        '<option value="done"'+(w.status==='done'?' selected':'')+'>Done</option>'+
-      '</select></td>'+
-      '<td><input type="number" value="'+(w.cost||'')+'" onchange="qiWorkItems['+i+'].cost=this.value;qiUpdateWorksTotal()" placeholder="0.00" style="text-align:right;min-width:90px" min="0"></td>'+
-      '<td><button onclick="qiRemoveWork('+i+')" style="color:var(--red);border:1.5px solid #FCA5A5;background:#FEF2F2;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer">✕</button></td>'+
-    '</tr>';
-  }).join('');
-  el.innerHTML='<div style="overflow-x:auto"><table class="works-tbl">'+
-    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost ('+cur()+')</th><th></th></tr></thead>'+
-    '<tbody>'+rows+'</tbody></table></div>';
-  var trs=el.querySelectorAll('tbody tr');
-  qiWorkItems.forEach(function(w,i){
-    if(!w.technicianId)return;
-    var sel=trs[i]?trs[i].querySelector('select'):null;
-    if(sel)sel.value=w.technicianId;
-  });
-  qiUpdateWorksTotal();
+  qiRecalc();
 }
-
-function qiAddWork(){
-  qiWorkItems.push({id:uid(),description:'',technicianId:'',technicianName:'',cost:'',status:'pending'});
-  qiRenderWorks();
+function qiLineTech(i,sel){qiLines[i].technicianId=sel.value;qiLines[i].technicianName=sel.value?(sel.options[sel.selectedIndex].text):'';}
+function qiAddLine(kind){qiLines.push({id:uid(),kind:kind,name:'',partId:'',technicianId:'',technicianName:'',qty:1,unitPrice:''});if(qiTab!=='all'&&qiTab!==kind)qiSetTab('all');else qiRenderLines();qiRecalc();}
+function qiRemoveLine(id){qiLines=qiLines.filter(function(l){return l.id!==id;});if(!qiLines.length)qiLines=[{id:uid(),kind:'labor',name:'',partId:'',technicianId:'',technicianName:'',qty:1,unitPrice:''}];qiRenderLines();qiRecalc();}
+function qiTotals(){
+  var subtotal=Math.round(qiLines.reduce(function(s,l){return s+qiLineCost(l);},0)*100)/100;
+  var dtype=document.getElementById('qi-disc-type').value,dval=Number(document.getElementById('qi-disc-value').value||0);
+  var disc=dtype==='pct'?Math.round(subtotal*dval)/100:Math.min(dval,subtotal);disc=Math.max(0,Math.min(disc,subtotal));
+  var net=Math.round((subtotal-disc)*100)/100;
+  var rate=(companySettings.vatEnabled&&Number(companySettings.vatRate)>0)?Number(companySettings.vatRate):0;
+  var vat=rate>0?Math.round(net*rate)/100:0;
+  var total=Math.round((net+vat)*100)/100;
+  return{subtotal:subtotal,discount:disc,net:net,rate:rate,vat:vat,total:total,dtype:dtype,dval:dval};
 }
-
-function qiRemoveWork(i){qiWorkItems.splice(i,1);qiRenderWorks();}
-
-function qiUpdateWorksTotal(){
-  var tt=invTaxTotals(qiWorkItems.reduce(function(s,w){return s+Number(w.cost||0);},0));
-  var el=document.getElementById('qi-works-total');
-  if(el)el.textContent=tt.total?(tt.taxAmount?'Total: '+fmtMoney(tt.total)+' (incl. VAT '+tt.taxRate+'%: '+fmtMoney(tt.taxAmount)+')':'Total: '+fmtMoney(tt.total)):'';
+function qiRecalc(){
+  qiLines.forEach(function(){});qiRenderLineTotals();
+  var t=qiTotals();
+  document.getElementById('qi-sum-subtotal').textContent=fmtMoney(t.subtotal);
+  document.getElementById('qi-total-num').textContent=fmtMoney(t.total);
+  var dr=document.getElementById('qi-discount-row');
+  if(t.discount>0.005){dr.style.display='';document.getElementById('qi-sum-discount').textContent='− '+fmtMoney(t.discount);document.getElementById('qi-disc-label').textContent=t.dtype==='pct'?'('+t.dval+'%)':'';}
+  else dr.style.display='none';
+  document.getElementById('qi-vat-label').textContent=t.rate>0?('VAT ('+t.rate+'%)'):'VAT';
+  document.getElementById('qi-sum-vat').textContent=fmtMoney(t.vat);
+  // amount received default + change
   var amtEl=document.getElementById('qi-pay-amount');
-  if(amtEl&&!amtEl.value)amtEl.value=tt.total?tt.total.toFixed(2):'';
+  if(amtEl&&qiPayMethod!=='credit'&&(!amtEl.value||amtEl._auto)){amtEl.value=t.total?t.total.toFixed(2):'';amtEl._auto=true;}
+  var amt=Number((amtEl||{}).value||0);
+  var cr=document.getElementById('qi-change-row');
+  if(qiPayMethod!=='credit'&&amt>0){
+    cr.style.display='flex';var diff=Math.round((amt-t.total)*100)/100;
+    if(diff>=0){document.getElementById('qi-change-label').textContent='Change to return';document.getElementById('qi-change-val').textContent=fmtMoney(diff);document.getElementById('qi-change-val').style.color='var(--green)';}
+    else{document.getElementById('qi-change-label').textContent='Balance due';document.getElementById('qi-change-val').textContent=fmtMoney(-diff);document.getElementById('qi-change-val').style.color='var(--red)';}
+  } else cr.style.display='none';
 }
-
-function qiToggleAmountField(){
-  var method=document.getElementById('qi-pay-method').value;
-  var wrap=document.getElementById('qi-amount-wrap');
-  if(wrap)wrap.style.display=method==='credit'?'none':'';
+function qiRenderLineTotals(){
+  var el=document.getElementById('qi-lines');if(!el)return;
+  var rows=el.querySelectorAll('.pos-line');var shown=qiLines.filter(function(l){return qiTab==='all'||l.kind===qiTab;});
+  shown.forEach(function(l,k){var t=rows[k]?rows[k].querySelector('.pos-total'):null;if(t)t.textContent=fmtMoney(qiLineCost(l));});
 }
+// track manual edits to amount so we stop auto-filling it
+document.addEventListener('input',function(e){if(e.target&&e.target.id==='qi-pay-amount')e.target._auto=false;});
 
-function saveQuickInvoice(){
-  if(!qiSelVehicle){toast('Please select a vehicle first.');return;}
-  var items=qiWorkItems.filter(function(w){return Number(w.cost||0)>0;}).map(function(w){return{description:(w.description||'').trim()||'Service',cost:Number(w.cost)};});
-  if(!items.length){toast('Please add at least one work item with a cost.');return;}
-  var method=document.getElementById('qi-pay-method').value;
-  var isCredit=method==='credit';
+function saveQuickInvoice(asDraft){
+  if(!qiSelVehicle)return invalidField('qi-veh-search','Select a vehicle first.');
+  var lines=qiLines.filter(function(l){return (l.name||'').trim()&&Number(l.qty||0)>0&&Number(l.unitPrice||0)>0;});
+  if(!lines.length){toast('Add at least one item with a quantity and price.','warning');return;}
+  var t=qiTotals();
+  var isCredit=asDraft||qiPayMethod==='credit';
   var amount=isCredit?0:Number((document.getElementById('qi-pay-amount')||{}).value||0);
   var notes=((document.getElementById('qi-notes')||{}).value||'').trim();
-  var tt=invTaxTotals(items.reduce(function(s,i){return s+i.cost;},0));
-  var total=tt.total;
-  if(!isCredit&&amount>total+0.005){toast('Payment ('+fmtMoney(amount)+') exceeds the invoice total ('+fmtMoney(total)+').');return;}
-  var btn=document.getElementById('qi-save-btn');
-  btn.disabled=true;btn.textContent='Creating…';
+  if(!isCredit&&amount>t.total+0.005)return invalidField('qi-pay-amount','Amount received exceeds the total ('+fmtMoney(t.total)+').');
+  var items=lines.map(function(l){var o={description:(l.name||'').trim(),cost:qiLineCost(l),qty:Number(l.qty),unitPrice:Number(l.unitPrice),kind:l.kind};if(l.kind==='part'&&l.partId){o.partId=l.partId;var p=parts.find(function(x){return x.id===l.partId;});o.costPrice=p?Number(p.costPrice||0):0;}return o;});
+  var method=isCredit?'':qiPayMethod;
+  var isPaidFull=!isCredit&&amount>=t.total-0.005;
   var custId=qiSelCustomer?qiSelCustomer.id:(qiSelVehicle.customerId||'');
   var custName=qiSelCustomer?qiSelCustomer.name:(qiSelVehicle.customerName||'');
-  var isPaidFull=!isCredit&&amount>=total-0.005;
+  var mileage=Number(document.getElementById('qi-mileage').value||0);
+  var advSel=document.getElementById('qi-advisor');var advId=advSel?advSel.value:'';var advName=advId?advSel.options[advSel.selectedIndex].text:'';
   var invData={
     jobCardId:'',jobNumber:'',
     customerId:custId,customerName:custName,
-    vehicleId:qiSelVehicle.id,vehicleReg:qiSelVehicle.registrationNo,
-    vehicleMake:qiSelVehicle.make||'',vehicleModel:qiSelVehicle.model||'',
-    items:items,subtotal:tt.subtotal,taxRate:tt.taxRate,taxAmount:tt.taxAmount,total:total,
-    status:isCredit?'credit':(isPaidFull?'paid':'unpaid'),
-    totalPaid:isCredit?0:amount,
-    paymentType:isCredit?'':method,
+    vehicleId:qiSelVehicle.id,vehicleReg:qiSelVehicle.registrationNo,vehicleMake:qiSelVehicle.make||'',vehicleModel:qiSelVehicle.model||'',
+    advisorId:advId,advisorName:advName,mileage:mileage||'',
+    items:items,discountType:t.dtype,discountValue:t.dval,
+    subtotal:t.subtotal,discountAmount:t.discount,taxRate:t.rate,taxAmount:t.vat,total:t.total,
+    status:isCredit?(asDraft?'unpaid':'credit'):(isPaidFull?'paid':'unpaid'),
+    totalPaid:isCredit?0:amount,paymentType:isCredit?'':method,
     payments:(!isCredit&&amount>0)?[{method:method,amount:amount,notes:notes,paidAt:Date.now()}]:[],
-    createdAt:Date.now(),source:'quick_invoice'
+    notes:notes,createdAt:Date.now(),source:'quick_invoice'
   };
-  // Invoice + cash-book entry created in ONE atomic server transaction — no
-  // more half-succeed where the invoice exists but the cash entry doesn't.
+  var btn=document.getElementById('qi-save-btn');btn.disabled=true;btn.textContent=asDraft?'Saving…':'Completing…';
   var txn=(!isCredit&&amount>0)?buildInvoiceTxnDoc({customerName:custName},method,amount,notes):null;
   gmsApi.quickInvoice({invoice:invData,transaction:txn}).then(function(saved){
-    curInvoice=saved;
-    // Backfill the txn description with the real invoice number now it exists.
+    curInvoice=saved;btn.disabled=false;btn.textContent='Complete Sale & Print Invoice';
+    toast(asDraft?'Saved as draft':'Sale completed','success');
     showInvoice(curInvoice);
-  }).catch(function(e){btn.disabled=false;btn.textContent='✓ Create Invoice & Collect Payment';toast(e.message||'Could not create invoice.','error');});
+  }).catch(function(e){btn.disabled=false;btn.textContent='Complete Sale & Print Invoice';toast(e.message||'Could not create invoice.','error');});
 }
 
 // INVOICE
@@ -5899,9 +5986,10 @@ function renderInvoiceDetail(){
         '<tbody>'+itemRows+'</tbody>'+
       '</table></div>'+
       '<div class="inv-totals">'+
-        (iv.taxAmount>0?
-          '<div class="inv-total-row"><span>Subtotal</span><span>'+fmtMoney(iv.subtotal!=null?iv.subtotal:(iv.total-iv.taxAmount))+'</span></div>'+
-          '<div class="inv-total-row"><span>VAT ('+(iv.taxRate||0)+'%)</span><span>'+fmtMoney(iv.taxAmount)+'</span></div>':'')+
+        ((iv.taxAmount>0||iv.discountAmount>0)?
+          '<div class="inv-total-row"><span>Subtotal</span><span>'+fmtMoney(iv.subtotal!=null?iv.subtotal:(iv.total-(iv.taxAmount||0)+(iv.discountAmount||0)))+'</span></div>'+
+          (iv.discountAmount>0?'<div class="inv-total-row" style="color:var(--red)"><span>Discount'+(iv.discountType==='pct'?' ('+(iv.discountValue||0)+'%)':'')+'</span><span>− '+fmtMoney(iv.discountAmount)+'</span></div>':'')+
+          (iv.taxAmount>0?'<div class="inv-total-row"><span>VAT ('+(iv.taxRate||0)+'%)</span><span>'+fmtMoney(iv.taxAmount)+'</span></div>':''):'')+
         '<div class="inv-total-row inv-grand"><span>Total</span><span>'+fmtMoney(iv.total)+'</span></div>'+
         (totalPaid&&iv.status!=='paid'?'<div class="inv-total-row" style="color:var(--green)"><span>Paid</span><span>'+fmtMoney(totalPaid)+'</span></div>':'')+
         (iv.status==='partial'?'<div class="inv-total-row" style="color:var(--red);font-weight:700"><span>Balance</span><span>'+fmtMoney(balance)+'</span></div>':'')+

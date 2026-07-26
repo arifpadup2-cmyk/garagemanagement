@@ -109,11 +109,19 @@ function sanitizeDoc(coll, doc) {
     if (Array.isArray(doc.items)) {
       // `cost` is the LINE TOTAL for every item (labour or part); qty is metadata.
       const sub = round2(doc.items.reduce((s, it) => s + (Number(it.cost) || 0), 0));
+      // Header discount (fixed amount or %), applied to the subtotal; VAT is then
+      // charged on the discounted subtotal. Discount can never exceed the subtotal.
+      let disc = 0;
+      if (doc.discountType === 'pct') disc = round2(sub * (Number(doc.discountValue) || 0) / 100);
+      else if (doc.discountType === 'amount') disc = round2(Number(doc.discountValue) || 0);
+      disc = Math.max(0, Math.min(disc, sub));
+      const net = round2(sub - disc);
       const rate = Number(doc.taxRate) || 0;
-      const tax = rate > 0 ? round2(sub * rate / 100) : 0;
+      const tax = rate > 0 ? round2(net * rate / 100) : 0;
       doc.subtotal = sub;
+      doc.discountAmount = disc;
       doc.taxAmount = tax;
-      doc.total = round2(sub + tax);
+      doc.total = round2(net + tax);
     } else if (typeof doc.total === 'number') {
       doc.total = round2(doc.total);
     }
@@ -551,10 +559,35 @@ app.post('/api/invoices/quick', asyncH(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const inv = sanitizeDoc('invoices', { ...invoice }); // recomputes total/subtotal/tax
+    const inv = sanitizeDoc('invoices', { ...invoice }); // recomputes total/subtotal/tax/discount
     delete inv.id;
     const id = crypto.randomUUID();
     inv.seq = await allocSeq(client, 'invoices', 'invoices', COLL.invoices.lock, id);
+    const invNoStr = 'INV-' + String(inv.seq).padStart(4, '0');
+    // Deduct stock for any inventory-part lines, atomically in this same
+    // transaction. Locked in stable id order (no deadlock); negative stock blocks
+    // the whole sale. Each part line carries {partId, qty}.
+    const partLines = (inv.items || []).filter((it) => it.partId && Number(it.qty) > 0);
+    if (partLines.length) {
+      const ids = Array.from(new Set(partLines.map((l) => l.partId))).sort();
+      const rows = {};
+      for (const pid of ids) {
+        const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+        if (r.rows.length) rows[pid] = r.rows[0].data;
+      }
+      // Aggregate qty per part (a part could appear on two lines).
+      const need = {};
+      partLines.forEach((l) => { need[l.partId] = (need[l.partId] || 0) + Number(l.qty); });
+      for (const pid of Object.keys(need)) {
+        const p = rows[pid];
+        if (!p) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'A selected part no longer exists.' }); }
+        const from = Number(p.stock) || 0, qty = need[pid], to = from - qty;
+        if (qty > from) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Insufficient stock — only ' + from + ' of ' + (p.name || 'a part') + ' on hand.' }); }
+        const mv = { type: 'out', qty, from, to, note: 'Sold on ' + invNoStr, at: Date.now(), by: (req.auth && req.auth.name) || '' };
+        rows[pid] = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+        await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(rows[pid])]);
+      }
+    }
     // Never trust a client-supplied totalPaid beyond the invoice total.
     if (inv.totalPaid != null) inv.totalPaid = Math.min(round2(inv.totalPaid), inv.total);
     await client.query(

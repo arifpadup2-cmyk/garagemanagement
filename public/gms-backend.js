@@ -279,7 +279,7 @@
     // Counter-sale: create invoice + cash-book entry in one server transaction.
     quickInvoice: function (body) {
       return req('POST', '/invoices/quick', body).then(function (r) {
-        refreshColl('invoices'); refreshColl('transactions');
+        refreshColl('invoices'); refreshColl('transactions'); refreshColl('parts');
         return r;
       });
     },
