@@ -26,6 +26,7 @@ const SCHEMA = `
 CREATE TABLE IF NOT EXISTS customers    (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS vehicles     (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS job_cards    (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS estimates    (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
 CREATE TABLE IF NOT EXISTS invoices     (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
 CREATE TABLE IF NOT EXISTS transactions (id text PRIMARY KEY, data jsonb NOT NULL, txn_date text, created_at bigint);
 CREATE TABLE IF NOT EXISTS fin_accounts (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
@@ -42,6 +43,8 @@ CREATE TABLE IF NOT EXISTS audit_log    (id bigserial PRIMARY KEY, at bigint, ac
 CREATE INDEX IF NOT EXISTS idx_customers_created ON customers(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_vehicles_created  ON vehicles(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobcards_created  ON job_cards(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_estimates_created ON estimates(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_estimates_seq     ON estimates(seq);
 CREATE INDEX IF NOT EXISTS idx_invoices_created  ON invoices(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_parts_created     ON parts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_finacc_created    ON fin_accounts(created_at ASC);

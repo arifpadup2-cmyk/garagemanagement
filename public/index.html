@@ -931,6 +931,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     </div>
     <div class="snav">
       <div class="snav-item active" id="snav-dashboard" onclick="navTo('dashboard')" title="Dashboard"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="snav-label">Dashboard</span></div>
+      <div class="snav-item" id="snav-estimates" onclick="navTo('estimates')" title="Estimates"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h3"/></svg></span><span class="snav-label">Estimates</span></div>
       <div class="snav-item" id="snav-jobcards" onclick="navTo('jobcards')" title="Job Cards"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span><span class="snav-label">Job Cards</span></div>
       <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
       <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
@@ -1370,6 +1371,42 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
       </div>
       <div id="jobcard-detail"></div>
+    </div>
+
+    <!-- ESTIMATES LIST -->
+    <div id="v-estimates" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Estimates</div><div class="page-sub">Quote work, get customer approval, convert to a job card</div></div>
+        <button class="btn btn-primary" onclick="showAddEstimate()">+ New Estimate</button>
+      </div>
+      <div class="search-wrap"><input type="text" id="est-search" placeholder="Search estimates…" oninput="renderEstimates()"></div>
+      <div id="estimates-list"></div>
+    </div>
+
+    <!-- ADD/EDIT ESTIMATE -->
+    <div id="v-add-estimate" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('estimates')">← Estimates</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-est-title">New Estimate</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Customer</label><select id="est-customer" onchange="estSyncVehicles()"></select></div>
+          <div class="form-group"><label>Vehicle</label><select id="est-vehicle"></select></div>
+        </div>
+        <div class="form-group"><label>Estimate Items</label><div id="est-items"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="estAddItem()">+ Add Line</button></div>
+        <div class="form-group"><label>Notes <span style="font-size:11px;color:var(--t3)">(optional)</span></label><textarea id="est-notes" rows="2" placeholder="Validity, terms, remarks…"></textarea></div>
+        <div style="text-align:right;font-size:15px;font-weight:800;margin:4px 0 14px">Total: <span id="est-total">QAR 0.00</span></div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-est-btn" onclick="saveEstimate()">Save Estimate</button><button class="btn btn-secondary" onclick="navTo('estimates')">Cancel</button></div>
+      </div>
+    </div>
+
+    <!-- ESTIMATE DETAIL -->
+    <div id="v-estimate" class="view">
+      <div class="page-header">
+        <button class="back-btn" onclick="navTo('estimates')">← Estimates</button>
+        <div class="btn-group" id="est-actions"></div>
+      </div>
+      <div id="estimate-detail"></div>
     </div>
 
     <!-- TECHNICIANS LIST -->
@@ -2179,7 +2216,7 @@ const db=firebase.firestore();
 const storage=firebase.storage();
 
 // STATE
-let customers=[],vehicles=[],jobCards=[],technicians=[],advisors=[],invoices=[];
+let customers=[],vehicles=[],jobCards=[],technicians=[],advisors=[],invoices=[],estimates=[];
 let companySettings={name:'',tagline:'',phone:'',email:'',address:'',city:'',country:'',vatNumber:'',currency:'QAR',website:'',invoiceTerms:'',logoUrl:''};
 let curCustomer=null,curVehicle=null,curJobCard=null,curInvoice=null;
 let activeNav='dashboard',jcFilter='all';
@@ -2219,7 +2256,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2242,7 +2279,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2292,6 +2329,7 @@ var _I={
 function ico(name,size,color){size=size||18;return '<span class="ico" style="width:'+size+'px;height:'+size+'px'+(color?';color:'+color:'')+'">'+(_I[name]||'')+'</span>';}
 var MOB_TILES=[
   {id:'dashboard',   icon:_I.dashboard,  ic:'#475569',name:'Dashboard',        bg:'#F1F5F9',ib:'#E2E8F0',badge:null,info:function(){return 'Overview & reports';}},
+  {id:'estimates',   icon:_I.statement||_I.jobcards,ic:'#7C3AED',name:'Estimates',bg:'#F5F3FF',ib:'#EDE9FE',badge:function(){var n=estimates.filter(function(e){return e.status==='approved';}).length;return n||null;},info:function(){var n=estimates.filter(function(e){return e.status==='draft'||e.status==='sent';}).length;return n+' open';}},
   {id:'jobcards',    icon:_I.jobcards,   ic:'#EA580C',name:'Job Cards',         bg:'#FFF7ED',ib:'#FFEDD5',badge:function(){var n=jobCards.filter(function(j){return j.status==='in_progress';}).length;return n||null;},info:function(){var n=jobCards.filter(function(j){return j.status==='pending'||j.status==='open';}).length;return n+' pending';}},
   {id:'workshop',    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg>',ic:'#DC2626',name:'Workshop',bg:'#FEF2F2',ib:'#FEE2E2',badge:null,info:function(){var n=jobCards.filter(function(j){return j.status!=='delivered'&&j.status!=='cancelled';}).length;return n+' on the floor';}},
   {id:'appointments',icon:_I.calendar,   ic:'#0284C7',name:'Appointments',      bg:'#F0F9FF',ib:'#E0F2FE',badge:null,info:function(){var t=new Date().toISOString().slice(0,10);var n=appointments.filter(function(a){return a.date===t&&a.status!=='cancelled';}).length;return n+' today';}},
@@ -2382,9 +2420,9 @@ function navTo(tab){
 }
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
-var TB_SECTIONS={dashboard:'Dashboard',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
+var TB_SECTIONS={dashboard:'Dashboard',estimates:'Estimates',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
-  'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-jobcard':['Job Cards','New Job Card'],
+  'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-estimate':['Estimates','New Estimate'],'estimate':['Estimates','Detail'],'add-jobcard':['Job Cards','New Job Card'],
   'jobcard':['Job Cards','Detail'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
   'add-vehicle':['Vehicles','Add Vehicle'],'vehicle':['Vehicles','Detail'],'add-technician':['Technicians','Add Technician'],
   'add-advisor':['Service Advisors','Add Advisor'],'add-transaction':['Finance','Transaction'],'fin-accounts':['Finance','Chart of Accounts'],
@@ -2689,6 +2727,11 @@ function initFirestore(){
     if(activeNav==='mob-home')renderMobHome();
     if(curTech){checkTechNotifications();renderTechPortal();}
   },snapErr('job cards','jobCards'));
+  db.collection('estimates').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.estimates=true;
+    estimates=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='estimates')renderEstimates();
+  },snapErr('estimates','estimates'));
   db.collection('technicians').orderBy('name').onSnapshot(function(snap){
     _fired.technicians=true;
     technicians=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -5000,6 +5043,144 @@ function convertToInvoice(){
     if(msg.indexOf('already exists')>=0||msg.indexOf('duplicate')>=0){toast('An invoice already exists for this job card.','error');}
     else toast('Could not create invoice: '+msg,'error');
   });
+}
+
+// ── ESTIMATES / QUOTATIONS ──
+var EST_STATUS={
+  draft:    {label:'DRAFT',    badge:'badge-gray'},
+  sent:     {label:'SENT',     badge:'badge-blue'},
+  approved: {label:'APPROVED', badge:'badge-green'},
+  declined: {label:'DECLINED', badge:'badge-red'},
+  converted:{label:'CONVERTED',badge:'badge-purple'}
+};
+function estNum(e){return 'EST-'+String(e.seq||0).padStart(4,'0');}
+var editingEstimateId=null, curEstimate=null, estItems=[];
+
+function renderEstimates(){
+  var el=document.getElementById('estimates-list');if(!el)return;
+  if(!_fired.estimates){el.innerHTML=skelTable(6);return;}
+  var q=((document.getElementById('est-search')||{}).value||'').toLowerCase();
+  var list=estimates.filter(function(e){return !q||(estNum(e)+' '+(e.customerName||'')+' '+(e.vehicleReg||'')).toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML='<div class="empty">No estimates yet. Create one to quote work for a customer’s approval.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Estimate</th><th>Customer</th><th>Vehicle</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>'+
+    list.map(function(e){var st=EST_STATUS[e.status]||EST_STATUS.draft;
+      return'<tr class="dt-row" onclick="openEstimateById(\''+e.id+'\')">'+
+        '<td style="font-weight:700">'+esc(estNum(e))+'</td>'+
+        '<td>'+esc(e.customerName||'—')+'</td>'+
+        '<td>'+esc(e.vehicleReg||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(fmtDate(tsToDs(e.createdAt)))+'</td>'+
+        '<td><span class="badge '+st.badge+'">'+st.label+'</span></td>'+
+        '<td class="num" style="font-weight:700">'+fmtMoney(e.total||0)+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+
+function showAddEstimate(id){
+  editingEstimateId=id||null;
+  var e=id?estimates.find(function(x){return x.id===id;}):null;
+  document.getElementById('add-est-title').textContent=e?'Edit Estimate':'New Estimate';
+  document.getElementById('save-est-btn').textContent=e?'Update Estimate':'Save Estimate';
+  var csel=document.getElementById('est-customer');
+  csel.innerHTML='<option value="">— Select customer —</option>'+customers.map(function(c){return'<option value="'+esc(c.id)+'"'+(e&&e.customerId===c.id?' selected':'')+'>'+esc(c.name)+'</option>';}).join('');
+  estSyncVehicles(e?e.vehicleId:'');
+  estItems=e&&e.items?e.items.map(function(it){return{description:it.description||'',cost:Number(it.cost)||0};}):[{description:'',cost:''}];
+  document.getElementById('est-notes').value=e?(e.notes||''):'';
+  renderEstItems();
+  show('v-add-estimate');
+}
+function estSyncVehicles(selId){
+  var cid=document.getElementById('est-customer').value;
+  var vsel=document.getElementById('est-vehicle');
+  var vs=vehicles.filter(function(v){return v.customerId===cid;});
+  vsel.innerHTML=vs.length?vs.map(function(v){return'<option value="'+esc(v.id)+'"'+(selId===v.id?' selected':'')+'>'+esc(v.registrationNo||'')+' · '+esc(((v.make||'')+' '+(v.model||'')).trim())+'</option>';}).join(''):'<option value="">— No vehicles for this customer —</option>';
+}
+function estAddItem(){estItems.push({description:'',cost:''});renderEstItems();}
+function estRemoveItem(i){estItems.splice(i,1);if(!estItems.length)estItems.push({description:'',cost:''});renderEstItems();}
+function renderEstItems(){
+  var el=document.getElementById('est-items');if(!el)return;
+  el.innerHTML=estItems.map(function(it,i){
+    return'<div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" placeholder="Description of work / part" value="'+esc(it.description)+'" oninput="estItems['+i+'].description=this.value" style="flex:1">'+
+      '<input type="number" placeholder="0.00" min="0" step="0.01" value="'+(it.cost===''?'':esc(it.cost))+'" oninput="estItems['+i+'].cost=this.value;estSyncTotal()" style="width:120px">'+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="estRemoveItem('+i+')">✕</button></div>';
+  }).join('');
+  estSyncTotal();
+}
+function estSyncTotal(){
+  var t=estItems.reduce(function(s,it){return s+Number(it.cost||0);},0);
+  var el=document.getElementById('est-total');if(el)el.textContent=fmtMoney(t);
+}
+function saveEstimate(){
+  var cid=document.getElementById('est-customer').value;
+  if(!cid){toast('Please select a customer.');return;}
+  var items=estItems.filter(function(it){return (it.description||'').trim()||Number(it.cost||0)>0;}).map(function(it){return{description:(it.description||'').trim()||'Item',cost:Number(it.cost)||0};});
+  if(!items.length){toast('Add at least one estimate line.');return;}
+  var cust=customers.find(function(c){return c.id===cid;})||{};
+  var vid=document.getElementById('est-vehicle').value;
+  var veh=vehicles.find(function(v){return v.id===vid;})||{};
+  var total=Math.round(items.reduce(function(s,it){return s+it.cost;},0)*100)/100;
+  var btn=document.getElementById('save-est-btn');btn.disabled=true;btn.textContent='Saving…';
+  var data={customerId:cid,customerName:cust.name||'',vehicleId:vid||'',vehicleReg:veh.registrationNo||'',vehicleMake:veh.make||'',vehicleModel:veh.model||'',
+    items:items,total:total,notes:document.getElementById('est-notes').value.trim()};
+  var fail=function(e){btn.disabled=false;btn.textContent=editingEstimateId?'Update Estimate':'Save Estimate';toast('Could not save estimate: '+e.message,'error');};
+  if(editingEstimateId){
+    var existing=estimates.find(function(x){return x.id===editingEstimateId;})||{};
+    data.status=existing.status||'draft';
+    db.collection('estimates').doc(editingEstimateId).update(data).then(function(){curEstimate=Object.assign({},existing,data,{id:editingEstimateId});btn.disabled=false;btn.textContent='Update Estimate';showEstimate(curEstimate);}).catch(fail);
+  } else {
+    data.status='draft';data.createdAt=Date.now();
+    db.collection('estimates').add(data).then(function(ref){curEstimate=Object.assign({id:ref.id},data,ref.serverDoc||{});btn.disabled=false;btn.textContent='Save Estimate';showEstimate(curEstimate);}).catch(fail);
+  }
+}
+function openEstimateById(id){var e=estimates.find(function(x){return x.id===id;});if(e)showEstimate(e);}
+function showEstimate(e){curEstimate=e;renderEstimateDetail();show('v-estimate');}
+function renderEstimateDetail(){
+  var e=curEstimate;var el=document.getElementById('estimate-detail');if(!el)return;
+  var st=EST_STATUS[e.status]||EST_STATUS.draft;
+  var actions=document.getElementById('est-actions');
+  var btns='';
+  if(e.status==='draft'||e.status==='sent'){
+    btns+='<button class="btn btn-secondary btn-sm" onclick="showAddEstimate(\''+e.id+'\')">Edit</button>';
+    btns+='<button class="btn btn-green btn-sm" onclick="approveEstimate()">Mark Approved</button>';
+    btns+='<button class="btn btn-danger btn-sm" onclick="declineEstimate()">Decline</button>';
+  } else if(e.status==='approved'){
+    btns+='<button class="btn btn-primary btn-sm" onclick="convertEstimateToJobCard()">→ Convert to Job Card</button>';
+  } else if(e.status==='converted'&&e.jobCardId){
+    btns+='<button class="btn btn-secondary btn-sm" onclick="(function(){var jc=jobCards.find(function(j){return j.id===\''+e.jobCardId+'\';});if(jc)showJobCard(jc);})()">View Job Card</button>';
+  }
+  actions.innerHTML=btns;
+  var rows=(e.items||[]).map(function(it){return'<tr><td style="font-weight:600;color:var(--t1)">'+esc(it.description)+'</td><td class="num" style="font-weight:700">'+fmtMoney(it.cost||0)+'</td></tr>';}).join('');
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(estNum(e))+'</div><div class="so-created">Created '+fmtTs(e.createdAt)+(e.approvedAt?' · Approved '+fmtTs(e.approvedAt):'')+'</div></div><div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
+    '<div class="so-vehicle"><span class="so-plate">'+esc(e.vehicleReg||'—')+'</span><div class="so-veh-txt"><div class="so-veh-model">'+esc(((e.vehicleMake||'')+' '+(e.vehicleModel||'')).trim()||'Vehicle')+'</div><div class="so-veh-cust">'+ico('user',13,'var(--t3)')+esc(e.customerName||'—')+'</div></div></div></div>'+
+    '<div class="card"><div class="card-title">Estimate Items</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td style="font-weight:800">Total</td><td class="num" style="font-weight:900">'+fmtMoney(e.total||0)+'</td></tr></tfoot></table></div></div>'+
+    (e.notes?'<div style="font-size:12px;color:var(--t2);margin-top:12px;white-space:pre-wrap">'+esc(e.notes)+'</div>':'')+'</div>';
+}
+function approveEstimate(){
+  var e=curEstimate;
+  db.collection('estimates').doc(e.id).update({status:'approved',approvedAt:Date.now()}).then(function(){
+    curEstimate.status='approved';curEstimate.approvedAt=Date.now();toast('Estimate approved','success');renderEstimateDetail();
+  }).catch(function(err){toast('Could not approve: '+err.message,'error');});
+}
+function declineEstimate(){
+  var e=curEstimate;
+  confirmDialog({title:'Decline estimate?',message:'Mark '+estNum(e)+' as declined by the customer?',confirmText:'Decline',onConfirm:function(){
+    db.collection('estimates').doc(e.id).update({status:'declined'}).then(function(){curEstimate.status='declined';toast('Estimate declined','success');renderEstimateDetail();}).catch(function(err){toast('Could not update: '+err.message,'error');});
+  }});
+}
+function convertEstimateToJobCard(){
+  var e=curEstimate;if(e.status!=='approved'){toast('Approve the estimate first.');return;}
+  if(e.jobCardId){var jc=jobCards.find(function(j){return j.id===e.jobCardId;});if(jc){showJobCard(jc);return;}}
+  var data={customerId:e.customerId,customerName:e.customerName,vehicleId:e.vehicleId,vehicleReg:e.vehicleReg,vehicleMake:e.vehicleMake,vehicleModel:e.vehicleModel,
+    dateIn:new Date().toISOString().slice(0,10),dateOut:'',mileageIn:'',advisorId:'',advisorName:'',status:'pending',
+    complaints:e.notes||'',notes:'From estimate '+estNum(e),
+    works:(e.items||[]).map(function(it){return{id:uid(),description:it.description||'',technicianId:'',technicianName:'',cost:Number(it.cost)||0,status:'pending'};}),
+    estimateId:e.id,createdAt:Date.now()};
+  db.collection('jobCards').add(data).then(function(ref){
+    var jc=Object.assign({id:ref.id},data,ref.serverDoc||{});
+    db.collection('estimates').doc(e.id).update({status:'converted',jobCardId:ref.id}).catch(function(){});
+    curEstimate.status='converted';curEstimate.jobCardId=ref.id;
+    toast('Job card '+jcNum(jc)+' created from estimate','success');
+    showJobCard(jc);
+  }).catch(function(err){toast('Could not convert: '+err.message,'error');});
 }
 
 var INV_STATUS={

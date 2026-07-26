@@ -56,6 +56,7 @@ const COLL = {
   customers:    { table: 'customers',    order: 'created_at DESC NULLS LAST' },
   vehicles:     { table: 'vehicles',     order: 'created_at DESC NULLS LAST' },
   jobCards:     { table: 'job_cards',    order: 'created_at DESC NULLS LAST', seq: true, lock: 1001 },
+  estimates:    { table: 'estimates',    order: 'created_at DESC NULLS LAST', seq: true, lock: 1003 },
   invoices:     { table: 'invoices',     order: 'created_at DESC NULLS LAST', seq: true, lock: 1002 },
   transactions: { table: 'transactions', order: 'txn_date DESC NULLS LAST', extra: { txn_date: 'date' } },
   finAccounts:  { table: 'fin_accounts', order: 'created_at ASC NULLS LAST' },
