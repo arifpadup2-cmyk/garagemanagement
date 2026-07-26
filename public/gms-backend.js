@@ -283,6 +283,13 @@
         return r;
       });
     },
+    // Receive a purchase order (atomic: stocks in every line, updates cost).
+    receivePO: function (poId) {
+      return req('POST', '/purchaseOrders/' + poId + '/receive', {}).then(function (r) {
+        refreshColl('purchaseOrders'); refreshColl('parts');
+        return r;
+      });
+    },
     // Issue a part from stock to a job card (atomic: deducts stock + adds line).
     issuePart: function (jcId, partId, qty, unitPrice) {
       return req('POST', '/jobCards/' + jcId + '/parts', { partId: partId, qty: qty, unitPrice: unitPrice }).then(function (r) {

@@ -86,6 +86,8 @@ const COLL = {
   advisors:     { table: 'advisors',     order: 'name ASC NULLS LAST', extra: { name: 'name' }, noCreated: true },
   appointments: { table: 'appointments', order: 'appt_date ASC NULLS LAST', extra: { appt_date: 'date' } },
   parts:        { table: 'parts',        order: 'created_at DESC NULLS LAST' },
+  suppliers:    { table: 'suppliers',    order: 'created_at DESC NULLS LAST' },
+  purchaseOrders: { table: 'purchase_orders', order: 'created_at DESC NULLS LAST', seq: true, lock: 1004 },
 };
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -599,6 +601,54 @@ app.post('/api/jobCards/:id/work', asyncH(async (req, res) => {
     }
     await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
     await client.query('COMMIT');
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Receive a purchase order, atomically ----
+// Locks the PO then each part (consistent order), stocks in every line
+// (weighted-average cost update), records movements noting the PO, and marks
+// the PO received. Idempotent: a PO already received is rejected.
+app.post('/api/purchaseOrders/:id/receive', asyncH(async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const pr = await client.query(`SELECT data, seq FROM purchase_orders WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!pr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase order not found' }); }
+    const po = pr.rows[0].data;
+    if (po.status === 'received') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'This purchase order has already been received.' }); }
+    const poNo = 'PO-' + String(pr.rows[0].seq || 0).padStart(4, '0');
+    const lines = Array.isArray(po.items) ? po.items : [];
+    // Lock all referenced parts in a stable order (by id) to avoid deadlocks.
+    const partIds = Array.from(new Set(lines.map((l) => l.partId).filter(Boolean))).sort();
+    const partRows = {};
+    for (const pid of partIds) {
+      const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      if (r.rows.length) partRows[pid] = r.rows[0].data;
+    }
+    for (const line of lines) {
+      const p = partRows[line.partId];
+      if (!p) continue;
+      const from = Number(p.stock) || 0, qty = Number(line.qty) || 0, to = from + qty;
+      const unitCost = round2(Number(line.unitCost) || 0);
+      // Weighted-average cost so valuation reflects the real blended cost.
+      const oldCost = Number(p.costPrice) || 0;
+      const wac = to > 0 ? round2((from * oldCost + qty * unitCost) / to) : unitCost;
+      const mv = { type: 'in', qty, from, to, note: 'Received on ' + poNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
+      partRows[line.partId] = { ...p, stock: to, costPrice: wac, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+    }
+    for (const pid of partIds) {
+      if (partRows[pid]) await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
+    }
+    const merged = { ...po, status: 'received', receivedAt: Date.now(), receivedBy: (req.auth && req.auth.name) || '' };
+    await client.query(`UPDATE purchase_orders SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query('COMMIT');
+    audit(req, 'receive-po', 'purchaseOrders', req.params.id, poNo);
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');

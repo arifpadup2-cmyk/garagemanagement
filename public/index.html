@@ -936,6 +936,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
       <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
       <div class="snav-item" id="snav-inventory" onclick="navTo('inventory')" title="Inventory"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span><span class="snav-label">Inventory</span></div>
+      <div class="snav-item" id="snav-purchases" onclick="navTo('purchases')" title="Purchases"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="snav-label">Purchases</span></div>
+      <div class="snav-item" id="snav-suppliers" onclick="navTo('suppliers')" title="Suppliers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h4v-3.34a2 2 0 0 0-.59-1.42L17 9h-3"/><path d="M2 5h11v11H2z"/><path d="M14 9h3"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="snav-label">Suppliers</span></div>
       <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Sales"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Sales</span></div>
       <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
       <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
@@ -1419,6 +1421,63 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="btn-group" id="est-actions"></div>
       </div>
       <div id="estimate-detail"></div>
+    </div>
+
+    <!-- SUPPLIERS LIST -->
+    <div id="v-suppliers" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Suppliers</div><div class="page-sub">Parts and service vendors</div></div>
+        <button class="btn btn-primary" onclick="showAddSupplier()">+ New Supplier</button>
+      </div>
+      <div class="search-wrap"><input type="text" id="sup-search" placeholder="Search suppliers…" oninput="renderSuppliers()"></div>
+      <div id="suppliers-list"></div>
+    </div>
+    <div id="v-add-supplier" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('suppliers')">← Suppliers</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-sup-title">New Supplier</div></div>
+      <div class="card" style="max-width:640px">
+        <div class="form-group"><label>Supplier Name *</label><input type="text" id="sup-name" placeholder="e.g. Gulf Auto Parts"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Contact Person</label><input type="text" id="sup-contact"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="sup-phone" placeholder="+974 …"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Email</label><input type="email" id="sup-email"></div>
+          <div class="form-group"><label>VAT / TRN</label><input type="text" id="sup-trn"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Terms</label><input type="text" id="sup-terms" placeholder="e.g. Net 30"></div>
+          <div class="form-group"><label>Address</label><input type="text" id="sup-address"></div>
+        </div>
+        <div class="btn-group" style="margin-top:6px"><button class="btn btn-primary" id="save-sup-btn" onclick="saveSupplier()">Save Supplier</button><button class="btn btn-secondary" onclick="navTo('suppliers')">Cancel</button><button class="btn btn-red" id="sup-del-btn" onclick="deleteSupplier()" style="display:none;margin-left:auto">Delete</button></div>
+      </div>
+    </div>
+
+    <!-- PURCHASE ORDERS -->
+    <div id="v-purchases" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Purchase Orders</div><div class="page-sub">Order parts from suppliers; receive to stock</div></div>
+        <button class="btn btn-primary" onclick="showAddPO()">+ New Purchase Order</button>
+      </div>
+      <div class="search-wrap"><input type="text" id="po-search" placeholder="Search purchase orders…" oninput="renderPurchases()"></div>
+      <div id="purchases-list"></div>
+    </div>
+    <div id="v-add-po" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchases')">← Purchases</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-po-title">New Purchase Order</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Supplier *</label><select id="po-supplier"></select></div>
+          <div class="form-group"><label>Reference / Notes</label><input type="text" id="po-ref" placeholder="Supplier invoice no, etc."></div>
+        </div>
+        <div class="form-group"><label>Order Lines</label><div id="po-items"></div><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="poAddItem()">+ Add Part</button></div>
+        <div style="text-align:right;font-size:15px;font-weight:800;margin:4px 0 14px">Total: <span id="po-total">QAR 0.00</span></div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-po-btn" onclick="savePO()">Save Purchase Order</button><button class="btn btn-secondary" onclick="navTo('purchases')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-po" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchases')">← Purchases</button><div class="btn-group" id="po-actions"></div></div>
+      <div id="po-detail"></div>
     </div>
 
     <!-- TECHNICIANS LIST -->
@@ -2228,7 +2287,7 @@ const db=firebase.firestore();
 const storage=firebase.storage();
 
 // STATE
-let customers=[],vehicles=[],jobCards=[],technicians=[],advisors=[],invoices=[],estimates=[];
+let customers=[],vehicles=[],jobCards=[],technicians=[],advisors=[],invoices=[],estimates=[],suppliers=[],purchaseOrders=[];
 let companySettings={name:'',tagline:'',phone:'',email:'',address:'',city:'',country:'',vatNumber:'',currency:'QAR',website:'',invoiceTerms:'',logoUrl:''};
 let curCustomer=null,curVehicle=null,curJobCard=null,curInvoice=null;
 let activeNav='dashboard',jcFilter='all';
@@ -2268,7 +2327,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2291,7 +2350,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2432,13 +2491,13 @@ function navTo(tab){
 }
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
-var TB_SECTIONS={dashboard:'Dashboard',estimates:'Estimates',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
+var TB_SECTIONS={dashboard:'Dashboard',estimates:'Estimates',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
 var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'quick-invoice':['Sales','Quick Invoice'],'invoice':['Sales','Invoice'],'add-estimate':['Estimates','New Estimate'],'estimate':['Estimates','Detail'],'add-jobcard':['Job Cards','New Job Card'],
   'jobcard':['Job Cards','Detail'],'inspection':['Job Cards','Inspection'],'add-customer':['Customers','Add Customer'],'customer':['Customers','Detail'],
   'add-vehicle':['Vehicles','Add Vehicle'],'vehicle':['Vehicles','Detail'],'add-technician':['Technicians','Add Technician'],
   'add-advisor':['Service Advisors','Add Advisor'],'add-transaction':['Finance','Transaction'],'fin-accounts':['Finance','Chart of Accounts'],
-  'add-fin-account':['Finance','New Account'],'gen-ledger':['Finance','General Ledger'],'trial-balance':['Finance','Trial Balance'],
+  'add-supplier':['Suppliers','Supplier'],'add-po':['Purchases','New Purchase Order'],'po':['Purchases','Detail'],'add-fin-account':['Finance','New Account'],'gen-ledger':['Finance','General Ledger'],'trial-balance':['Finance','Trial Balance'],
   'pl-statement':['Finance','Profit & Loss'],'balance-sheet':['Finance','Balance Sheet'],'cust-accs':['Finance','Customer Accounts'],
   'cust-acc-detail':['Finance','Customer Ledger'],'acc-statement':['Finance','Statement'],'cash-flow':['Finance','Cash Flow'],'aged-receivables':['Finance','Aged Receivables'],'vat-summary':['Finance','VAT Summary'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
   'jc-reports':['Job Cards','Reports'],'cust-reports':['Customers','Reports'],'tech-reports':['Technicians','Reports'],'veh-history':['Vehicles','Service History'],
@@ -2775,6 +2834,16 @@ function initFirestore(){
     if(activeNav==='inventory')renderInventory();
     buildNotifs();
   },snapErr('inventory','parts'));
+  db.collection('suppliers').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.suppliers=true;
+    suppliers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='suppliers')renderSuppliers();
+  },snapErr('suppliers','suppliers'));
+  db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.purchaseOrders=true;
+    purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='purchases')renderPurchases();
+  },snapErr('purchase orders','purchaseOrders'));
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.invoices=true;
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -5307,6 +5376,127 @@ function convertEstimateToJobCard(){
     toast('Job card '+jcNum(jc)+' created from estimate','success');
     showJobCard(jc);
   }).catch(function(err){toast('Could not convert: '+err.message,'error');});
+}
+
+// ── SUPPLIERS ──
+var editingSupplierId=null, curSupplier=null;
+function renderSuppliers(){
+  var el=document.getElementById('suppliers-list');if(!el)return;
+  if(!_fired.suppliers){el.innerHTML=skelTable(6);return;}
+  var q=((document.getElementById('sup-search')||{}).value||'').toLowerCase();
+  var list=suppliers.filter(function(s){return !q||((s.name||'')+' '+(s.phone||'')+' '+(s.contact||'')).toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML='<div class="empty">No suppliers yet. Add your parts vendors to raise purchase orders.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Supplier</th><th>Contact</th><th>Phone</th><th>Terms</th></tr></thead><tbody>'+
+    list.map(function(s){return'<tr class="dt-row" onclick="showAddSupplier(\''+s.id+'\')"><td style="font-weight:700">'+esc(s.name)+'</td><td>'+esc(s.contact||'—')+'</td><td>'+esc(s.phone||'—')+'</td><td style="color:var(--t2)">'+esc(s.terms||'—')+'</td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function showAddSupplier(id){
+  editingSupplierId=id||null;
+  var s=id?suppliers.find(function(x){return x.id===id;}):null;
+  document.getElementById('add-sup-title').textContent=s?'Edit Supplier':'New Supplier';
+  document.getElementById('save-sup-btn').textContent=s?'Update Supplier':'Save Supplier';
+  document.getElementById('sup-del-btn').style.display=s?'':'none';
+  var f=function(id,v){document.getElementById(id).value=v||'';};
+  f('sup-name',s&&s.name);f('sup-contact',s&&s.contact);f('sup-phone',s&&s.phone);f('sup-email',s&&s.email);f('sup-trn',s&&s.trn);f('sup-terms',s&&s.terms);f('sup-address',s&&s.address);
+  show('v-add-supplier');
+}
+function saveSupplier(){
+  var name=document.getElementById('sup-name').value.trim();
+  if(!name){toast('Please enter the supplier name.');return;}
+  var data={name:name,contact:document.getElementById('sup-contact').value.trim(),phone:document.getElementById('sup-phone').value.trim(),email:document.getElementById('sup-email').value.trim(),trn:document.getElementById('sup-trn').value.trim(),terms:document.getElementById('sup-terms').value.trim(),address:document.getElementById('sup-address').value.trim()};
+  var btn=document.getElementById('save-sup-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent=editingSupplierId?'Update Supplier':'Save Supplier';toast('Could not save supplier: '+e.message,'error');};
+  if(editingSupplierId){
+    db.collection('suppliers').doc(editingSupplierId).update(data).then(function(){btn.disabled=false;toast('Supplier updated','success');navTo('suppliers');}).catch(fail);
+  } else {
+    data.createdAt=Date.now();
+    db.collection('suppliers').add(data).then(function(){btn.disabled=false;toast('Supplier added','success');navTo('suppliers');}).catch(fail);
+  }
+}
+function deleteSupplier(){
+  if(!editingSupplierId)return;var id=editingSupplierId;
+  confirmDialog({title:'Delete supplier?',message:'This supplier will be removed.',confirmText:'Delete',onConfirm:function(){
+    db.collection('suppliers').doc(id).delete().then(function(){toast('Supplier deleted','success');navTo('suppliers');}).catch(function(e){toast('Could not delete: '+e.message,'error');});
+  }});
+}
+
+// ── PURCHASE ORDERS ──
+var PO_STATUS={draft:{label:'DRAFT',badge:'badge-gray'},received:{label:'RECEIVED',badge:'badge-green'}};
+function poNum(po){return 'PO-'+String(po.seq||0).padStart(4,'0');}
+var editingPOId=null, curPO=null, poItems=[];
+function renderPurchases(){
+  var el=document.getElementById('purchases-list');if(!el)return;
+  if(!_fired.purchaseOrders){el.innerHTML=skelTable(6);return;}
+  var q=((document.getElementById('po-search')||{}).value||'').toLowerCase();
+  var list=purchaseOrders.filter(function(p){return !q||((poNum(p))+' '+(p.supplierName||'')).toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML='<div class="empty">No purchase orders yet. Raise one to order parts from a supplier.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>PO</th><th>Supplier</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>'+
+    list.map(function(p){var st=PO_STATUS[p.status]||PO_STATUS.draft;return'<tr class="dt-row" onclick="openPOById(\''+p.id+'\')"><td style="font-weight:700">'+esc(poNum(p))+'</td><td>'+esc(p.supplierName||'—')+'</td><td style="color:var(--t2);white-space:nowrap">'+esc(fmtDate(tsToDs(p.createdAt)))+'</td><td><span class="badge '+st.badge+'">'+st.label+'</span></td><td class="num" style="font-weight:700">'+fmtMoney(p.total||0)+'</td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function showAddPO(id){
+  editingPOId=id||null;
+  var po=id?purchaseOrders.find(function(x){return x.id===id;}):null;
+  document.getElementById('add-po-title').textContent=po?'Edit Purchase Order':'New Purchase Order';
+  document.getElementById('save-po-btn').textContent=po?'Update Purchase Order':'Save Purchase Order';
+  var ssel=document.getElementById('po-supplier');
+  ssel.innerHTML='<option value="">— Select supplier —</option>'+suppliers.map(function(s){return'<option value="'+esc(s.id)+'"'+(po&&po.supplierId===s.id?' selected':'')+'>'+esc(s.name)+'</option>';}).join('');
+  document.getElementById('po-ref').value=po?(po.reference||''):'';
+  poItems=po&&po.items?po.items.map(function(it){return{partId:it.partId||'',name:it.name||'',qty:it.qty||1,unitCost:it.unitCost||''};}):[{partId:'',name:'',qty:1,unitCost:''}];
+  renderPOItems();
+  show('v-add-po');
+}
+function poAddItem(){poItems.push({partId:'',name:'',qty:1,unitCost:''});renderPOItems();}
+function poRemoveItem(i){poItems.splice(i,1);if(!poItems.length)poItems.push({partId:'',name:'',qty:1,unitCost:''});renderPOItems();}
+function poItemPart(i,partId){var p=parts.find(function(x){return x.id===partId;});poItems[i].partId=partId;poItems[i].name=p?p.name:'';if(p&&!poItems[i].unitCost)poItems[i].unitCost=p.costPrice||'';renderPOItems();}
+function renderPOItems(){
+  var el=document.getElementById('po-items');if(!el)return;
+  el.innerHTML=poItems.map(function(it,i){
+    return'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+      '<select onchange="poItemPart('+i+',this.value)" style="flex:1;min-width:160px"><option value="">— Select part —</option>'+parts.map(function(p){return'<option value="'+esc(p.id)+'"'+(it.partId===p.id?' selected':'')+'>'+esc(p.name)+' (stock '+Number(p.stock||0)+')</option>';}).join('')+'</select>'+
+      '<input type="number" placeholder="Qty" min="1" step="1" value="'+esc(it.qty)+'" oninput="poItems['+i+'].qty=this.value;poSyncTotal()" style="width:80px">'+
+      '<input type="number" placeholder="Unit cost" min="0" step="0.01" value="'+(it.unitCost===''?'':esc(it.unitCost))+'" oninput="poItems['+i+'].unitCost=this.value;poSyncTotal()" style="width:110px">'+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="poRemoveItem('+i+')">✕</button></div>';
+  }).join('');
+  poSyncTotal();
+}
+function poSyncTotal(){var t=poItems.reduce(function(s,it){return s+Number(it.qty||0)*Number(it.unitCost||0);},0);var el=document.getElementById('po-total');if(el)el.textContent=fmtMoney(t);}
+function savePO(){
+  var sid=document.getElementById('po-supplier').value;
+  if(!sid){toast('Please select a supplier.');return;}
+  var items=poItems.filter(function(it){return it.partId&&Number(it.qty||0)>0;}).map(function(it){return{partId:it.partId,name:it.name,qty:Number(it.qty),unitCost:Number(it.unitCost)||0};});
+  if(!items.length){toast('Add at least one part line.');return;}
+  var sup=suppliers.find(function(s){return s.id===sid;})||{};
+  var total=Math.round(items.reduce(function(s,it){return s+it.qty*it.unitCost;},0)*100)/100;
+  var btn=document.getElementById('save-po-btn');btn.disabled=true;btn.textContent='Saving…';
+  var data={supplierId:sid,supplierName:sup.name||'',reference:document.getElementById('po-ref').value.trim(),items:items,total:total};
+  var fail=function(e){btn.disabled=false;btn.textContent=editingPOId?'Update Purchase Order':'Save Purchase Order';toast('Could not save PO: '+e.message,'error');};
+  if(editingPOId){
+    var ex=purchaseOrders.find(function(x){return x.id===editingPOId;})||{};data.status=ex.status||'draft';
+    db.collection('purchaseOrders').doc(editingPOId).update(data).then(function(){curPO=Object.assign({},ex,data,{id:editingPOId});btn.disabled=false;showPO(curPO);}).catch(fail);
+  } else {
+    data.status='draft';data.createdAt=Date.now();
+    db.collection('purchaseOrders').add(data).then(function(ref){curPO=Object.assign({id:ref.id},data,ref.serverDoc||{});btn.disabled=false;showPO(curPO);}).catch(fail);
+  }
+}
+function openPOById(id){var p=purchaseOrders.find(function(x){return x.id===id;});if(p)showPO(p);}
+function showPO(po){curPO=po;renderPODetail();show('v-po');}
+function renderPODetail(){
+  var po=curPO;var el=document.getElementById('po-detail');if(!el)return;
+  var st=PO_STATUS[po.status]||PO_STATUS.draft;
+  var actions=document.getElementById('po-actions');
+  actions.innerHTML=(po.status==='draft'?'<button class="btn btn-secondary btn-sm" onclick="showAddPO(\''+po.id+'\')">Edit</button><button class="btn btn-green btn-sm" onclick="receivePurchaseOrder()">Receive to Stock</button>':'<span style="font-size:12px;color:var(--t3)">Received '+fmtTs(po.receivedAt)+'</span>');
+  var rows=(po.items||[]).map(function(it){return'<tr><td style="font-weight:600">'+esc(it.name)+'</td><td class="num">'+Number(it.qty||0)+'</td><td class="num">'+fmtMoney(it.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(Number(it.qty||0)*Number(it.unitCost||0))+'</td></tr>';}).join('');
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(poNum(po))+'</div><div class="so-created">Created '+fmtTs(po.createdAt)+'</div></div><div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
+    '<div class="so-spec"><div class="so-spec-item"><div class="so-spec-k">'+ico('truck',13,'var(--t3)')+'Supplier</div><div class="so-spec-v">'+esc(po.supplierName||'—')+'</div></div>'+(po.reference?'<div class="so-spec-item"><div class="so-spec-k">Reference</div><div class="so-spec-v">'+esc(po.reference)+'</div></div>':'')+'</div></div>'+
+    '<div class="card"><div class="card-title">Order Lines</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Part</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Line Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3" style="text-align:right;font-weight:800">Total</td><td class="num" style="font-weight:900">'+fmtMoney(po.total||0)+'</td></tr></tfoot></table></div></div>'+
+    (po.status==='draft'?'<div style="font-size:12px;color:var(--t3);margin-top:12px">Receiving adds these quantities to stock (weighted-average cost) and marks the order received.</div>':'')+'</div>';
+}
+function receivePurchaseOrder(){
+  var po=curPO;if(po.status==='received'){toast('Already received.');return;}
+  confirmDialog({title:'Receive to stock?',message:'Add all ordered quantities of '+poNum(po)+' to inventory? This updates part costs and cannot be undone.',confirmText:'Receive',onConfirm:function(){
+    gmsApi.receivePO(po.id).then(function(saved){curPO=saved;toast('Stock received for '+poNum(po),'success');renderPODetail();}).catch(function(e){toast(e.message||'Could not receive.','error');});
+  }});
 }
 
 var INV_STATUS={
