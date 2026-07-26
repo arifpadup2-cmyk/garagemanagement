@@ -257,6 +257,35 @@ app.get('/api/image', asyncH(async (req, res) => {
 // ---- Everything below requires a valid token ----
 app.use('/api', requireAuth);
 
+// ---- Authorization (RBAC) ----
+// Admin: full access. Technician: a tight allowlist — read the shop-floor data
+// they need, update job-card work status, and toggle ONLY their own
+// availability. Everything else (finance, other people's records, deletes,
+// the atomic money/stock endpoints, export, image mutations) is 403.
+const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts']);
+function authorize(req, res, next) {
+  const role = req.auth && req.auth.role;
+  if (role === 'admin') return next();
+  if (role === 'tech') {
+    // Mounted at '/api', so req.path is mount-relative: '/<coll>/<id>/<sub>'.
+    const parts = req.path.split('/').filter(Boolean); // ['coll',':id',...]
+    const coll = parts[0], id = parts[1], sub = parts[2];
+    if (req.method === 'GET') {
+      if (coll === 'settings' || coll === 'image') return next();
+      if (TECH_READ.has(coll)) return next();
+    }
+    // Update a job card's work status (no sub-action), or your OWN tech status.
+    if (req.method === 'PUT' && !sub) {
+      if (coll === 'jobCards' && id) return next();
+      if (coll === 'technicians' && id === req.auth.techId) return next();
+    }
+    return res.status(403).json({ error: 'Not permitted for this account.' });
+  }
+  return res.status(403).json({ error: 'Not permitted.' });
+}
+app.use('/api', authorize);
+const requireAdmin = (req, res, next) => (req.auth && req.auth.role === 'admin') ? next() : res.status(403).json({ error: 'Admin only.' });
+
 // Technician PINs (now scrypt hashes) never leave the server for ANY session —
 // nobody needs to read them back; the edit form leaves the PIN field blank and
 // only re-sets it when the admin types a new one.
