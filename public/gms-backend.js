@@ -16,11 +16,35 @@
   'use strict';
   var API = (window.GMS_API_BASE || '') + '/api';
 
+  function authToken() {
+    try {
+      var raw = localStorage.getItem('gms_session') || sessionStorage.getItem('gms_session') ||
+                localStorage.getItem('gms_tech_session') || sessionStorage.getItem('gms_tech_session');
+      if (!raw) return null;
+      return (JSON.parse(raw) || {}).token || null;
+    } catch (e) { return null; }
+  }
+  function onUnauthorized() {
+    // Token missing/expired: clear stored sessions and return to the login screen.
+    try {
+      localStorage.removeItem('gms_session'); sessionStorage.removeItem('gms_session');
+      localStorage.removeItem('gms_tech_session'); sessionStorage.removeItem('gms_tech_session');
+    } catch (e) {}
+    if (!window._gmsAuthReloading) { window._gmsAuthReloading = true; location.reload(); }
+  }
+
   function req(method, url, body) {
     var opts = { method: method, headers: {} };
+    var tok = authToken();
+    if (tok) opts.headers['Authorization'] = 'Bearer ' + tok;
     if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     return fetch(API + url, opts).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error(method + ' ' + url + ' -> ' + r.status + ' ' + t); });
+      if (r.status === 401 && url !== '/login' && url !== '/tech-login') { onUnauthorized(); throw new Error('Session expired — please sign in again.'); }
+      if (!r.ok) return r.text().then(function (t) {
+        var msg = method + ' ' + url + ' -> ' + r.status + ' ' + t;
+        try { var j = JSON.parse(t); if (j && j.error) msg = j.error; } catch (e) {}
+        var err = new Error(msg); err.status = r.status; throw err;
+      });
       var ct = r.headers.get('content-type') || '';
       return ct.indexOf('application/json') >= 0 ? r.json() : r.text();
     });
@@ -72,7 +96,12 @@
     var url = (name === 'settings') ? '/settings/company' : '/' + name + '/' + id;
     return req('GET', url).then(function (d) {
       ls.forEach(function (l) { try { l.cb(docSnap(d)); } catch (e) { console.error(e); } });
-    }).catch(function () { ls.forEach(function (l) { try { l.cb(docSnap(null)); } catch (e) {} }); });
+    }).catch(function (e) {
+      // A transport/server failure is NOT "document does not exist" — only a
+      // real 404 reports a missing doc; anything else surfaces as an error.
+      if (e && e.status === 404) { ls.forEach(function (l) { try { l.cb(docSnap(null)); } catch (e2) {} }); return; }
+      ls.forEach(function (l) { if (l.err) { try { l.err(e); } catch (e2) {} } else { console.error('refreshDoc(' + key + '):', e); } });
+    });
   }
 
   function uid() { return (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2, 10))); }
@@ -81,7 +110,10 @@
   function DocRef(name, id) { this._name = name; this._id = id || uid(); }
   DocRef.prototype.get = function () {
     var url = (this._name === 'settings') ? '/settings/company' : '/' + this._name + '/' + this._id;
-    return req('GET', url).then(docSnap, function () { return docSnap(null); });
+    return req('GET', url).then(docSnap, function (e) {
+      if (e && e.status === 404) return docSnap(null);
+      throw e; // network/server failures must not masquerade as "missing doc"
+    });
   };
   DocRef.prototype.update = function (data) {
     var self = this;
@@ -114,7 +146,15 @@
   CollRef.prototype.doc = function (id) { return new DocRef(this._name, id); };
   CollRef.prototype.add = function (data) {
     var self = this;
-    return req('POST', '/' + this._name, data).then(function (r) { refreshColl(self._name); return new DocRef(self._name, r.id); });
+    return req('POST', '/' + this._name, data).then(function (r) {
+      refreshColl(self._name);
+      var ref = new DocRef(self._name, r.id);
+      // Expose the server-authoritative document (incl. assigned seq) so the
+      // UI never displays/prints a locally guessed document number.
+      ref.serverDoc = r;
+      if (r && r.seq != null) ref.seq = r.seq;
+      return ref;
+    });
   };
   CollRef.prototype.get = function () {
     var self = this;
@@ -188,5 +228,32 @@
     initializeApp: function () { return { name: '[DEFAULT]' }; },
     firestore: firestore,
     storage: function () { return _st; }
+  };
+
+  // ---- GMS domain API (atomic server-side operations) ----
+  window.gmsApi = {
+    // Record one or more payments on an invoice atomically (row-locked append,
+    // balance-capped, cash-book rows inserted in the same DB transaction).
+    pay: function (invoiceId, body) {
+      return req('POST', '/invoices/' + invoiceId + '/pay', body).then(function (r) {
+        refreshColl('invoices'); refreshColl('transactions');
+        return r;
+      });
+    },
+    // Atomic stock adjustment (blocks negative stock, appends movement safely).
+    adjustStock: function (partId, body) {
+      return req('POST', '/parts/' + partId + '/adjust', body).then(function (r) {
+        refreshColl('parts');
+        return r;
+      });
+    },
+    // Full data backup as a downloadable JSON blob (admin only).
+    exportBackup: function () {
+      var tok = authToken();
+      return fetch(API + '/export', { headers: tok ? { 'Authorization': 'Bearer ' + tok } : {} }).then(function (r) {
+        if (!r.ok) throw new Error('Export failed (' + r.status + ')');
+        return r.blob();
+      });
+    }
   };
 })();

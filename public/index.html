@@ -1269,7 +1269,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Supplier</label><input type="text" id="pt-supplier" placeholder="Supplier name"></div>
           <div class="form-group"><label>Location / Bin</label><input type="text" id="pt-location" placeholder="e.g. A-12, Shelf 3"></div>
         </div>
-        <div class="form-group" id="pt-stock-note" style="display:none;font-size:12px;color:var(--t3)">Tip: use <b>Adjust Stock</b> on the part page to record stock in/out — editing here overwrites the on-hand quantity.</div>
+        <div class="form-group" id="pt-stock-note" style="display:none;font-size:12px;color:var(--t3)">On-hand stock is locked while editing — use <b>Adjust Stock</b> on the part page so every change is logged in the movement history.</div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="pt-save-btn" onclick="savePart()">Save Part</button>
           <button class="btn btn-secondary" onclick="navTo('inventory')">Cancel</button>
@@ -1977,6 +1977,14 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-title">Data &amp; Backup</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="font-size:13px;color:var(--t2);max-width:560px">Download a complete backup of all data — customers, vehicles, job cards, invoices, transactions, inventory, appointments, staff and settings — as a single JSON file. Keep a copy off this computer.</div>
+          <button id="set-backup-btn" class="btn btn-secondary" onclick="downloadBackup()">Download Backup</button>
+        </div>
+      </div>
+
       <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:24px">
         <button id="set-save-btn" class="btn btn-green" onclick="saveCompanySettings()">✓ Save Settings</button>
       </div>
@@ -2487,7 +2495,7 @@ async function doLogin(){
     var res=await fetch(((window.GMS_API_BASE||'')+'/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
     var data=await res.json().catch(function(){return {};});
     if(!res.ok||!data.ok){err.textContent=(data&&data.error)||'Invalid username or password.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;}
-    var session=JSON.stringify({username:user,name:data.name});
+    var session=JSON.stringify({username:user,name:data.name,token:data.token});
     if(remember)localStorage.setItem(SESSION_KEY,session);else sessionStorage.setItem(SESSION_KEY,session);
     showApp(data.name);btn.disabled=false;btn.textContent='Sign In';
   }catch(e){err.textContent='Cannot reach server. Try again.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
@@ -2530,9 +2538,11 @@ function showApp(name){
 }
 (function checkSession(){
   var raw=localStorage.getItem(SESSION_KEY)||sessionStorage.getItem(SESSION_KEY);
-  if(raw){try{var s=JSON.parse(raw);if(s&&s.name){showApp(s.name);return;}}catch(e){}}
+  // Sessions without a token predate server-side auth — force a fresh sign-in.
+  if(raw){try{var s=JSON.parse(raw);if(s&&s.name&&s.token){showApp(s.name);return;}
+    if(s&&!s.token){localStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_KEY);}}catch(e){}}
   var traw=localStorage.getItem(TECH_SESSION_KEY)||sessionStorage.getItem(TECH_SESSION_KEY);
-  if(traw){try{var ts=JSON.parse(traw);if(ts&&ts.id){
+  if(traw){try{var ts=JSON.parse(traw);if(ts&&ts.id&&ts.token){
     // Tech portal HTML is after the script block — defer until DOM is fully parsed
     document.addEventListener('DOMContentLoaded',function(){showTechPortal(ts);});
   }} catch(e){}}
@@ -2557,16 +2567,29 @@ function skelDash(){
 }
 
 // FIRESTORE
+// A load failure must never be silent (or masquerade as "no data"): surface
+// one toast, log the detail, and release the skeletons for that collection.
+function snapErr(label,firedKey){
+  return function(e){
+    console.error('Load failed ['+label+']:',e);
+    if(firedKey)_fired[firedKey]=true;
+    if(!window._dbErrToasted){
+      window._dbErrToasted=true;
+      toast('Database error — could not load '+label+'. Check your connection and reload.','error');
+      setTimeout(function(){window._dbErrToasted=false;},30000);
+    }
+  };
+}
 function initFirestore(){
   db.collection('customers').orderBy('createdAt','desc').onSnapshot(function(snap){
     customers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='customers')renderCustomers();
     if(activeNav==='dashboard')renderDashboard();
-  });
+  },snapErr('customers'));
   db.collection('vehicles').orderBy('createdAt','desc').onSnapshot(function(snap){
     vehicles=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='vehicles')renderVehiclesSection();
-  });
+  },snapErr('vehicles'));
   db.collection('jobCards').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.jobCards=true;
     jobCards=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -2575,27 +2598,27 @@ function initFirestore(){
     if(activeNav==='dashboard')renderDashboard();
     if(activeNav==='mob-home')renderMobHome();
     if(curTech){checkTechNotifications();renderTechPortal();}
-  });
+  },snapErr('job cards','jobCards'));
   db.collection('technicians').orderBy('name').onSnapshot(function(snap){
     technicians=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='technicians')renderTechnicians();
     if(activeNav==='dashboard')renderDashboard();
-  });
+  },snapErr('technicians'));
   db.collection('advisors').orderBy('name').onSnapshot(function(snap){
     advisors=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='advisors')renderAdvisors();
     if(activeNav==='add-jobcard'||activeNav==='v-add-jobcard')populateAdvisorSelect(document.getElementById('jc-advisor')?document.getElementById('jc-advisor').value:'');
-  });
+  },snapErr('service advisors'));
   db.collection('appointments').onSnapshot(function(snap){
     appointments=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='appointments')renderAppointments();
-  });
+  },snapErr('appointments'));
   db.collection('parts').onSnapshot(function(snap){
     _fired.parts=true;
     parts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='inventory')renderInventory();
     buildNotifs();
-  });
+  },snapErr('inventory','parts'));
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.invoices=true;
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -2603,7 +2626,7 @@ function initFirestore(){
     if(activeNav==='sales')renderSales();
     if(activeNav==='cust-accs')renderCustAccounts();
     if(activeNav==='cust-acc-detail')renderCustAccDetail();
-  });
+  },snapErr('invoices','invoices'));
   initAccountsFirestore();
   db.collection('settings').doc('company').onSnapshot(function(doc){
     if(doc.exists){
@@ -2611,7 +2634,7 @@ function initFirestore(){
       syncCurLabels();
       if(activeNav==='settings')renderSettings();
     }
-  });
+  },snapErr('company settings'));
 }
 
 // DASHBOARD
@@ -3126,19 +3149,20 @@ function saveCustomer(){
   var btn=document.getElementById('save-cust-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var data={name:name,phone:phone,wa:document.getElementById('c-wa').value.trim(),email:document.getElementById('c-email').value.trim(),address:document.getElementById('c-address').value.trim()};
+  var fail=function(e){btn.disabled=false;btn.textContent=editingCustomerId?'Update Customer':'Save Customer';toast('Could not save customer: '+e.message,'error');};
   if(editingCustomerId){
     db.collection('customers').doc(editingCustomerId).update(data).then(function(){
       curCustomer=Object.assign({},curCustomer,data);
       btn.disabled=false;btn.textContent='Update Customer';
       showCustomer(curCustomer);
-    });
+    }).catch(fail);
   } else {
     data.createdAt=Date.now();
     db.collection('customers').add(data).then(function(ref){
       curCustomer=Object.assign({id:ref.id},data);
       btn.disabled=false;btn.textContent='Save Customer';
       showCustomer(curCustomer);
-    });
+    }).catch(fail);
   }
 }
 
@@ -3230,19 +3254,20 @@ function saveVehicle(){
     notes:document.getElementById('v-notes').value.trim(),
     customerId:curCustomer.id,customerName:curCustomer.name
   };
+  var vfail=function(e){btn.disabled=false;btn.textContent=editingVehicleId?'Update Vehicle':'Save Vehicle';toast('Could not save vehicle: '+e.message,'error');};
   if(editingVehicleId){
     db.collection('vehicles').doc(editingVehicleId).update(data).then(function(){
       curVehicle=Object.assign({},curVehicle,data);
       btn.disabled=false;btn.textContent='Update Vehicle';
       showVehicle(curVehicle);
-    });
+    }).catch(vfail);
   } else {
     data.createdAt=Date.now();
     db.collection('vehicles').add(data).then(function(ref){
       curVehicle=Object.assign({id:ref.id},data);
       btn.disabled=false;btn.textContent='Save Vehicle';
       showVehicle(curVehicle);
-    });
+    }).catch(vfail);
   }
 }
 
@@ -3489,7 +3514,8 @@ function saveAppointment(){
 function deleteAppointment(){
   if(!editingApptId)return;var id=editingApptId;
   confirmDialog({title:'Delete appointment?',message:'This booking will be permanently removed.',confirmText:'Delete',onConfirm:function(){
-    db.collection('appointments').doc(id).delete().then(function(){toast('Appointment deleted','success');navTo('appointments');});
+    db.collection('appointments').doc(id).delete().then(function(){toast('Appointment deleted','success');navTo('appointments');})
+      .catch(function(e){toast('Could not delete appointment: '+e.message,'error');});
   }});
 }
 
@@ -3552,6 +3578,7 @@ function showAddPart(editing){
   document.getElementById('pt-save-btn').textContent=p?'Update Part':'Save Part';
   document.getElementById('part-back-btn').onclick=p?function(){showPart(curPart);}:function(){navTo('inventory');};
   document.getElementById('pt-stock-note').style.display=p?'':'none';
+  document.getElementById('pt-stock').disabled=!!p; // stock changes only via Adjust Stock (audited movements)
   var cats=[];parts.forEach(function(x){if(x.category&&cats.indexOf(x.category)<0)cats.push(x.category);});
   document.getElementById('pt-cat-list').innerHTML=cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('');
   var f=function(id,v){document.getElementById(id).value=(v==null||v==='')?'':v;};
@@ -3566,11 +3593,14 @@ function savePart(){
   var data={
     name:name,partNumber:document.getElementById('pt-number').value.trim(),barcode:document.getElementById('pt-barcode').value.trim(),
     oemNumber:document.getElementById('pt-oem').value.trim(),category:document.getElementById('pt-category').value.trim(),
-    brand:document.getElementById('pt-brand').value.trim(),stock:Number(document.getElementById('pt-stock').value||0),
+    brand:document.getElementById('pt-brand').value.trim(),
     reorderLevel:Number(document.getElementById('pt-reorder').value||0),costPrice:Number(document.getElementById('pt-cost').value||0),
     sellingPrice:Number(document.getElementById('pt-price').value||0),supplier:document.getElementById('pt-supplier').value.trim(),
     location:document.getElementById('pt-location').value.trim()
   };
+  // Stock is set only at creation; afterwards it moves exclusively through
+  // Adjust Stock so the movement history always reconciles with on-hand.
+  if(!editingPartId)data.stock=Number(document.getElementById('pt-stock').value||0);
   var btn=document.getElementById('pt-save-btn');btn.disabled=true;btn.textContent='Saving…';
   var fail=function(e){btn.disabled=false;btn.textContent=editingPartId?'Update Part':'Save Part';toast('Error: '+e.message,'error');};
   if(editingPartId){
@@ -3629,15 +3659,14 @@ function applyStockAdjust(){
   var qty=Math.abs(Number(document.getElementById('sa-qty').value||0));
   var note=document.getElementById('sa-note').value.trim();
   if(!qty&&type!=='set'){toast('Enter a quantity.');return;}
-  var cur=Number(p.stock||0),next;
-  if(type==='in')next=cur+qty;else if(type==='out')next=Math.max(0,cur-qty);else next=qty;
-  var movements=(p.movements||[]).concat([{type:type,qty:qty,from:cur,to:next,note:note,at:Date.now()}]);
-  db.collection('parts').doc(p.id).update({stock:next,movements:movements}).then(function(){
-    p.stock=next;p.movements=movements;
+  // Atomic server-side adjust: row-locked (concurrent devices can never erase
+  // each other's movements) and stock can never go negative.
+  gmsApi.adjustStock(p.id,{type:type,qty:qty,note:note}).then(function(updated){
+    curPart=updated;
     var m=document.getElementById('stock-modal');if(m)m.classList.remove('open');
-    toast(esc(p.name)+' stock updated to '+next,'success');
+    toast(esc(updated.name)+' stock updated to '+Number(updated.stock||0),'success');
     renderPartDetail();
-  }).catch(function(e){toast('Error: '+e.message,'error');});
+  }).catch(function(e){toast(e.message||'Could not adjust stock.','error');});
 }
 
 // ── JC VEHICLE STATE ──
@@ -4019,10 +4048,10 @@ function saveJobCard(){
       });
     } else {
       data.createdAt=Date.now();
-      var maxSeq=jobCards.reduce(function(m,j){return Math.max(m,j.seq||0);},0);
-      data.seq=maxSeq+1;
       db.collection('jobCards').add(data).then(function(ref){
-        curJobCard=Object.assign({id:ref.id},data);
+        // Server assigns the JC number under a lock — display that, never a
+        // locally guessed one (two devices used to both print the same number).
+        curJobCard=Object.assign({id:ref.id},data,ref.serverDoc||{});
         btn.disabled=false;btn.textContent='Save Job Card';
         showJobCard(curJobCard);
       }).catch(function(err){
@@ -4337,7 +4366,7 @@ function renderAdvisors(){
     return'<div class="card" style="margin-bottom:12px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'+
         '<div style="display:flex;align-items:center;gap:12px">'+
-          (a.photoUrl?'<img src="'+esc(a.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+statusColor+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:'+statusColor+'22;color:'+statusColor+';border:2px solid '+statusColor+'66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+staffInitials(a.name)+'</div>')+
+          (a.photoUrl?'<img src="'+esc(a.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+statusColor+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:'+statusColor+'22;color:'+statusColor+';border:2px solid '+statusColor+'66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(a.name))+'</div>')+
           '<div>'+
             '<div style="font-weight:700;font-size:15px">'+esc(a.name)+'</div>'+
             (a.phone?'<div style="font-size:12px;color:var(--t2)">'+esc(a.phone)+'</div>':'')+
@@ -4399,7 +4428,8 @@ function saveAdvisor(){
 
 function deleteAdvisor(id,name){
   confirmDialog({title:'Delete advisor?',message:'Delete "'+name+'"? This cannot be undone.',confirmText:'Delete',onConfirm:function(){
-    db.collection('advisors').doc(id).delete();toast('Advisor deleted','success');
+    db.collection('advisors').doc(id).delete().then(function(){toast('Advisor deleted','success');})
+      .catch(function(e){toast('Could not delete advisor: '+e.message,'error');});
   }});
 }
 
@@ -4410,7 +4440,7 @@ function renderTechnicians(){
   if(!technicians.length){el.innerHTML='<div class="empty">No technicians added yet.</div>';return;}
   el.innerHTML=technicians.map(function(t){
     var ts=TECH_STATUS[t.status||'available']||TECH_STATUS.available;
-    var avatarHtml=t.photoUrl?'<img src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+ts.dot+'">':'<div style="width:40px;height:40px;border-radius:50%;background:'+ts.bg+';color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+staffInitials(t.name)+'</div>';
+    var avatarHtml=t.photoUrl?'<img src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+ts.dot+'">':'<div style="width:40px;height:40px;border-radius:50%;background:'+ts.bg+';color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(t.name))+'</div>';
     return'<div class="list-item" style="cursor:default">'+
       '<div style="flex-shrink:0">'+avatarHtml+'</div>'+
       '<div class="li-body">'+
@@ -4475,7 +4505,11 @@ function saveTechnician(){
 
 // SHARED INVOICE HELPERS
 function isInvPaid(iv){
-  return iv.status==='paid'||iv.status==='delivered'||(typeof iv.status==='string'&&iv.status.startsWith('paid_'));
+  if(iv.status==='paid'||(typeof iv.status==='string'&&iv.status.startsWith('paid_')))return true;
+  // 'delivered' is a logistics state, not a settlement state — only treat it
+  // as paid when the money has actually been collected.
+  if(iv.status==='delivered')return Number(iv.totalPaid||0)>=Number(iv.total||0)-0.005;
+  return false;
 }
 function openInvoiceById(id){
   var iv=invoices.find(function(x){return x.id===id;});
@@ -4697,15 +4731,15 @@ function saveQuickInvoice(){
   var isCredit=method==='credit';
   var amount=isCredit?0:Number((document.getElementById('qi-pay-amount')||{}).value||0);
   var notes=((document.getElementById('qi-notes')||{}).value||'').trim();
-  var total=items.reduce(function(s,i){return s+i.cost;},0);
+  var total=Math.round(items.reduce(function(s,i){return s+i.cost;},0)*100)/100;
+  if(!isCredit&&amount>total+0.005){toast('Payment ('+fmtMoney(amount)+') exceeds the invoice total ('+fmtMoney(total)+').');return;}
   var btn=document.getElementById('qi-save-btn');
   btn.disabled=true;btn.textContent='Creating…';
-  var maxSeq=invoices.reduce(function(m,iv){return Math.max(m,iv.seq||0);},0);
   var custId=qiSelCustomer?qiSelCustomer.id:(qiSelVehicle.customerId||'');
   var custName=qiSelCustomer?qiSelCustomer.name:(qiSelVehicle.customerName||'');
-  var isPaidFull=!isCredit&&amount>=total;
+  var isPaidFull=!isCredit&&amount>=total-0.005;
   var invData={
-    seq:maxSeq+1,jobCardId:'',jobNumber:'',
+    jobCardId:'',jobNumber:'',
     customerId:custId,customerName:custName,
     vehicleId:qiSelVehicle.id,vehicleReg:qiSelVehicle.registrationNo,
     vehicleMake:qiSelVehicle.make||'',vehicleModel:qiSelVehicle.model||'',
@@ -4717,10 +4751,15 @@ function saveQuickInvoice(){
     createdAt:Date.now(),source:'quick_invoice'
   };
   db.collection('invoices').add(invData).then(function(ref){
-    curInvoice=Object.assign({id:ref.id},invData);
-    if(!isCredit&&amount>0)createInvoiceTransaction(curInvoice,method,amount,notes);
+    // The server assigns the authoritative invoice number — use it, never the
+    // locally guessed one, so screen/print always match the register.
+    curInvoice=Object.assign({id:ref.id},invData,ref.serverDoc||{});
+    if(!isCredit&&amount>0){
+      db.collection('transactions').add(buildInvoiceTxnDoc(curInvoice,method,amount,notes))
+        .catch(function(e){toast('Invoice saved, but the cash entry failed: '+e.message+' — record it in Accounts.','error');});
+    }
     showInvoice(curInvoice);
-  }).catch(function(e){btn.disabled=false;btn.textContent='✓ Create Invoice & Collect Payment';toast('Error: '+e.message);});
+  }).catch(function(e){btn.disabled=false;btn.textContent='✓ Create Invoice & Collect Payment';toast('Error: '+e.message,'error');});
 }
 
 // INVOICE
@@ -4728,21 +4767,26 @@ function convertToInvoice(){
   var jc=curJobCard;if(!jc)return;
   var existing=invoices.find(function(iv){return iv.jobCardId===jc.id;});
   if(existing){showInvoice(existing);return;}
-  var maxSeq=invoices.reduce(function(m,iv){return Math.max(m,iv.seq||0);},0);
-  var total=(jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0);
+  var total=Math.round((jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0)*100)/100;
   var data={
-    seq:maxSeq+1,jobCardId:jc.id,jobNumber:jcNum(jc),
+    jobCardId:jc.id,jobNumber:jcNum(jc),
     customerId:jc.customerId,customerName:jc.customerName,
     vehicleId:jc.vehicleId,vehicleReg:jc.vehicleReg,vehicleMake:jc.vehicleMake,vehicleModel:jc.vehicleModel,
     items:(jc.works||[]).map(function(w){return{description:w.description||'',cost:Number(w.cost)||0};}),
     total:total,status:'unpaid',createdAt:Date.now()
   };
   db.collection('invoices').add(data).then(function(ref){
-    curInvoice=Object.assign({id:ref.id},data);
-    // Auto-update job card status to Invoiced
-    db.collection('jobCards').doc(jc.id).update({status:'invoiced'});
+    // Server-assigned number (a DB unique index also blocks a second invoice
+    // for the same job card, so a double-click can never double-bill).
+    curInvoice=Object.assign({id:ref.id},data,ref.serverDoc||{});
+    db.collection('jobCards').doc(jc.id).update({status:'invoiced'})
+      .catch(function(e){toast('Invoice created, but the job card status update failed: '+e.message,'error');});
     if(curJobCard&&curJobCard.id===jc.id)curJobCard.status='invoiced';
     showInvoice(curInvoice);
+  }).catch(function(e){
+    var msg=(e&&e.message)||'';
+    if(msg.indexOf('already exists')>=0||msg.indexOf('duplicate')>=0){toast('An invoice already exists for this job card.','error');}
+    else toast('Could not create invoice: '+msg,'error');
   });
 }
 
@@ -4958,13 +5002,12 @@ function findDefaultAccount(method){
   return finAccounts.find(function(a){return a.type===key&&a.isActive!==false;})||null;
 }
 
-function createInvoiceTransaction(iv,method,amount,notes){
-  if(!amount||amount<=0)return;
+function buildInvoiceTxnDoc(iv,method,amount,notes){
   // DR: Cash/Bank (money received), CR: Accounts Receivable
   var drAcc=findDefaultAccount(method);
   var crAcc=finAccounts.find(function(a){return a.name==='Accounts Receivable'&&a.isActive!==false;})||null;
   var today=new Date().toISOString().slice(0,10);
-  db.collection('transactions').add({
+  return {
     type:'income',
     date:today,
     amount:Number(parseFloat(amount).toFixed(2)),
@@ -4982,6 +5025,25 @@ function createInvoiceTransaction(iv,method,amount,notes){
     invoiceId:iv.id,
     jobCardId:iv.jobCardId||'',
     createdAt:Date.now()
+  };
+}
+
+// Payments post through POST /api/invoices/:id/pay — appended under a row
+// lock (two devices can never erase each other's payments), balance-capped,
+// with the cash-book rows written in the same DB transaction.
+function postInvoicePayments(iv,payments,btn){
+  var txns=payments.map(function(p){return buildInvoiceTxnDoc(iv,p.method,p.amount,p.notes||'');});
+  var origLabel=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  gmsApi.pay(iv.id,{payments:payments,transactions:txns}).then(function(updated){
+    Object.assign(curInvoice,updated);
+    if(btn){btn.disabled=false;btn.textContent=origLabel;}
+    closePaymentModal();
+    showInvoice(curInvoice);
+    toast('Payment recorded — '+fmtMoney(payments.reduce(function(s,p){return s+Number(p.amount);},0)),'success');
+  }).catch(function(e){
+    if(btn){btn.disabled=false;btn.textContent=origLabel;}
+    toast(e.message||'Could not record payment.','error');
   });
 }
 
@@ -4990,64 +5052,42 @@ function confirmFullPayment(){
   var amount=Number(document.getElementById('pm-amount').value);
   var notes=(document.getElementById('pm-notes').value||'').trim();
   if(!amount||amount<=0){toast('Please enter a valid amount.');return;}
-  var iv=curInvoice;
-  var newPayment={method:method,amount:amount,paidAt:Date.now(),notes:notes};
-  var payments=(iv.payments||[]).concat([newPayment]);
-  var totalPaid=payments.reduce(function(s,p){return s+Number(p.amount);},0);
-  var status=totalPaid>=iv.total?'paid':'partial';
-  var update={payments:payments,totalPaid:totalPaid,status:status};
-  if(status==='paid'){update.paidAt=Date.now();update.paymentType=method;}
-  db.collection('invoices').doc(iv.id).update(update).then(function(){
-    Object.assign(curInvoice,update);
-    createInvoiceTransaction(iv,method,amount,notes);
-    closePaymentModal();
-    showInvoice(curInvoice);
-  });
+  postInvoicePayments(curInvoice,[{method:method,amount:amount,paidAt:Date.now(),notes:notes}]);
 }
 
 function confirmCredit(){
   var due=(document.getElementById('pm-due').value||'');
   var notes=(document.getElementById('pm-credit-notes').value||'').trim();
-  var update={status:'credit',creditDueDate:due,creditNotes:notes};
-  db.collection('invoices').doc(curInvoice.id).update(update).then(function(){
+  // A part-paid invoice keeps its 'partial' status (and stays in the unpaid
+  // chase lists); credit terms are stored alongside without erasing it.
+  var iv=curInvoice;
+  var update={creditDueDate:due,creditNotes:notes};
+  if(!(Number(iv.totalPaid)>0))update.status='credit';
+  db.collection('invoices').doc(iv.id).update(update).then(function(){
     Object.assign(curInvoice,update);
     closePaymentModal();
     showInvoice(curInvoice);
-  });
+  }).catch(function(e){toast(e.message||'Could not save credit terms.','error');});
 }
 
 function confirmSplitPayment(){
   var valid=splitRows.filter(function(r){return Number(r.amount)>0;});
   if(!valid.length){toast('Please enter at least one payment amount.');return;}
-  var iv=curInvoice;
   var now=Date.now();
-  var newPayments=valid.map(function(r){return{method:r.method,amount:Number(r.amount),paidAt:now,notes:''};});
-  var payments=(iv.payments||[]).concat(newPayments);
-  var totalPaid=payments.reduce(function(s,p){return s+Number(p.amount);},0);
-  var status=totalPaid>=iv.total?'paid':'partial';
-  var update={payments:payments,totalPaid:totalPaid,status:status};
-  if(status==='paid'){
-    update.paidAt=now;
-    var methods=valid.map(function(r){return r.method;});
-    update.paymentType=methods.length===1?methods[0]:'split';
-  }
-  db.collection('invoices').doc(iv.id).update(update).then(function(){
-    Object.assign(curInvoice,update);
-    valid.forEach(function(r){createInvoiceTransaction(iv,r.method,Number(r.amount),'');});
-    closePaymentModal();
-    showInvoice(curInvoice);
-  });
+  postInvoicePayments(curInvoice,valid.map(function(r){return{method:r.method,amount:Number(r.amount),paidAt:now,notes:''};}));
 }
 
 // ── GATE PASS ──
 function showGatePass(){
   var jc=curJobCard;
   if(!jc){toast('No job card selected.');return;}
-  // Mark job card as delivered
+  // Mark job card as delivered — local state flips only after the write lands,
+  // so the screen never claims a delivery that was not persisted.
   if(jc.status!=='delivered'){
-    db.collection('jobCards').doc(jc.id).update({status:'delivered',deliveredAt:Date.now()});
-    jc.status='delivered';
-    jc.deliveredAt=Date.now();
+    var ts=Date.now();
+    db.collection('jobCards').doc(jc.id).update({status:'delivered',deliveredAt:ts}).then(function(){
+      jc.status='delivered';jc.deliveredAt=ts;
+    }).catch(function(e){toast('Could not mark the job card as delivered: '+e.message,'error');});
   }
   renderGatePass(jc,curInvoice);
   show('v-gate-pass');
@@ -5305,11 +5345,11 @@ function initAccountsFirestore(){
     transactions=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='accounts')renderAccounts();
     if(activeNav==='dashboard')renderDashboard();
-  });
+  },snapErr('transactions','transactions'));
   db.collection('finAccounts').orderBy('createdAt','desc').onSnapshot(function(snap){
     finAccounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='fin-accounts')renderFinAccounts();
-  });
+  },snapErr('ledger accounts'));
 }
 
 function getAccRange(){
@@ -5642,30 +5682,26 @@ function saveTransaction(){
   if(editingTxnId){
     db.collection('transactions').doc(editingTxnId).update(data).then(function(){
       btn.disabled=false;btn.textContent='Update';navTo('accounts');
+    }).catch(function(e){
+      btn.disabled=false;btn.textContent='Update';toast('Could not update transaction: '+(e.message||e),'error');
     });
   } else {
     data.createdAt=Date.now();
     var linkedInvId=txnLinkedInvoiceId;
     var linkedAmt=Number(parseFloat(amount).toFixed(2));
     var linkedMethod=txnMethod;
-    db.collection('transactions').add(data).then(function(){
-      if(linkedInvId){
-        var iv=invoices.find(function(x){return x.id===linkedInvId;});
-        if(iv){
-          var newPayment={method:linkedMethod,amount:linkedAmt,paidAt:Date.now(),notes:''};
-          var updatedPayments=(iv.payments||[]).concat([newPayment]);
-          var newTotalPaid=updatedPayments.reduce(function(s,p){return s+Number(p.amount||0);},0);
-          var newStatus=newTotalPaid>=Number(iv.total||0)?'paid':'partial';
-          var invUpdate={payments:updatedPayments,totalPaid:newTotalPaid,status:newStatus};
-          if(newStatus==='paid'){invUpdate.paidAt=Date.now();invUpdate.paymentType=linkedMethod;}
-          return db.collection('invoices').doc(linkedInvId).update(invUpdate);
-        }
-      }
-    }).then(function(){
-      btn.disabled=false;btn.textContent='Save';navTo('accounts');
-    }).catch(function(e){
-      btn.disabled=false;btn.textContent='Save';toast('Saved, but error updating invoice: '+(e.message||e));navTo('accounts');
-    });
+    var done=function(){btn.disabled=false;btn.textContent='Save';navTo('accounts');};
+    var fail=function(e){btn.disabled=false;btn.textContent='Save';toast((e&&e.message)||'Could not save transaction.','error');};
+    if(linkedInvId){
+      // Invoice payment + cash-book row in ONE server transaction — the two
+      // can never diverge (no more "saved, but error updating invoice").
+      gmsApi.pay(linkedInvId,{
+        payments:[{method:linkedMethod,amount:linkedAmt,paidAt:Date.now(),notes:''}],
+        transactions:[data]
+      }).then(done).catch(fail);
+    } else {
+      db.collection('transactions').add(data).then(done).catch(fail);
+    }
   }
 }
 
@@ -5681,11 +5717,30 @@ function renderSettings(){
   show('v-settings');
 }
 
+function downloadBackup(){
+  var btn=document.getElementById('set-backup-btn');
+  if(btn){btn.disabled=true;btn.textContent='Preparing…';}
+  gmsApi.exportBackup().then(function(blob){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='gms-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
+    if(btn){btn.disabled=false;btn.textContent='Download Backup';}
+    toast('Backup downloaded','success');
+  }).catch(function(e){
+    if(btn){btn.disabled=false;btn.textContent='Download Backup';}
+    toast('Backup failed: '+e.message,'error');
+  });
+}
+
 function saveCompanySettings(){
+  var nameVal=document.getElementById('set-name').value.trim();
+  if(!nameVal){toast('Please enter the company name — it appears on every invoice.');return;}
   var btn=document.getElementById('set-save-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var data={
-    name:document.getElementById('set-name').value.trim(),
+    name:nameVal,
     tagline:document.getElementById('set-tagline').value.trim(),
     phone:document.getElementById('set-phone').value.trim(),
     email:document.getElementById('set-email').value.trim(),
@@ -5865,15 +5920,16 @@ function saveFinAccount(){
     description:document.getElementById('fin-acc-desc').value.trim(),
     isActive:true
   };
+  var ffail=function(e){btn.disabled=false;btn.textContent=editingFinAccId?'Update Account':'Save Account';toast('Could not save account: '+e.message,'error');};
   if(editingFinAccId){
     db.collection('finAccounts').doc(editingFinAccId).update(data).then(function(){
       btn.disabled=false;btn.textContent='Update Account';navTo('fin-accounts');
-    });
+    }).catch(ffail);
   } else {
     data.createdAt=Date.now();
     db.collection('finAccounts').add(data).then(function(){
       btn.disabled=false;btn.textContent='Save Account';navTo('fin-accounts');
-    });
+    }).catch(ffail);
   }
 }
 
@@ -5881,8 +5937,13 @@ function deleteFinAccount(){
   if(!editingFinAccId)return;
   var a=finAccounts.find(function(x){return x.id===editingFinAccId;});
   var accId=editingFinAccId;
+  // Deleting an account with posted transactions would orphan them from every
+  // ledger report — block it instead of silently corrupting the books.
+  var linked=transactions.filter(function(tx){return tx.accountId===accId||tx.debitAccountId===accId||tx.creditAccountId===accId;}).length;
+  if(linked){toast('Cannot delete "'+((a&&a.name)||'this account')+'" — '+linked+' transaction'+(linked===1?'':'s')+' are posted to it. Deactivate it instead.','error');return;}
   confirmDialog({title:'Delete account?',message:'Delete "'+((a&&a.name)||'this account')+'"? This cannot be undone.',confirmText:'Delete',onConfirm:function(){
-    db.collection('finAccounts').doc(accId).delete().then(function(){navTo('fin-accounts');toast('Account deleted','success');});
+    db.collection('finAccounts').doc(accId).delete().then(function(){navTo('fin-accounts');toast('Account deleted','success');})
+      .catch(function(e){toast('Could not delete account: '+e.message,'error');});
   }});
 }
 
@@ -6276,8 +6337,8 @@ function renderTrialBalance(){
     '</tr></thead><tbody>'+
     rows.map(function(r){
       return'<tr>'+
-        '<td style="font-weight:600;color:var(--t1)">'+r.name+'</td>'+
-        '<td style="color:var(--t2)">'+r.type+'</td>'+
+        '<td style="font-weight:600;color:var(--t1)">'+esc(r.name)+'</td>'+
+        '<td style="color:var(--t2)">'+esc(r.type)+'</td>'+
         '<td class="num" style="font-weight:700;color:#DC2626">'+(r.dr>0?fmtMoney(r.dr):'—')+'</td>'+
         '<td class="num" style="font-weight:700;color:#15803D">'+(r.cr>0?fmtMoney(r.cr):'—')+'</td>'+
       '</tr>';
@@ -7284,14 +7345,16 @@ function toggleLoginPw(btn,inputId){
   btn.setAttribute('aria-label',show?'Hide password':'Show password');
 }
 
+var _techLoginList=[];
 function loadTechLoginList(){
   var sel=document.getElementById('tl-name');
   sel.innerHTML='<option value="">Loading…</option>';
-  db.collection('technicians').orderBy('name').get().then(function(snap){
+  // Public safe-fields endpoint — technician PINs never reach the browser.
+  fetch((window.GMS_API_BASE||'')+'/api/tech-list').then(function(r){return r.json();}).then(function(list){
+    _techLoginList=list||[];
     sel.innerHTML='<option value="">— Select your name —</option>';
-    snap.docs.forEach(function(d){
-      var t=Object.assign({id:d.id},d.data());
-      sel.innerHTML+='<option value="'+t.id+'">'+esc(t.name)+'</option>';
+    _techLoginList.forEach(function(t){
+      sel.innerHTML+='<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
     });
   }).catch(function(){sel.innerHTML='<option value="">Error loading list</option>';});
 }
@@ -7305,16 +7368,19 @@ function doTechLogin(){
   if(!sel.value){err.textContent='Please select your name.';err.style.display='block';return;}
   if(!pin){err.textContent='Please enter your PIN.';err.style.display='block';return;}
   btn.disabled=true;btn.textContent='Signing in…';
-  db.collection('technicians').doc(sel.value).get().then(function(doc){
-    if(!doc.exists){err.textContent='Technician not found.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In as Technician';return;}
-    var t=Object.assign({id:doc.id},doc.data());
-    if(!t.pin){err.textContent='No PIN set. Ask admin to set your PIN.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In as Technician';return;}
-    if(t.pin!==pin){err.textContent='Incorrect PIN.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In as Technician';return;}
-    localStorage.setItem(TECH_SESSION_KEY,JSON.stringify({id:t.id,name:t.name,photoUrl:t.photoUrl||'',status:t.status||'available'}));
+  // PIN is verified server-side; a signed token comes back for API access.
+  fetch((window.GMS_API_BASE||'')+'/api/tech-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:sel.value,pin:pin})})
+  .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+  .then(function(res){
     btn.disabled=false;btn.textContent='Sign In as Technician';
+    if(!res.ok||!res.d.ok){err.textContent=(res.d&&res.d.error)||'Incorrect PIN.';err.style.display='block';return;}
+    var listed=_techLoginList.find(function(t){return t.id===res.d.id;})||{};
+    var t={id:res.d.id,name:res.d.name,photoUrl:listed.photoUrl||'',status:'available',token:res.d.token};
+    localStorage.setItem(TECH_SESSION_KEY,JSON.stringify(t));
     unlockAudio(); // user gesture — unlock audio context for later alarm sounds
     showTechPortal(t);
-  }).catch(function(e){err.textContent='Error: '+e.message;err.style.display='block';btn.disabled=false;btn.textContent='Sign In as Technician';});
+  })
+  .catch(function(e){err.textContent='Cannot reach server. Try again.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In as Technician';});
 }
 
 function showTechPortal(t){

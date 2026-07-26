@@ -30,8 +30,12 @@ CREATE TABLE IF NOT EXISTS appointments (id text PRIMARY KEY, data jsonb NOT NUL
 CREATE TABLE IF NOT EXISTS parts        (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
+CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
 
 CREATE INDEX IF NOT EXISTS idx_jobcards_created  ON job_cards(created_at DESC);
+-- One invoice per job card, enforced by the database (client-side guards race).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_jobcard
+  ON invoices ((data->>'jobCardId')) WHERE data->>'jobCardId' IS NOT NULL AND data->>'jobCardId' <> '';
 CREATE INDEX IF NOT EXISTS idx_invoices_created  ON invoices(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_txn_date          ON transactions(txn_date DESC);
 CREATE INDEX IF NOT EXISTS idx_appt_date         ON appointments(appt_date);

@@ -8,10 +8,33 @@
  */
 const BASE = process.env.BASE || 'http://localhost:3010';
 
+// The API requires auth now — log in first (credentials from env/.env).
+let TOKEN = null;
+async function login() {
+  const env = {};
+  try {
+    for (const line of require('fs').readFileSync(require('path').join(__dirname, '..', '.env'), 'utf8').split('\n')) {
+      const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/i);
+      if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+  } catch (_) {}
+  const user = process.env.ADMIN_USER || env.ADMIN_USER || 'arifpadup';
+  const pass = process.env.ADMIN_PASSWORD || env.ADMIN_PASSWORD;
+  if (!pass) throw new Error('Set ADMIN_PASSWORD (env or .env) so the seeder can log in.');
+  const r = await fetch(BASE + '/api/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user, password: pass }),
+  });
+  const d = await r.json();
+  if (!r.ok || !d.token) throw new Error('Seeder login failed: ' + (d.error || r.status));
+  TOKEN = d.token;
+}
+
 async function api(method, path, body) {
+  if (!TOKEN) await login();
   const r = await fetch(BASE + path, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!r.ok) throw new Error(`${method} ${path} -> ${r.status} ${await r.text()}`);
