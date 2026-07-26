@@ -59,10 +59,22 @@ function extractedColumns(cfg, doc) {
 }
 
 // Money fields are rounded server-side so float dust can never strand an
-// invoice between "paid" and "partial".
+// invoice between "paid" and "partial". Invoice totals are RECOMPUTED from the
+// line items (+ optional VAT) rather than trusted from the client — a tampered
+// or buggy client can no longer post a total that doesn't match its lines.
 function sanitizeDoc(coll, doc) {
   if (coll === 'invoices') {
-    for (const k of ['total', 'subtotal', 'taxAmount', 'totalPaid', 'discount']) {
+    if (Array.isArray(doc.items)) {
+      const sub = round2(doc.items.reduce((s, it) => s + (Number(it.cost) || 0) * (it.qty != null ? Number(it.qty) || 0 : 1), 0));
+      const rate = Number(doc.taxRate) || 0;
+      const tax = rate > 0 ? round2(sub * rate / 100) : 0;
+      doc.subtotal = sub;
+      doc.taxAmount = tax;
+      doc.total = round2(sub + tax);
+    } else if (typeof doc.total === 'number') {
+      doc.total = round2(doc.total);
+    }
+    for (const k of ['totalPaid', 'discount']) {
       if (typeof doc[k] === 'number') doc[k] = round2(doc[k]);
     }
   }
@@ -365,7 +377,18 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     await client.query('BEGIN');
     const cur = await client.query(`SELECT data FROM ${cfg.table} WHERE id = $1 FOR UPDATE`, [req.params.id]);
     if (!cur.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }); }
-    const merged = { ...cur.rows[0].data, ...patch };
+    let merged = { ...cur.rows[0].data, ...patch };
+    // Re-derive invoice money from the MERGED items so a bare {total:…} patch
+    // (no items) can never desync the total from the lines. Paid amounts are
+    // owned by POST /api/invoices/:id/pay — a raw PUT may change lifecycle
+    // status (delivered, credit terms) but never rewrite payments/totalPaid.
+    if (req.params.coll === 'invoices') {
+      if ('totalPaid' in patch || 'payments' in patch) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Payments must be recorded via the payment endpoint.' });
+      }
+      merged = sanitizeDoc('invoices', merged);
+    }
     const cols = extractedColumns(cfg, merged);
     if (cfg.seq && merged.seq != null) cols.seq = merged.seq;
     const sets = ['data = $2'];

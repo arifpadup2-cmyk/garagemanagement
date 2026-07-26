@@ -783,10 +783,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 }
 
 @media print{
-  #sidebar,#bottom-nav,.back-btn,.btn,.page-header .btn-group,#mark-paid-btn{display:none!important}
-  #main-content{margin:0;padding:16px}
+  /* Hide ALL app chrome so only the document (invoice/statement/report) prints */
+  #sidebar,#bottom-nav,#topbar,#mob-header,.back-btn,.btn,.page-header,.page-header .btn-group,#mark-paid-btn,.acc-filter-bar,.jc-fpill,.filter-bar,input[type=date],.no-print{display:none!important}
+  #main-content{margin:0!important;padding:0!important}
+  .view{padding:0!important}
   .card{box-shadow:none;border:1px solid #ddd}
   body{background:#fff}
+  @page{margin:14mm}
 }
 </style>
 </head>
@@ -4619,8 +4622,11 @@ function renderSalesKpis(){
   if(!_fired.invoices){el.innerHTML=skelKpis(4);return;}
   var today=new Date().toISOString().slice(0,10);
   var mStart=today.slice(0,7)+'-01';
-  var todayAmt=invoices.filter(function(iv){return new Date(iv.createdAt).toISOString().slice(0,10)===today;}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
-  var mAmt=invoices.filter(function(iv){var d=new Date(iv.createdAt).toISOString().slice(0,10);return d>=mStart&&d<=today;}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
+  // Guard: an invoice with a missing/invalid createdAt used to throw
+  // RangeError and blank the whole Sales hub. ds() returns '' safely.
+  var ds=function(iv){var t=Number(iv.createdAt);if(!t)return '';var d=new Date(t);return isNaN(d)?'':d.toISOString().slice(0,10);};
+  var todayAmt=invoices.filter(function(iv){return ds(iv)===today;}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
+  var mAmt=invoices.filter(function(iv){var d=ds(iv);return d&&d>=mStart&&d<=today;}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
   var unpaidC=invoices.filter(function(iv){return iv.status==='unpaid';}).length;
   var unpaidAmt=invoices.filter(function(iv){return iv.status==='unpaid';}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
   el.innerHTML=
@@ -6155,7 +6161,7 @@ function deleteFinAccount(){
 var glType='customer', glAccId='';
 var glEntryMode='receipt', glEntryRef='', glEntryEntityType='customer';
 
-function tsToDs(ts){return ts?new Date(ts).toISOString().slice(0,10):'';}
+function tsToDs(ts){if(!ts)return '';var d=new Date(Number(ts)||ts);return isNaN(d)?'':d.toISOString().slice(0,10);}
 
 function showGenLedger(){
   var today=new Date().toISOString().slice(0,10);
@@ -7209,7 +7215,7 @@ function renderSalesReport(){
 
 function srFilteredInvoices(){
   return invoices.filter(function(iv){
-    var d=new Date(iv.createdAt).toISOString().slice(0,10);
+    var d=tsToDs(iv.createdAt);
     return(!srFrom||d>=srFrom)&&(!srTo||d<=srTo);
   });
 }
@@ -7254,7 +7260,7 @@ function renderInvoiceReport(el){
       '<td style="font-weight:700">'+esc(invNum(iv))+'</td>'+
       '<td>'+esc(iv.customerName||'')+'</td>'+
       '<td>'+esc(iv.vehicleReg||'')+'</td>'+
-      '<td style="white-space:nowrap">'+fmtDate(new Date(iv.createdAt).toISOString().slice(0,10))+'</td>'+
+      '<td style="white-space:nowrap">'+fmtDate(tsToDs(iv.createdAt))+'</td>'+
       '<td class="num" style="font-weight:600">'+fmtMoney(iv.total)+'</td>'+
       '<td class="num" style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
       '<td class="num" style="color:'+(bal>0?'var(--red)':'var(--t3)')+'">'+fmtMoney(bal)+'</td>'+
@@ -7339,7 +7345,7 @@ function renderItemwiseReport(el){
 function renderServicewiseReport(el){
   var today=new Date().toISOString().slice(0,10);
   var jcList=jobCards.filter(function(jc){
-    var d=(jc.dateIn||new Date(jc.createdAt).toISOString()).slice(0,10);
+    var d=jc.dateIn||tsToDs(jc.createdAt);
     return(!srFrom||d>=srFrom)&&(!srTo||d<=srTo);
   });
   if(!jcList.length){el.innerHTML='<div class="empty">No job cards in this period.</div>';return;}
@@ -7408,7 +7414,7 @@ function renderJcReport(){
   var totalRev=jobCards.reduce(function(s,j){return s+(j.works||[]).reduce(function(ws,w){return ws+Number(w.cost||0);},0);},0);
   var monthMap={};
   jobCards.forEach(function(jc){
-    var m=(jc.dateIn||new Date(jc.createdAt).toISOString()).slice(0,7);
+    var m=(jc.dateIn||tsToDs(jc.createdAt)).slice(0,7);
     if(!monthMap[m])monthMap[m]={count:0,rev:0};
     monthMap[m].count++;
     monthMap[m].rev+=(jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0);
