@@ -528,6 +528,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .wb-card:hover{border-color:var(--b2);box-shadow:0 8px 18px -10px rgba(15,23,42,.22)}
 .wb-card:active{cursor:grabbing}
 .wb-card.wb-dragging{opacity:.4;transform:rotate(1.5deg)}
+.wb-move{display:none;width:100%;margin-top:10px;min-height:40px;font-size:12.5px;font-weight:600;border:1.5px solid var(--b1);border-radius:8px;padding:0 10px;background:var(--bg);color:var(--t2)}
+/* Coarse-pointer (touch) devices: native DnD doesn't fire — show the stage
+   picker, drop the grab cursor, and give small controls comfortable targets. */
+@media (pointer:coarse){
+  .wb-move{display:block}
+  .wb-card{cursor:default}
+  .wb-hint-drag{display:none}
+  .dt-colbtn{min-height:40px;padding:8px 12px}
+  .jc-fpill{min-height:40px}
+}
 .wb-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
 .wb-jc{font-size:12px;font-weight:800;color:var(--t3);font-variant-numeric:tabular-nums}
 .wb-plate-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
@@ -3861,6 +3871,10 @@ function wbCard(jc){
     (techs.length?'<div class="wb-techs">'+ico('technicians',12,'var(--t3)')+'<span>'+esc(techs.join(', '))+'</span></div>':'')+
     '<div class="wb-card-foot"><span class="mini-bar"><span class="mini-fill" style="width:'+pct+'%;background:'+(pct===100?'var(--green)':'#2563EB')+'"></span></span>'+
       '<span class="wb-prog">'+doneW+'/'+works.length+'</span>'+(total?'<span class="wb-val">'+fmtMoney(total)+'</span>':'')+'</div>'+
+    // Touch fallback for drag-drop: a stage picker (shown only on coarse pointers).
+    '<select class="wb-move" aria-label="Move to stage" onclick="event.stopPropagation()" onchange="wbMove(\''+jc.id+'\',this.value)">'+
+      WB_STAGES.map(function(st){return '<option value="'+st.key+'"'+(st.match(jc.status)?' selected':'')+'>Move to: '+st.label+'</option>';}).join('')+
+    '</select>'+
   '</div>';
 }
 function renderWorkshop(){
