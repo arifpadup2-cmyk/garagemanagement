@@ -8,7 +8,9 @@ services:
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        sync: false   # set in the Render dashboard (Neon connection string)
+        sync: false   # set in the Render dashboard. Use Neon's POOLED endpoint
+                      # (host contains "-pooler") for many concurrent connections;
+                      # verify pg_advisory_xact_lock behaviour under PgBouncer first.
       - key: ADMIN_PASSWORD
         sync: false   # set in the Render dashboard (admin login password)
       - key: SESSION_SECRET
