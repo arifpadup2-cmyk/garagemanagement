@@ -47,6 +47,9 @@ input,select,textarea{font-family:inherit;font-size:14px;outline:none;border:1.5
 input::placeholder,textarea::placeholder{color:#64748B;opacity:1}
 input:focus,select:focus,textarea:focus{border-color:var(--accent-dk);box-shadow:0 0 0 3px rgba(52,120,255,.22)}
 textarea{resize:vertical;min-height:80px}
+/* Inline field validation */
+input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.15)}
+.field-err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:5px;display:flex;align-items:center;gap:5px}
 label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px}
 .ico{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle}
 .ico svg{width:100%;height:100%;display:block}
@@ -2728,6 +2731,23 @@ function toast(msg,type){
   t.onclick=dismiss;wrap.appendChild(t);
   setTimeout(dismiss,type==='error'?6000:3800);
 }
+// ── Inline field validation (aria-invalid + message + focus-to-error) ──
+// invalidField('id','message') marks the field, shows an inline error, focuses
+// and scrolls to it, and returns false so callers can `return invalidField(...)`.
+function invalidField(id,msg){
+  var el=document.getElementById(id);if(!el){toast(msg,'warning');return false;}
+  el.setAttribute('aria-invalid','true');
+  var m=el.parentNode.querySelector('.field-err-msg[data-for="'+id+'"]');
+  if(!m){m=document.createElement('div');m.className='field-err-msg';m.setAttribute('data-for',id);m.setAttribute('role','alert');el.parentNode.appendChild(m);}
+  m.innerHTML=ico('alertTri',13,'var(--red)')+esc(msg);
+  el.addEventListener('input',function clr(){el.removeAttribute('aria-invalid');if(m&&m.parentNode)m.remove();el.removeEventListener('input',clr);});
+  el.focus();if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'});
+  return false;
+}
+function clearFieldErrors(){
+  document.querySelectorAll('[aria-invalid="true"]').forEach(function(el){el.removeAttribute('aria-invalid');});
+  document.querySelectorAll('.field-err-msg').forEach(function(m){m.remove();});
+}
 // confirmDialog(opts|message, onConfirm) — styled replacement for window.confirm
 function confirmDialog(opts,onConfirm){
   if(typeof opts==='string')opts={message:opts,onConfirm:onConfirm};
@@ -3610,8 +3630,8 @@ function showAddCustomer(editing){
 function saveCustomer(){
   var name=document.getElementById('c-name').value.trim();
   var phone=document.getElementById('c-phone').value.trim();
-  if(!name){toast('Please enter customer name.');return;}
-  if(!phone){toast('Please enter phone number.');return;}
+  if(!name){return invalidField('c-name','Please enter the customer name.');}
+  if(!phone){return invalidField('c-phone','Please enter a phone number.');}
   var btn=document.getElementById('save-cust-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var data={name:name,phone:phone,wa:document.getElementById('c-wa').value.trim(),email:document.getElementById('c-email').value.trim(),address:document.getElementById('c-address').value.trim()};
@@ -3709,8 +3729,8 @@ function saveVehicle(){
   var reg=document.getElementById('v-reg').value.trim().toUpperCase();
   var make=document.getElementById('v-make').value.trim();
   var model=document.getElementById('v-model').value.trim();
-  if(!reg){toast('Please enter registration number.');return;}
-  if(!make){toast('Please enter vehicle make.');return;}
+  if(!reg){return invalidField('v-reg','Please enter the registration number.');}
+  if(!make){return invalidField('v-make','Please enter the vehicle make.');}
   var btn=document.getElementById('save-veh-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var data={
@@ -4084,7 +4104,7 @@ function showAddPart(editing){
 }
 function savePart(){
   var name=document.getElementById('pt-name').value.trim();
-  if(!name){toast('Please enter the part name.');return;}
+  if(!name){return invalidField('pt-name','Please enter the part name.');}
   var data={
     name:name,partNumber:document.getElementById('pt-number').value.trim(),barcode:document.getElementById('pt-barcode').value.trim(),
     oemNumber:document.getElementById('pt-oem').value.trim(),category:document.getElementById('pt-category').value.trim(),
@@ -5642,7 +5662,7 @@ function showAddSupplier(id){
 }
 function saveSupplier(){
   var name=document.getElementById('sup-name').value.trim();
-  if(!name){toast('Please enter the supplier name.');return;}
+  if(!name){return invalidField('sup-name','Please enter the supplier name.');}
   var data={name:name,contact:document.getElementById('sup-contact').value.trim(),phone:document.getElementById('sup-phone').value.trim(),email:document.getElementById('sup-email').value.trim(),trn:document.getElementById('sup-trn').value.trim(),terms:document.getElementById('sup-terms').value.trim(),address:document.getElementById('sup-address').value.trim()};
   var btn=document.getElementById('save-sup-btn');btn.disabled=true;btn.textContent='Saving…';
   var fail=function(e){btn.disabled=false;btn.textContent=editingSupplierId?'Update Supplier':'Save Supplier';toast('Could not save supplier: '+e.message,'error');};
