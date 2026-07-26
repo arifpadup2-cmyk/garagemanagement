@@ -24,7 +24,9 @@
   --blue:#1E40AF;--blue-lt:#EFF6FF;
   --green:#16A34A;--green-lt:#DCFCE7;
   --red:#DC2626;--red-lt:#FEF2F2;
-  --amber:#D97706;--amber-lt:#FFFBEB;
+  --amber:#D97706;--amber-lt:#FFFBEB;--amber-dk:#B45309;--amber-bd:#FDE68A;
+  --purple:#7C3AED;--purple-lt:#F5F3FF;
+  --cta:#047857;--cta-dk:#065F46;--red-bd:#FCA5A5;--red-lt2:#FEE2E2;
   --t1:#0F172A;--t2:#475569;--t3:#556173;
   --b1:#E2E8F0;--b2:#CBD5E1;
   --bg:#F8FAFC;--card:#FFFFFF;
@@ -153,6 +155,18 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .snav-logout-mini:hover{color:var(--accent)}
 .snav-divider{padding:10px 18px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;overflow:hidden;border-top:1px solid rgba(255,255,255,.07);margin-top:4px}
 #sidebar.sidebar-mini .snav-divider{padding:8px 0 4px;border-top:1px solid rgba(255,255,255,.07);font-size:0}
+/* Collapsible module groups */
+.snav-group{display:flex;flex-direction:column}
+.snav-ghead{display:flex;align-items:center;gap:8px;width:100%;padding:11px 18px 5px;background:none;border:none;border-top:1px solid rgba(255,255,255,.07);margin-top:4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.30);text-transform:uppercase;letter-spacing:.8px;cursor:pointer;white-space:nowrap;overflow:hidden;transition:color .15s;text-align:left}
+.snav-ghead:hover{color:rgba(255,255,255,.62)}
+.snav-ghead:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;color:#fff;border-radius:4px}
+.snav-chev{margin-left:auto;font-size:9px;transition:transform .2s ease;opacity:.65}
+.snav-group.collapsed .snav-chev{transform:rotate(-90deg)}
+.snav-group.collapsed .snav-gitems{display:none}
+@media(prefers-reduced-motion:reduce){.snav-chev{transition:none}}
+#sidebar.sidebar-mini .snav-ghead{padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:0;justify-content:center}
+#sidebar.sidebar-mini .snav-chev{display:none}
+#sidebar.sidebar-mini .snav-group.collapsed .snav-gitems{display:block}
 /* MOBILE TOP HEADER */
 #mob-header{display:none;position:fixed;top:0;left:0;right:0;z-index:99;background:#0F172A;border-bottom:1px solid rgba(255,255,255,.1);padding:0 16px;padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top));align-items:center;justify-content:space-between;gap:10px}
 .mob-hdr-brand{display:flex;align-items:center;gap:10px}
@@ -480,7 +494,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 @media(max-width:1080px){.pos-grid{grid-template-columns:1fr}}
 .pos-side{position:sticky;top:82px}
 @media(max-width:1080px){.pos-side{position:static}}
-.pos-statuspill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;background:var(--amber-lt);color:var(--amber);border:1px solid #FDE68A}
+.pos-statuspill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;background:var(--amber-lt);color:var(--amber-dk);border:1px solid var(--amber-bd)}
 .pos-ctx{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r-md);padding:14px 16px}
 .pos-tabs{display:inline-flex;gap:4px;background:var(--bg);border-radius:9px;padding:4px}
 .pos-tab{border:none;background:none;font-size:12.5px;font-weight:700;color:var(--t3);padding:6px 14px;border-radius:7px;cursor:pointer;transition:all .15s}
@@ -491,9 +505,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .pos-line .pos-total{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--t1)}
 .pos-typetag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:99px;text-align:center}
 .pos-typetag.labor{background:var(--blue-lt);color:var(--blue)}
-.pos-typetag.part{background:#F5F3FF;color:#7C3AED}
+.pos-typetag.part{background:var(--purple-lt);color:var(--purple)}
 .pos-linehead{display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px 64px 96px 96px 32px;gap:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);padding:0 0 8px}
-@media(max-width:720px){.pos-linehead{display:none}.pos-line{grid-template-columns:1fr 1fr;gap:8px;padding:12px 0}}
+/* Below 900px the fixed columns starve the item-name field, so stack the line 2-up (name gets ~half width, no truncation) */
+@media(max-width:900px){.pos-linehead{display:none}.pos-line{grid-template-columns:1fr 1fr;gap:8px 10px;padding:12px 0}}
+/* vehicle search results (keyboard + hover) */
+.qi-veh-row{display:block;width:100%;text-align:left;padding:11px 14px;cursor:pointer;border:none;border-bottom:1px solid var(--b1);background:var(--card);border-radius:0}
+.qi-veh-row:last-child{border-bottom:none}
+.qi-veh-row:hover,.qi-veh-row:focus-visible{background:var(--accent-lt);outline:none}
+.qi-veh-row.notfound{background:var(--red-lt);border-top:1.5px solid var(--b1)}
+.qi-veh-row.notfound:hover,.qi-veh-row.notfound:focus-visible{background:var(--red-lt2)}
 .pos-sumrow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:6px 0;color:var(--t2)}
 .pos-sumrow.total{border-top:1.5px solid var(--b1);margin-top:6px;padding-top:14px}
 .pos-total-num{font-size:30px;font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
@@ -502,9 +523,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .pay-tile:hover{border-color:var(--b2)}
 .pay-tile.on{border-color:var(--accent);background:var(--accent-lt);color:var(--accent-text)}
 .pay-tile .pt-ic{width:20px;height:20px;flex-shrink:0}
-.btn-emerald{background:#10B981;color:#fff;border:none}
-.btn-emerald:hover{background:#059669}
-.pos-rowdel{color:var(--red);border:1.5px solid #FCA5A5;background:var(--red-lt);border-radius:7px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;line-height:1;min-height:36px}
+.btn-emerald{background:var(--cta);color:#fff;border:none}
+.btn-emerald:hover{background:var(--cta-dk)}
+.pos-rowdel{color:var(--red);border:1.5px solid var(--red-bd);background:var(--red-lt);border-radius:7px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;line-height:1;min-height:36px}
 /* ── SKELETON LOADING ── */
 .skel{position:relative;overflow:hidden;background:#E9EEF4;border-radius:7px;display:inline-block}
 .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:skelShimmer 1.5s infinite}
@@ -567,6 +588,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   .wb-hint-drag{display:none}
   .dt-colbtn{min-height:40px;padding:8px 12px}
   .jc-fpill{min-height:40px}
+  .pos-line input,.pos-line select{min-height:44px}
+  .pos-rowdel{min-height:44px}
+  .pos-tab{min-height:40px;padding:8px 14px}
+  .qi-veh-row{padding:14px}
 }
 .wb-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
 .wb-jc{font-size:12px;font-weight:800;color:var(--t3);font-variant-numeric:tabular-nums}
@@ -1013,23 +1038,72 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     </div>
     <div class="snav">
       <div class="snav-item active" id="snav-dashboard" onclick="navTo('dashboard')" title="Dashboard"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="snav-label">Dashboard</span></div>
+      <div class="snav-group" id="grp-frontdesk">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-frontdesk" onclick="toggleNavGroup('frontdesk')" title="Front Desk"><span class="snav-label">Front Desk</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-frontdesk">
+      <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
+      <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-vehicles-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-vehicles-g" onclick="toggleNavGroup('vehicles-g')" title="Vehicles"><span class="snav-label">Vehicles</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-vehicles-g">
+      <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-workshop-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-workshop-g" onclick="toggleNavGroup('workshop-g')" title="Workshop"><span class="snav-label">Workshop</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-workshop-g">
       <div class="snav-item" id="snav-estimates" onclick="navTo('estimates')" title="Estimates"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h3"/></svg></span><span class="snav-label">Estimates</span></div>
       <div class="snav-item" id="snav-jobcards" onclick="navTo('jobcards')" title="Job Cards"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span><span class="snav-label">Job Cards</span></div>
-      <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop</span></div>
-      <div class="snav-item" id="snav-appointments" onclick="navTo('appointments')" title="Appointments"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span><span class="snav-label">Appointments</span></div>
-      <div class="snav-item" id="snav-inventory" onclick="navTo('inventory')" title="Inventory"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span><span class="snav-label">Inventory</span></div>
-      <div class="snav-item" id="snav-purchases" onclick="navTo('purchases')" title="Purchases"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="snav-label">Purchases</span></div>
+      <div class="snav-item" id="snav-workshop" onclick="navTo('workshop')" title="Workshop Board"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg></span><span class="snav-label">Workshop Board</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-sales-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-sales-g" onclick="toggleNavGroup('sales-g')" title="Sales & Billing"><span class="snav-label">Sales & Billing</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-sales-g">
+      <div class="snav-item" id="snav-quick-invoice" onclick="navShow('snav-quick-invoice',showQuickInvoice)" title="Quick Invoice"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1Z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></span><span class="snav-label">Quick Invoice</span></div>
+      <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Invoices"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Invoices</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-inventory-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-inventory-g" onclick="toggleNavGroup('inventory-g')" title="Inventory"><span class="snav-label">Inventory</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-inventory-g">
+      <div class="snav-item" id="snav-inventory" onclick="navTo('inventory')" title="Spare Parts"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span><span class="snav-label">Spare Parts</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-purchasing">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-purchasing" onclick="toggleNavGroup('purchasing')" title="Purchasing"><span class="snav-label">Purchasing</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-purchasing">
+      <div class="snav-item" id="snav-purchases" onclick="navTo('purchases')" title="Purchase Orders"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="snav-label">Purchase Orders</span></div>
       <div class="snav-item" id="snav-suppliers" onclick="navTo('suppliers')" title="Suppliers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h4v-3.34a2 2 0 0 0-.59-1.42L17 9h-3"/><path d="M2 5h11v11H2z"/><path d="M14 9h3"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="snav-label">Suppliers</span></div>
-      <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Sales"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Sales</span></div>
-      <div class="snav-item" id="snav-customers" onclick="navTo('customers')" title="Customers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Customers</span></div>
-      <div class="snav-item" id="snav-vehicles" onclick="navTo('vehicles')" title="Vehicles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2.5-5h13L21 13v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 13h14"/></svg></span><span class="snav-label">Vehicles</span></div>
-      <div class="snav-divider snav-label">Staff</div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-finance-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-finance-g" onclick="toggleNavGroup('finance-g')" title="Finance"><span class="snav-label">Finance</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-finance-g">
+      <div class="snav-item" id="snav-accounts" onclick="navTo('accounts')" title="Finance"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="snav-label">Finance</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-reports-g">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-reports-g" onclick="toggleNavGroup('reports-g')" title="Reports"><span class="snav-label">Reports</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-reports-g">
+      <div class="snav-item" id="snav-reports" onclick="navShow('snav-reports',showSalesReports)" title="Reports"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="10" width="3.4" height="8" rx="0.6"/><rect x="11.3" y="6" width="3.4" height="12" rx="0.6"/><rect x="16.6" y="13" width="3.4" height="5" rx="0.6"/></svg></span><span class="snav-label">Reports</span></div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-people">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-people" onclick="toggleNavGroup('people')" title="People"><span class="snav-label">People</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-people">
       <div class="snav-item" id="snav-technicians" onclick="navTo('technicians')" title="Technicians"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="snav-label">Technicians</span></div>
       <div class="snav-item" id="snav-advisors" onclick="navTo('advisors')" title="Service Advisors"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="snav-label">Service Advisors</span></div>
-      <div class="snav-divider snav-label">Finance</div>
-      <div class="snav-item" id="snav-accounts" onclick="navTo('accounts')" title="Finance"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="snav-label">Finance</span></div>
-      <div class="snav-divider snav-label">System</div>
+        </div>
+      </div>
+      <div class="snav-group" id="grp-admin">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-admin" onclick="toggleNavGroup('admin')" title="Administration"><span class="snav-label">Administration</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-admin">
       <div class="snav-item" id="snav-settings" onclick="navTo('settings')" title="Settings"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="snav-label">Settings</span></div>
+        </div>
+      </div>
     </div>
     <div class="snav-footer">
       <div class="snav-footer-text">
@@ -1997,8 +2071,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="card" style="margin-bottom:16px">
             <div class="form-group" style="position:relative;margin-bottom:0">
               <label>Vehicle</label>
-              <input type="text" id="qi-veh-search" placeholder="Enter plate no., chassis no., or phone…" oninput="searchVehicleInQI(this.value)" autocomplete="off">
-              <div id="qi-veh-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--r-sm);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:50;max-height:240px;overflow-y:auto;margin-top:2px"></div>
+              <input type="text" id="qi-veh-search" placeholder="Enter plate no., chassis no., or phone…" oninput="searchVehicleInQI(this.value)" onkeydown="qiVehSearchKey(event)" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="qi-veh-results" aria-autocomplete="list">
+              <div id="qi-veh-results" role="listbox" aria-label="Matching vehicles" onkeydown="qiVehResultsKey(event)" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1.5px solid var(--accent);border-radius:var(--r-sm);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:var(--z-dropdown);max-height:240px;overflow-y:auto;margin-top:2px"></div>
             </div>
             <div id="qi-veh-card" style="display:none;margin-top:14px">
               <div class="pos-ctx">
@@ -2016,10 +2090,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="card" style="margin-bottom:16px">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
               <div class="card-title" style="margin:0">Job Items &amp; Services</div>
-              <div class="pos-tabs">
-                <button class="pos-tab on" id="qi-tab-all" onclick="qiSetTab('all')">All Items</button>
-                <button class="pos-tab" id="qi-tab-labor" onclick="qiSetTab('labor')">Labour</button>
-                <button class="pos-tab" id="qi-tab-part" onclick="qiSetTab('part')">Parts</button>
+              <div class="pos-tabs" role="tablist" aria-label="Filter line items">
+                <button type="button" class="pos-tab on" id="qi-tab-all" role="tab" aria-selected="true" onclick="qiSetTab('all')">All Items</button>
+                <button type="button" class="pos-tab" id="qi-tab-labor" role="tab" aria-selected="false" onclick="qiSetTab('labor')">Labour</button>
+                <button type="button" class="pos-tab" id="qi-tab-part" role="tab" aria-selected="false" onclick="qiSetTab('part')">Parts</button>
               </div>
             </div>
             <div class="pos-linehead"><span>Item / Service</span><span>Type</span><span>Technician</span><span style="text-align:center">Qty</span><span style="text-align:right">Unit</span><span style="text-align:right">Total</span><span></span></div>
@@ -2576,7 +2650,7 @@ function goMobHome(){navTo('mob-home');}
 function navTo(tab){
   activeNav=tab;
   document.querySelectorAll('.snav-item').forEach(function(el){el.classList.remove('active');});
-  var si=document.getElementById('snav-'+tab);if(si)si.classList.add('active');
+  var si=document.getElementById('snav-'+tab);if(si){si.classList.add('active');var g=si.closest('.snav-group');if(g)g.classList.remove('collapsed');}
   syncTopbar(tab);
   document.querySelectorAll('.bnav-item').forEach(function(el){el.classList.remove('active');});
   var bi=document.getElementById('bnav-'+tab);if(bi)bi.classList.add('active');
@@ -2617,6 +2691,38 @@ function navTo(tab){
   else if(tab==='balance-sheet')renderBalanceSheet();
   else if(tab==='settings')renderSettings();
 }
+
+// Sidebar items that open via a show*() helper (not navTo) still need the active highlight.
+function navShow(navId,fn){
+  document.querySelectorAll('.snav-item').forEach(function(el){el.classList.remove('active');});
+  var el=document.getElementById(navId);
+  if(el){el.classList.add('active');var g=el.closest('.snav-group');if(g)g.classList.remove('collapsed');}
+  document.querySelectorAll('.bnav-item').forEach(function(b){b.classList.remove('active');});
+  if(typeof fn==='function')fn();
+}
+// Collapsible sidebar module groups — state persisted per user.
+var NAV_COLLAPSE_KEY='viwo_nav_collapsed';
+function toggleNavGroup(g){
+  var grp=document.getElementById('grp-'+g);if(!grp)return;
+  var collapsed=grp.classList.toggle('collapsed');
+  var head=grp.querySelector('.snav-ghead');if(head)head.setAttribute('aria-expanded',collapsed?'false':'true');
+  try{
+    var set=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'[]');
+    set=set.filter(function(x){return x!==g;});
+    if(collapsed)set.push(g);
+    localStorage.setItem(NAV_COLLAPSE_KEY,JSON.stringify(set));
+  }catch(e){}
+}
+function restoreNavGroups(){
+  var set;try{set=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'[]');}catch(e){return;}
+  (set||[]).forEach(function(g){
+    var grp=document.getElementById('grp-'+g);if(!grp)return;
+    grp.classList.add('collapsed');
+    var head=grp.querySelector('.snav-ghead');if(head)head.setAttribute('aria-expanded','false');
+  });
+}
+if(document.readyState!=='loading')restoreNavGroups();
+else document.addEventListener('DOMContentLoaded',restoreNavGroups);
 
 // ─── APP SHELL: top bar (breadcrumb, quick-add, notifications, profile, ⌘K search) ───
 var TB_SECTIONS={dashboard:'Dashboard',estimates:'Estimates',jobcards:'Job Cards',workshop:'Workshop Board',appointments:'Appointments',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers',sales:'Sales',customers:'Customers',vehicles:'Vehicles',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',settings:'Settings'};
@@ -5363,18 +5469,18 @@ function showQuickInvoice(){
   document.getElementById('qi-disc-inputs').style.display='none';document.getElementById('qi-disc-btn').style.display='';
   document.getElementById('qi-disc-value').value='';
   var pl=document.getElementById('qi-parts-list');if(pl)pl.innerHTML=parts.map(function(p){return '<option value="'+esc(p.name)+'">';}).join('');
-  ['all','labor','part'].forEach(function(t){var b=document.getElementById('qi-tab-'+t);if(b)b.classList.toggle('on',t==='all');});
+  ['all','labor','part'].forEach(function(t){var b=document.getElementById('qi-tab-'+t);if(b){b.classList.toggle('on',t==='all');b.setAttribute('aria-selected',t==='all'?'true':'false');}});
   qiRenderPayTiles();qiRenderLines();qiRecalc();
   show('v-quick-invoice');
 }
 function qiRenderPayTiles(){
   var el=document.getElementById('qi-pay-tiles');if(!el)return;
   el.innerHTML=QI_PAY.map(function(p){
-    return '<button type="button" class="pay-tile'+(qiPayMethod===p.k?' on':'')+'" onclick="qiSetPay(\''+p.k+'\')"><span class="pt-ic">'+ico(p.ic,20,qiPayMethod===p.k?'var(--accent)':'var(--t3)')+'</span>'+p.label+'</button>';
+    return '<button type="button" class="pay-tile'+(qiPayMethod===p.k?' on':'')+'" aria-pressed="'+(qiPayMethod===p.k?'true':'false')+'" onclick="qiSetPay(\''+p.k+'\')"><span class="pt-ic">'+ico(p.ic,20,qiPayMethod===p.k?'var(--accent)':'var(--t3)')+'</span>'+p.label+'</button>';
   }).join('');
 }
 function qiSetPay(k){qiPayMethod=k;qiRenderPayTiles();document.getElementById('qi-amount-wrap').style.display=(k==='credit')?'none':'';qiRecalc();}
-function qiSetTab(t){qiTab=t;['all','labor','part'].forEach(function(x){document.getElementById('qi-tab-'+x).classList.toggle('on',x===t);});qiRenderLines();}
+function qiSetTab(t){qiTab=t;['all','labor','part'].forEach(function(x){var b=document.getElementById('qi-tab-'+x);if(b){b.classList.toggle('on',x===t);b.setAttribute('aria-selected',x===t?'true':'false');}});qiRenderLines();}
 function qiToggleDiscount(){document.getElementById('qi-disc-btn').style.display='none';document.getElementById('qi-disc-inputs').style.display='block';document.getElementById('qi-disc-value').focus();}
 function qiClearForm(){confirmDialog({title:'Clear the form?',message:'This resets the whole invoice.',confirmText:'Clear',onConfirm:function(){showQuickInvoice();}});}
 function qiPrintPreview(){var t=qiTotals();if(!qiSelVehicle||!t.subtotal){toast('Add a vehicle and at least one item first.');return;}toast('Complete the sale to print the invoice.','info');}
@@ -5390,7 +5496,9 @@ function populateQiAdvisorSelect(){
 function searchVehicleInQI(q){
   var res=document.getElementById('qi-veh-results');
   var qn=(q||'').trim().toLowerCase();
-  if(!qn){res.style.display='none';return;}
+  var sb=document.getElementById('qi-veh-search');
+  if(!qn){res.style.display='none';if(sb)sb.setAttribute('aria-expanded','false');return;}
+  if(sb)sb.setAttribute('aria-expanded','true');
   var matches=vehicles.filter(function(v){
     return(v.registrationNo||'').toLowerCase().replace(/\s/g,'').includes(qn.replace(/\s/g,''))||
            (v.vin||'').toLowerCase().includes(qn);
@@ -5398,17 +5506,33 @@ function searchVehicleInQI(q){
   res.style.display='block';
   var rows=matches.map(function(v){
     var cust=customers.find(function(c){return c.id===v.customerId;})||{};
-    return'<div onclick="selectVehicleFromQI(\''+v.id+'\')" style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--b1)" onmouseover="this.style.background=\'#FFF7ED\'" onmouseout="this.style.background=\'\'">'+
+    return'<button type="button" class="qi-veh-row" role="option" onclick="selectVehicleFromQI(\''+v.id+'\')">'+
       '<div style="font-size:13px;font-weight:700">'+esc(v.registrationNo)+(v.vin?'<span style="font-size:11px;color:var(--t3);margin-left:8px">VIN: '+esc(v.vin)+'</span>':'')+'</div>'+
       '<div style="font-size:12px;color:var(--t2);margin-top:1px">'+esc([v.year,v.make,v.model].filter(Boolean).join(' '))+(v.color?' · '+esc(v.color):'')+'</div>'+
       '<div style="font-size:11px;color:var(--accent);font-weight:600;margin-top:1px">👤 '+esc(cust.name||'Unknown')+'</div>'+
-    '</div>';
+    '</button>';
   }).join('');
-  var notFoundRow='<div onclick="openQiModal(\''+esc(q)+'\')" style="padding:12px 14px;cursor:pointer;border-top:'+(matches.length?'1.5px solid var(--b1)':'none')+';background:#FEF2F2" onmouseover="this.style.background=\'#FEE2E2\'" onmouseout="this.style.background=\'#FEF2F2\'">'+
+  var notFoundRow='<button type="button" class="qi-veh-row notfound" role="option" onclick="openQiModal(\''+esc(q)+'\')">'+
     '<div style="font-size:13px;font-weight:700;color:var(--red)">⊕ Vehicle not in system</div>'+
     '<div style="font-size:12px;color:var(--t2);margin-top:1px">Click to search customer or add new</div>'+
-  '</div>';
+  '</button>';
   res.innerHTML=rows+notFoundRow;
+}
+// Keyboard: ↓ from the search box enters the list; ↑/↓ roam it; Esc closes.
+function qiVehSearchKey(e){
+  var res=document.getElementById('qi-veh-results');
+  if(e.key==='ArrowDown'&&res&&res.style.display!=='none'){var first=res.querySelector('.qi-veh-row');if(first){e.preventDefault();first.focus();}}
+  else if(e.key==='Escape'&&res){res.style.display='none';}
+}
+function qiVehResultsKey(e){
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp'&&e.key!=='Escape')return;
+  var res=document.getElementById('qi-veh-results');if(!res)return;
+  var rows=Array.prototype.slice.call(res.querySelectorAll('.qi-veh-row'));
+  var idx=rows.indexOf(document.activeElement);
+  if(e.key==='Escape'){res.style.display='none';document.getElementById('qi-veh-search').focus();return;}
+  e.preventDefault();
+  if(e.key==='ArrowDown'){if(idx<rows.length-1)rows[idx+1].focus();}
+  else if(e.key==='ArrowUp'){if(idx>0)rows[idx-1].focus();else document.getElementById('qi-veh-search').focus();}
 }
 
 function selectVehicleFromQI(vehicleId){
@@ -5467,14 +5591,15 @@ function qiRenderLines(){
   if(!shown.length){el.innerHTML='<div class="empty" style="padding:18px 0">No '+(qiTab==='all'?'items':qiTab==='labor'?'labour lines':'parts')+' yet. Use the buttons below to add.</div>';return;}
   el.innerHTML=shown.map(function(x){
     var l=x.l,i=x.i,isPart=l.kind==='part';
+    var rn=i+1;
     return'<div class="pos-line">'+
-      '<input type="text" value="'+esc(l.name||'')+'"'+(isPart?' list="qi-parts-list"':'')+' placeholder="'+(isPart?'Search part…':'Service description')+'" oninput="qiLineName('+i+',this.value)">'+
+      '<input type="text" value="'+esc(l.name||'')+'"'+(isPart?' list="qi-parts-list"':'')+' placeholder="'+(isPart?'Search part…':'Service description')+'" aria-label="'+(isPart?'Part':'Service')+' name, row '+rn+'" oninput="qiLineName('+i+',this.value)">'+
       '<span class="pos-typetag '+(isPart?'part':'labor')+'">'+(isPart?'Spare Part':'Labour')+'</span>'+
-      '<select onchange="qiLineTech('+i+',this)"><option value="">Technician…</option>'+techOpts+'</select>'+
-      '<input type="number" min="1" step="1" value="'+esc(l.qty)+'" oninput="qiLines['+i+'].qty=this.value;qiRecalc()" style="text-align:center">'+
-      '<input type="number" min="0" step="0.01" value="'+(l.unitPrice===''?'':esc(l.unitPrice))+'" placeholder="0.00" oninput="qiLines['+i+'].unitPrice=this.value;qiRecalc()" style="text-align:right">'+
+      '<select aria-label="Technician, row '+rn+'" onchange="qiLineTech('+i+',this)"><option value="">Technician…</option>'+techOpts+'</select>'+
+      '<input type="number" min="1" step="1" value="'+esc(l.qty)+'" aria-label="Quantity, row '+rn+'" oninput="qiLines['+i+'].qty=this.value;qiRecalc()" style="text-align:center">'+
+      '<input type="number" min="0" step="0.01" value="'+(l.unitPrice===''?'':esc(l.unitPrice))+'" placeholder="0.00" aria-label="Unit price, row '+rn+'" data-qi-price="'+i+'" oninput="qiLines['+i+'].unitPrice=this.value;qiRecalc()" style="text-align:right">'+
       '<span class="pos-total">'+fmtMoney(qiLineCost(l))+'</span>'+
-      '<button class="pos-rowdel" onclick="qiRemoveLine(\''+l.id+'\')" title="Remove" aria-label="Remove row">✕</button>'+
+      '<button class="pos-rowdel" onclick="qiRemoveLine(\''+l.id+'\')" title="Remove" aria-label="Remove row '+rn+'">✕</button>'+
     '</div>';
   }).join('');
   // restore technician selections
@@ -5485,7 +5610,15 @@ function qiLineName(i,val){
   qiLines[i].name=val;
   if(qiLines[i].kind==='part'){
     var p=parts.find(function(x){return x.name===val;});
-    if(p){qiLines[i].partId=p.id;if(!qiLines[i].unitPrice)qiLines[i].unitPrice=p.sellingPrice||'';qiRenderLines();}
+    if(p){
+      qiLines[i].partId=p.id;
+      // Patch just the price field so the name input keeps focus/caret (no full re-render).
+      if(!qiLines[i].unitPrice){
+        qiLines[i].unitPrice=p.sellingPrice||'';
+        var pe=document.querySelector('#qi-lines [data-qi-price="'+i+'"]');
+        if(pe&&(pe.value===''||pe._auto))pe.value=(qiLines[i].unitPrice===''?'':qiLines[i].unitPrice);
+      }
+    } else { qiLines[i].partId=''; }
   }
   qiRecalc();
 }
@@ -5503,7 +5636,7 @@ function qiTotals(){
   return{subtotal:subtotal,discount:disc,net:net,rate:rate,vat:vat,total:total,dtype:dtype,dval:dval};
 }
 function qiRecalc(){
-  qiLines.forEach(function(){});qiRenderLineTotals();
+  qiRenderLineTotals();
   var t=qiTotals();
   document.getElementById('qi-sum-subtotal').textContent=fmtMoney(t.subtotal);
   document.getElementById('qi-total-num').textContent=fmtMoney(t.total);
@@ -5529,7 +5662,8 @@ function qiRenderLineTotals(){
   shown.forEach(function(l,k){var t=rows[k]?rows[k].querySelector('.pos-total'):null;if(t)t.textContent=fmtMoney(qiLineCost(l));});
 }
 // track manual edits to amount so we stop auto-filling it
-document.addEventListener('input',function(e){if(e.target&&e.target.id==='qi-pay-amount')e.target._auto=false;});
+// Stop auto-filling the amount once the cashier edits it manually (scoped to the field, not document-wide).
+(function(){var a=document.getElementById('qi-pay-amount');if(a)a.addEventListener('input',function(){a._auto=false;});})();
 
 function saveQuickInvoice(asDraft){
   if(!qiSelVehicle)return invalidField('qi-veh-search','Select a vehicle first.');
