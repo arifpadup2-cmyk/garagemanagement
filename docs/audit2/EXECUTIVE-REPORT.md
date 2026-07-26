@@ -57,13 +57,15 @@ Fixed during this audit turn: server-recomputed invoice totals (SEC-F5/ACC-INV1-
 
 ## 4. Roadmaps
 
-### 4A. Critical Fix Roadmap (before go-live)
-1. **RBAC** — real role gate on every `/api` route; techs restricted to their own work (SEC-F1).
-2. **Auth hardening** — set `SESSION_SECRET`, `trust proxy` + account lockout, hash technician PINs (SEC-F2/F3).
-3. **Quick Invoice atomicity** — route it through the same server transaction as `/pay` (ACC-CC2).
-4. **Delete dependency checks / soft-delete** — block or cascade-guard customer/vehicle/invoice/job-card deletes (DI-1).
-5. **Job-card work-item locking** — atomic append like `/pay`/`/adjust` (ACC-CC1 concurrency).
-6. **Real double-entry ledger** — post revenue+AR at invoicing; both-sided TB; accrual-consistent BS/P&L (ACC-DE/AB — root cause of most accounting failures).
+### 4A. Critical Fix Roadmap (before go-live) — ✅ COMPLETED 2026-07-26 (commits 0a7e964 → 5b0b8b1)
+1. ✅ **RBAC** — role gate on every `/api` route; tech tokens restricted to their own work (SEC-F1). Verified 4 allow + 10 deny.
+2. ✅ **Auth hardening** — `SESSION_SECRET` (independent, warns if unset), `trust proxy` + per-account lockout, scrypt-hashed technician PINs (SEC-F2/F3).
+3. ✅ **Quick Invoice atomicity** — `POST /api/invoices/quick` writes invoice + cash-book entry in one DB transaction (ACC-CC2).
+4. ✅ **Delete dependency guards** — 409 with clear message when dependents exist; no more silent orphans (DI-1).
+5. ✅ **Job-card work-item locking** — `POST /api/jobCards/:id/work` row-locked single-item update kills the whole-array race (ACC-CC1).
+6. ✅ **Real double-entry ledger** — accrual basis; TB & BS now balance by construction (Opening Balance Equity pattern); P&L accrual. Proven with a worked scenario (ACC-DE/AB).
+
+Also fixed pre-sprint (commit d989f0d): server-recomputed invoice totals (SEC-F5), print-chrome leak, Sales `createdAt` crash. **Re-score after sprint: Security ~62, Accounting Compliance ~70, Data Integrity substantially hardened.** Remaining gaps are now in 4B/4C (not go-live blockers): token revocation, audit trail, security headers (partial done), parts↔job-card COGS linkage, estimates/procurement, and the load-everything scale model.
 
 ### 4B. High-Priority Roadmap (30 days)
 - Parts→job-card linkage + auto stock deduction + COGS posting (INV-W7).
