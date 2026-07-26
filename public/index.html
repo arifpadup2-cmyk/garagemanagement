@@ -2560,13 +2560,22 @@ function tbToggle(id){
 document.addEventListener('click',function(e){
   if(!e.target.closest('.tb-mw'))document.querySelectorAll('.tb-menu.open').forEach(function(m){m.classList.remove('open');});
 });
-// Escape closes the payment / GL entry modals
+// Escape closes whichever modal is open (topmost first). Covers the fixed
+// payment/GL modals, the JC lookup, and every dynamic .dlg-overlay (confirm,
+// stock adjust, issue part).
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
   var pm=document.getElementById('pay-modal-overlay');
-  if(pm&&pm.style.display!=='none'&&pm.style.display!==''){closePaymentModal();return;}
+  if(pm&&pm.style.display&&pm.style.display!=='none'){closePaymentModal();return;}
   var gl=document.getElementById('gl-entry-overlay');
-  if(gl&&gl.style.display!=='none'&&gl.style.display!==''){closeGlEntry();}
+  if(gl&&gl.style.display&&gl.style.display!=='none'){if(typeof closeGlEntry==='function')closeGlEntry();return;}
+  var jc=document.getElementById('jc-modal-overlay');
+  if(jc&&jc.style.display&&jc.style.display!=='none'){if(typeof closeJcModal==='function')closeJcModal();return;}
+  var cmdk=document.getElementById('cmdk');
+  if(cmdk&&cmdk.classList.contains('open')){closeCmdk();return;}
+  // Any open dlg-overlay (confirm dialog, stock adjust, issue part, …)
+  var open=document.querySelector('.dlg-overlay.open');
+  if(open)open.classList.remove('open');
 });
 function tbGo(fn){document.querySelectorAll('.tb-menu.open').forEach(function(m){m.classList.remove('open');});fn();}
 function buildQuickAdd(){
@@ -4886,7 +4895,7 @@ function renderAdvisors(){
     return;
   }
   el.innerHTML=advisors.map(function(a){
-    var statusColor=a.status==='active'?'#16A34A':'#94A3B8';
+    var statusColor=a.status==='active'?'#16A34A':'#64748B'; // darker inactive → WCAG-AA text contrast
     var statusLabel=a.status==='active'?'Active':'Inactive';
     return'<div class="card" style="margin-bottom:12px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'+
