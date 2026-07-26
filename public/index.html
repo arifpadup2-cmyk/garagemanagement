@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0F172A">
-<title>GMS — Garage Management</title>
+<title>VIWO — Garage Management</title>
+<link rel="icon" type="image/png" href="/brand/viwo-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
@@ -45,11 +46,12 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .ico svg{width:100%;height:100%;display:block}
 
 /* LOGIN — split-screen (hero + form) */
-#v-login{--lg-accent:#C2410C;--lg-accent-strong:#9A3412;--lg-accent-soft:#FB923C;--lg-ring:rgba(234,88,12,.2);--lg-tint:rgba(249,115,22,.12);--lg-tint-border:rgba(249,115,22,.28);--lg-glow:rgba(249,115,22,.16);--lg-logo-a:#F97316;--lg-logo-b:#C2410C;--lg-border:#818C9C;--lg-muted:#64748B;--lg-label:#334155;--lg-ink:#0F172A;display:flex;min-height:100vh;background:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--lg-ink)}
+#v-login{--lg-accent:#D04818;--lg-accent-strong:#B83D13;--lg-accent-soft:#FB923C;--lg-ring:rgba(249,115,22,.2);--lg-tint:rgba(208,72,24,.15);--lg-tint-border:rgba(249,115,22,.2);--lg-glow:rgba(208,72,24,.18);--lg-logo-a:#F97316;--lg-logo-b:#C2410C;--lg-border:#E5E7EB;--lg-muted:#6B7280;--lg-icon:#9CA3AF;--lg-label:#334155;--lg-ink:#111827;display:flex;min-height:100vh;background:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--lg-ink)}
 #v-login *{box-sizing:border-box}
-.lg-hero{position:relative;flex:1 1 54%;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:56px 60px 40px;background:linear-gradient(160deg,#1C1712 0%,#0D0906 100%)}
+.lg-hero{position:relative;flex:1 1 55%;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:56px 60px 40px;background:linear-gradient(160deg,#18120F 0%,#120D0A 100%)}
 .lg-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(251,146,60,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(251,146,60,.05) 1px,transparent 1px);background-size:48px 48px}
 .lg-hero::after{content:'';position:absolute;left:-180px;bottom:-220px;width:640px;height:640px;background:radial-gradient(circle,var(--lg-glow) 0%,transparent 62%)}
+.lg-hero .lg-glow2{position:absolute;top:-160px;right:-140px;width:520px;height:520px;background:radial-gradient(circle,rgba(208,72,24,.12) 0%,transparent 60%);pointer-events:none}
 .lg-gear{position:absolute;color:#F59E0B;opacity:.10;pointer-events:none}
 .lg-gear.g1{top:-70px;right:-60px}
 .lg-gear.g2{bottom:120px;right:84px;opacity:.07}
@@ -57,10 +59,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .lg-logo{width:46px;height:46px;border-radius:13px;flex:none;background:linear-gradient(135deg,var(--lg-logo-a),var(--lg-logo-b));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(194,65,12,.5)}
 .lg-brand-name{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;font-size:19px;color:#F8FAFC;letter-spacing:.2px}
 .lg-mid{position:relative;z-index:2;max-width:520px}
-.lg-eyebrow{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:99px;background:var(--lg-tint);border:1px solid var(--lg-tint-border);color:var(--lg-accent-soft);font-size:12px;font-weight:700;letter-spacing:1.6px}
+.lg-eyebrow{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.04);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--lg-tint-border);color:var(--lg-accent-soft);font-size:12px;font-weight:700;letter-spacing:1.6px}
 .lg-hero h1{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:44px;line-height:1.14;color:#F8FAFC;margin:22px 0 18px;letter-spacing:-.5px;text-wrap:balance}
-.lg-hero h1 em{font-style:normal;color:var(--lg-accent-soft)}
-.lg-sub{font-size:16px;line-height:1.65;color:#A8A29E;max-width:460px}
+.lg-hero h1 em{font-style:normal;color:#D04818}
+.lg-sub{font-size:16px;line-height:1.65;color:#D4D4D8;max-width:460px}
 .lg-features{margin-top:38px;display:flex;flex-direction:column;gap:18px}
 .lg-feature{display:flex;align-items:center;gap:14px}
 .lg-ficon{width:34px;height:34px;border-radius:10px;flex:none;background:var(--lg-tint);border:1px solid var(--lg-tint-border);display:flex;align-items:center;justify-content:center;color:var(--lg-accent-soft)}
@@ -78,25 +80,28 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .lg-fields{margin-top:24px;display:flex;flex-direction:column;gap:18px}
 .lg-field label{display:block;font-size:13.5px;font-weight:600;color:var(--lg-label);margin-bottom:7px}
 .lg-input{position:relative;display:flex;align-items:center}
-.lg-input>svg.lead{position:absolute;left:15px;color:var(--lg-muted);pointer-events:none;z-index:1}
-.lg-input input,.lg-input select{width:100%;min-height:48px;border:1.5px solid var(--lg-border);border-radius:12px;background:#fff;padding:0 46px;font-family:'Inter',sans-serif;font-size:15px;color:var(--lg-ink);transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+.lg-input>svg.lead{position:absolute;left:15px;color:var(--lg-icon);pointer-events:none;z-index:1}
+.lg-input input,.lg-input select{width:100%;min-height:48px;border:1.5px solid var(--lg-border);border-radius:12px;background:#F9FAFB;padding:0 46px;font-family:'Inter',sans-serif;font-size:15px;color:var(--lg-ink);transition:border-color .15s,box-shadow .15s,background .15s;-webkit-appearance:none;appearance:none}
 .lg-input select{cursor:pointer}
-.lg-input input::placeholder{color:var(--lg-muted)}
-.lg-input input:focus,.lg-input select:focus{outline:none;border-color:var(--lg-accent);box-shadow:0 0 0 3.5px var(--lg-ring)}
+.lg-input input::placeholder{color:#9CA3AF}
+.lg-input input:focus,.lg-input select:focus{outline:none;background:#fff;border-color:var(--lg-accent);box-shadow:0 0 0 3px var(--lg-ring)}
+.lg-input input:-webkit-autofill,.lg-input input:-webkit-autofill:hover,.lg-input input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px #fff inset;-webkit-text-fill-color:var(--lg-ink);transition:background-color 9999s ease-out}
+.lg-help{margin-top:22px;text-align:center;font-size:13px;color:var(--lg-muted)}
+.lg-help a{color:var(--lg-accent);font-weight:600;text-decoration:none}
 .lg-input .tail{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:44px;height:44px;color:var(--lg-muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:9px}
 .lg-input .tail:hover{color:var(--lg-ink)}
 .lg-input .caret{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--lg-muted);pointer-events:none}
 .lg-row{margin-top:16px;display:flex;align-items:center;justify-content:space-between}
 .lg-remember{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;min-height:44px}
 .lg-remember input{position:absolute;opacity:0;width:0;height:0}
-.lg-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #94A3B8;background:#fff;display:flex;align-items:center;justify-content:center;color:#fff;transition:.15s;flex:none}
+.lg-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #D1D5DB;background:#fff;display:flex;align-items:center;justify-content:center;color:#fff;transition:.15s;flex:none}
 .lg-box svg{opacity:0}
 .lg-remember input:checked+.lg-box{background:var(--lg-accent);border-color:var(--lg-accent)}
 .lg-remember input:checked+.lg-box svg{opacity:1}
 .lg-remember input:focus-visible+.lg-box{outline:2px solid #1E40AF;outline-offset:2px}
 .lg-remember span{font-size:14px;color:#334155}
-.lg-submit{margin-top:24px;width:100%;min-height:50px;border:none;border-radius:12px;cursor:pointer;background:var(--lg-accent);color:#fff;font-family:'Inter',sans-serif;font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 20px -8px rgba(194,65,12,.45);transition:background .15s,transform .05s}
-.lg-submit:hover{background:var(--lg-accent-strong)}
+.lg-submit{margin-top:24px;width:100%;min-height:50px;border:none;border-radius:12px;cursor:pointer;background:var(--lg-accent);color:#fff;font-family:'Inter',sans-serif;font-size:15.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 20px -8px rgba(208,72,24,.5);transition:all .15s}
+.lg-submit:hover{background:var(--lg-accent-strong);box-shadow:0 10px 24px -8px rgba(208,72,24,.55)}
 .lg-submit:active{transform:translateY(1px)}
 .lg-help{margin-top:22px;text-align:center;font-size:13.5px;color:var(--lg-muted)}
 @media (max-width:900px){
@@ -108,6 +113,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   .lg-panel{min-height:auto;padding:36px 26px 48px;flex:none}
 }
 @media (prefers-reduced-motion:reduce){#v-login *{transition:none!important}}
+
+/* ── VIWO BOOT INTRO ── */
+#viwo-intro{position:fixed;inset:0;background:#fff;z-index:2000;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .45s ease}
+#viwo-intro.out{opacity:0;pointer-events:none}
+.vi-stage{position:relative;width:min(440px,72vw)}
+.vi-stage img{display:block;width:100%;height:auto;opacity:0;animation:viLetters .8s cubic-bezier(.2,.7,.2,1) .15s forwards}
+.vi-ball{position:absolute;left:10.07%;top:0;width:4.65%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 33% 28%,#8AB4FF 0%,#3478FF 55%,#1D54D6 100%);box-shadow:0 5px 12px rgba(52,120,255,.4);animation:viDrop 1.15s cubic-bezier(.5,0,.7,.4) .35s both}
+@keyframes viLetters{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes viDrop{0%{transform:translateY(-44vh);opacity:0}8%{opacity:1}52%{transform:translateY(0)}56%{transform:translateY(4%) scaleY(.82)}66%{transform:translateY(-320%) scaleY(1)}80%{transform:translateY(0)}84%{transform:translateY(2%) scaleY(.92)}92%{transform:translateY(-80%) scaleY(1)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.vi-stage img{animation:none;opacity:1}.vi-ball{animation:none;transform:none;opacity:1}}
 
 /* APP LAYOUT */
 #app-wrap{display:none;min-height:100vh}
@@ -784,6 +799,27 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 <body>
 
 <!-- LOGIN -->
+<div id="viwo-intro" aria-hidden="true" style="display:none">
+  <div class="vi-stage">
+    <img src="/brand/viwo-noball.png" alt="">
+    <div class="vi-ball"></div>
+  </div>
+</div>
+<script>
+(function(){
+  // Boot intro: plays once per browser session; skipped on in-session reloads.
+  try{
+    if(sessionStorage.getItem('viwo_intro_played')){return;}
+    sessionStorage.setItem('viwo_intro_played','1');
+  }catch(e){}
+  var el=document.getElementById('viwo-intro');
+  el.style.display='flex';
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var hold=reduce?1100:2350;
+  setTimeout(function(){el.classList.add('out');setTimeout(function(){el.remove();},500);},hold);
+})();
+</script>
+
 <div id="v-login">
   <!-- LEFT HERO -->
   <section class="lg-hero">
@@ -803,9 +839,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <line x1="-58" y1="58" x2="-70.7" y2="70.7"/><line x1="58" y1="-58" x2="70.7" y2="-70.7"/>
       </g>
     </svg>
+    <div class="lg-glow2" aria-hidden="true"></div>
     <div class="lg-brand">
-      <div class="lg-logo"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
-      <div class="lg-brand-name">Garage Management</div>
+      <img src="/brand/viwo-logo-dark.png" alt="VIWO" style="height:38px;width:auto">
+      <div class="lg-brand-name" style="border-left:1px solid rgba(255,255,255,.14);padding-left:14px">Garage Management</div>
     </div>
     <div class="lg-mid">
       <div class="lg-eyebrow">WORKSHOP OS</div>
@@ -909,7 +946,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   <nav id="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-top">
-        <div class="sidebar-logo-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> <span class="snav-label">GMS</span></div>
+        <div class="sidebar-logo-title"><img src="/brand/viwo-icon.png" alt="" style="width:22px;height:22px;flex-shrink:0"> <img src="/brand/viwo-word-white.png" alt="VIWO" class="snav-label" style="height:13px;width:auto;display:block"></div>
         <button class="snav-toggle-btn" id="snav-toggle-btn" onclick="toggleSidebar()" title="Collapse sidebar">‹</button>
       </div>
       <div class="sidebar-logo-sub snav-label">Garage Management System</div>
@@ -960,7 +997,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="mob-hdr-brand" class="mob-hdr-brand" style="display:none">
       <span class="mob-hdr-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
       <div>
-        <div class="mob-hdr-name">GMS</div>
+        <div class="mob-hdr-name" style="display:flex;align-items:center;gap:7px"><img src="/brand/viwo-icon.png" alt="" style="width:18px;height:18px"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:11px;width:auto"></div>
         <div class="mob-hdr-user" id="mob-hdr-user"></div>
       </div>
     </div>
@@ -1020,7 +1057,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-mob-home" class="view">
       <div class="mob-home-hdr">
         <div class="mob-home-toprow">
-          <div class="mob-home-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> GMS</div>
+          <div class="mob-home-brand"><img src="/brand/viwo-icon.png" alt="" style="width:20px;height:20px;flex-shrink:0"><img src="/brand/viwo-word-white.png" alt="VIWO" style="height:12px;width:auto"></div>
           <button class="mob-home-logoutbtn" onclick="doLogout()">Sign Out</button>
         </div>
         <div class="mob-home-greet" id="mob-home-greet">Welcome!</div>
