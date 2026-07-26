@@ -107,7 +107,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .lg-box svg{opacity:0}
 .lg-remember input:checked+.lg-box{background:var(--lg-accent);border-color:var(--lg-accent)}
 .lg-remember input:checked+.lg-box svg{opacity:1}
-.lg-remember input:focus-visible+.lg-box{outline:2px solid #1E40AF;outline-offset:2px}
+.lg-remember input:focus-visible+.lg-box{outline:2px solid var(--blue);outline-offset:2px}
 .lg-remember span{font-size:14px;color:#334155}
 .lg-submit{margin-top:24px;width:100%;min-height:50px;border:none;border-radius:12px;cursor:pointer;background:var(--lg-accent);color:#fff;font-family:'Inter',sans-serif;font-size:15.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 20px -8px rgba(52,120,255,.55);transition:all .15s}
 .lg-submit:hover{background:var(--lg-accent-strong);box-shadow:0 10px 24px -8px rgba(52,120,255,.6)}
@@ -334,7 +334,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .badge-amber{background:#FFFBEB;color:#B45309;border:1px solid #FCD34D}
 .badge-gray{background:#F1F5F9;color:#475569;border:1px solid #CBD5E1}
 .badge-purple{background:#F5F3FF;color:#6D28D9;border:1px solid #C4B5FD}
-.badge-red{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5}
+.badge-red{background:var(--red-lt);color:var(--red);border:1px solid #FCA5A5}
 .list-item{background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
 .list-item:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(52,120,255,.14)}
 .li-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -566,7 +566,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 /* ── INVENTORY ── */
 .stk-badge{display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.3px;margin-left:5px;vertical-align:1px}
 .stk-low{background:#FFFBEB;color:#B45309;border:1px solid #FCD34D}
-.stk-out{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5}
+.stk-out{background:var(--red-lt);color:var(--red);border:1px solid #FCA5A5}
 /* ── Entity detail header (customer / vehicle) ── */
 .ent-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ent-avatar{width:56px;height:56px;border-radius:15px;background:var(--accent-lt);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
@@ -659,7 +659,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .tp-btn-start{background:linear-gradient(135deg,#2563EB,#3B82F6);color:#fff;box-shadow:0 6px 18px rgba(37,99,235,.3)}
 .tp-btn-done{background:linear-gradient(135deg,#16A34A,#22C55E);color:#fff;box-shadow:0 6px 18px rgba(22,163,74,.3)}
 .tp-break-btn{background:rgba(255,255,255,.13);border:1.5px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.tp-break-btn.on-break{background:#D97706;border-color:#D97706;color:#fff}
+.tp-break-btn.on-break{background:var(--amber);border-color:var(--amber);color:#fff}
 /* Alarm overlay */
 #tech-notif{display:none;position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.88);align-items:center;justify-content:center;padding:20px}
 #tech-notif.show{display:flex;animation:notifIn .3s cubic-bezier(.34,1.4,.64,1)}
@@ -3244,7 +3244,7 @@ function renderDashboard(){
       },0);
       return'<div style="border:1.5px solid '+ts.dot+';border-radius:12px;padding:14px;background:'+ts.bg+';display:flex;flex-direction:column;gap:8px;min-width:0">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'+
-          (t.photoUrl?'<img src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid '+ts.dot+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:#fff;color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;letter-spacing:.5px">'+initials+'</div>')+
+          (t.photoUrl?'<img loading="lazy" src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid '+ts.dot+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:#fff;color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;letter-spacing:.5px">'+initials+'</div>')+
           '<span style="width:9px;height:9px;border-radius:50%;background:'+ts.dot+';flex-shrink:0;box-shadow:0 0 0 2px #fff,0 0 0 3.5px '+ts.dot+'"></span>'+
         '</div>'+
         '<div style="min-width:0">'+
@@ -4659,7 +4659,7 @@ function renderJobCardDetail(){
       ((jc.complaintImages&&jc.complaintImages.length)?
         '<div style="display:flex;flex-wrap:wrap;gap:8px">'+
         jc.complaintImages.map(function(img){
-          return'<img src="'+esc(img.url)+'" alt="'+esc(img.name||'photo')+'" onclick="openImageViewer(\''+esc(img.url)+'\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid var(--b1);transition:opacity .15s" onmouseover="this.style.opacity=.8" onmouseout="this.style.opacity=1">';
+          return'<img loading="lazy" src="'+esc(img.url)+'" alt="'+esc(img.name||'photo')+'" onclick="openImageViewer(\''+esc(img.url)+'\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid var(--b1);transition:opacity .15s" onmouseover="this.style.opacity=.8" onmouseout="this.style.opacity=1">';
         }).join('')+
         '</div>':'')+
       '</div>':'')+
@@ -4859,7 +4859,7 @@ function renderStaffPhotoPreview(elId,photoUrl,initials){
   var el=document.getElementById(elId);
   if(!el)return;
   if(photoUrl){
-    el.innerHTML='<img src="'+photoUrl+'" style="width:100%;height:100%;object-fit:cover">';
+    el.innerHTML='<img loading="lazy" src="'+photoUrl+'" style="width:100%;height:100%;object-fit:cover">';
     el.style.border='2px solid var(--b1)';
     el.style.background='#fff';
   } else {
@@ -4940,7 +4940,7 @@ function renderJcImagePreviews(){
   // Existing saved images
   jcExistingImages.forEach(function(img,i){
     html+='<div style="position:relative;width:80px;height:80px">'+
-      '<img src="'+esc(img.url)+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--b1);cursor:pointer" onclick="openImageViewer(\''+esc(img.url)+'\')" title="'+esc(img.name||'photo')+'">'+
+      '<img loading="lazy" src="'+esc(img.url)+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--b1);cursor:pointer" onclick="openImageViewer(\''+esc(img.url)+'\')" title="'+esc(img.name||'photo')+'">'+
       '<button type="button" onclick="removeExistingImage('+i+')" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&#x2715;</button>'+
     '</div>';
   });
@@ -4948,7 +4948,7 @@ function renderJcImagePreviews(){
   jcImageFiles.forEach(function(f,i){
     var url=URL.createObjectURL(f);
     html+='<div style="position:relative;width:80px;height:80px">'+
-      '<img src="'+url+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--b1);opacity:.85;cursor:pointer" onclick="openImageViewer(\''+url+'\')" title="'+esc(f.name)+'">'+
+      '<img loading="lazy" src="'+url+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--b1);opacity:.85;cursor:pointer" onclick="openImageViewer(\''+url+'\')" title="'+esc(f.name)+'">'+
       '<button type="button" onclick="removeNewImage('+i+')" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&#x2715;</button>'+
       '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:2px 4px;border-radius:0 0 7px 7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Compressed</div>'+
     '</div>';
@@ -5054,7 +5054,7 @@ function renderAdvisors(){
     return'<div class="card" style="margin-bottom:12px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'+
         '<div style="display:flex;align-items:center;gap:12px">'+
-          (a.photoUrl?'<img src="'+esc(a.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+statusColor+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:'+statusColor+'22;color:'+statusColor+';border:2px solid '+statusColor+'66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(a.name))+'</div>')+
+          (a.photoUrl?'<img loading="lazy" src="'+esc(a.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+statusColor+';flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:50%;background:'+statusColor+'22;color:'+statusColor+';border:2px solid '+statusColor+'66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(a.name))+'</div>')+
           '<div>'+
             '<div style="font-weight:700;font-size:15px">'+esc(a.name)+'</div>'+
             (a.phone?'<div style="font-size:12px;color:var(--t2)">'+esc(a.phone)+'</div>':'')+
@@ -5129,7 +5129,7 @@ function renderTechnicians(){
   if(!technicians.length){el.innerHTML='<div class="empty">No technicians added yet.</div>';return;}
   el.innerHTML=technicians.map(function(t){
     var ts=TECH_STATUS[t.status||'available']||TECH_STATUS.available;
-    var avatarHtml=t.photoUrl?'<img src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+ts.dot+'">':'<div style="width:40px;height:40px;border-radius:50%;background:'+ts.bg+';color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(t.name))+'</div>';
+    var avatarHtml=t.photoUrl?'<img loading="lazy" src="'+esc(t.photoUrl)+'" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid '+ts.dot+'">':'<div style="width:40px;height:40px;border-radius:50%;background:'+ts.bg+';color:'+ts.color+';border:2px solid '+ts.dot+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0">'+esc(staffInitials(t.name))+'</div>';
     return'<div class="list-item" style="cursor:default">'+
       '<div style="flex-shrink:0">'+avatarHtml+'</div>'+
       '<div class="li-body">'+
@@ -5852,7 +5852,7 @@ function renderInvoiceDetail(){
     '<div class="card">'+
       '<div class="inv-header">'+
         '<div>'+
-          (companySettings.logoUrl?'<img src="'+esc(companySettings.logoUrl)+'" style="height:48px;object-fit:contain;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'">':'')+
+          (companySettings.logoUrl?'<img loading="lazy" src="'+esc(companySettings.logoUrl)+'" style="height:48px;object-fit:contain;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'">':'')+
           '<div class="inv-logo-text">'+(companySettings.name?esc(companySettings.name):'Tecido <span>Garage</span>')+'</div>'+
           (companySettings.tagline?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(companySettings.tagline)+'</div>':'')+
           (companySettings.phone||companySettings.email?'<div style="font-size:11px;color:var(--t3);margin-top:3px">'+[companySettings.phone,companySettings.email].filter(Boolean).map(function(v){return esc(v);}).join(' · ')+'</div>':'')+
@@ -6106,7 +6106,7 @@ function renderGatePass(jc,iv){
   el.innerHTML=
     '<div class="card" style="max-width:700px;margin:0 auto">'+
       '<div style="text-align:center;border-bottom:2px solid #0F172A;padding-bottom:18px;margin-bottom:20px">'+
-        (companySettings.logoUrl?'<img src="'+esc(companySettings.logoUrl)+'" style="height:44px;object-fit:contain;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display=\'none\'">':'')+
+        (companySettings.logoUrl?'<img loading="lazy" src="'+esc(companySettings.logoUrl)+'" style="height:44px;object-fit:contain;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display=\'none\'">':'')+
         (companySettings.name?'<div style="font-size:15px;font-weight:800;color:#0F172A;margin-bottom:4px">'+esc(companySettings.name)+'</div>':'')+
         '<div style="font-size:24px;font-weight:900;color:#0F172A;letter-spacing:1px">VEHICLE GATE PASS</div>'+
         '<div style="font-size:13px;color:var(--t2);margin-top:4px">Vehicle Release Authorization</div>'+
@@ -8590,7 +8590,7 @@ function showTechPortal(t){
   setTechFilter('all');
   // Set header
   var av=document.getElementById('tp-avatar');
-  if(t.photoUrl)av.innerHTML='<img src="'+esc(t.photoUrl)+'" style="width:100%;height:100%;object-fit:cover">';
+  if(t.photoUrl)av.innerHTML='<img loading="lazy" src="'+esc(t.photoUrl)+'" style="width:100%;height:100%;object-fit:cover">';
   else av.textContent=staffInitials(t.name);
   document.getElementById('tp-name').textContent=t.name;
   syncTechStatusUI();
