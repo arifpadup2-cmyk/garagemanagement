@@ -254,6 +254,20 @@
         return r;
       });
     },
+    // Issue a part from stock to a job card (atomic: deducts stock + adds line).
+    issuePart: function (jcId, partId, qty, unitPrice) {
+      return req('POST', '/jobCards/' + jcId + '/parts', { partId: partId, qty: qty, unitPrice: unitPrice }).then(function (r) {
+        refreshColl('jobCards'); refreshColl('parts');
+        return r;
+      });
+    },
+    // Return an issued part (atomic: restores stock + removes line).
+    returnPart: function (jcId, lineId) {
+      return req('POST', '/jobCards/' + jcId + '/parts/return', { lineId: lineId }).then(function (r) {
+        refreshColl('jobCards'); refreshColl('parts');
+        return r;
+      });
+    },
     // Atomic update of a single job-card work item (technician clock in/out).
     updateWork: function (jcId, workId, patch, recomputeStatus) {
       return req('POST', '/jobCards/' + jcId + '/work', { workId: workId, patch: patch, recomputeStatus: !!recomputeStatus }).then(function (r) {

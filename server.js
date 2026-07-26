@@ -82,7 +82,8 @@ function extractedColumns(cfg, doc) {
 function sanitizeDoc(coll, doc) {
   if (coll === 'invoices') {
     if (Array.isArray(doc.items)) {
-      const sub = round2(doc.items.reduce((s, it) => s + (Number(it.cost) || 0) * (it.qty != null ? Number(it.qty) || 0 : 1), 0));
+      // `cost` is the LINE TOTAL for every item (labour or part); qty is metadata.
+      const sub = round2(doc.items.reduce((s, it) => s + (Number(it.cost) || 0), 0));
       const rate = Number(doc.taxRate) || 0;
       const tax = rate > 0 ? round2(sub * rate / 100) : 0;
       doc.subtotal = sub;
@@ -583,6 +584,84 @@ app.post('/api/parts/:id/adjust', asyncH(async (req, res) => {
     await client.query('COMMIT');
     audit(req, 'stock-' + type, 'parts', req.params.id, (p.name || '') + ' ' + from + '→' + to);
     res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Issue a part to a job card, atomically ----
+// Locks the part then the job card (consistent order → no deadlock), deducts
+// stock (blocking negative), records a movement noting the JC, and appends the
+// part line to the job card's parts[]. One transaction: stock and the job card
+// can never disagree about what was issued.
+app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
+  const { partId } = req.body || {};
+  const qty = Number((req.body || {}).qty);
+  if (!partId || !Number.isFinite(qty) || qty <= 0) return res.status(400).json({ error: 'partId and a positive qty are required.' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [partId]);
+    if (!pr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Part not found' }); }
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
+    const p = pr.rows[0].data, jc = jr.rows[0].data;
+    const from = Number(p.stock) || 0;
+    if (qty > from) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Insufficient stock — only ' + from + ' of ' + (p.name || 'this part') + ' on hand.' }); }
+    const jcNo = 'JC-' + String(jr.rows[0].seq || 0).padStart(4, '0');
+    const to = from - qty;
+    const mv = { type: 'out', qty, from, to, note: 'Issued to ' + jcNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
+    const pMerged = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+    await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [partId, JSON.stringify(pMerged)]);
+    const line = {
+      id: crypto.randomUUID(), partId, name: p.name || '', qty,
+      unitPrice: round2(Number(req.body.unitPrice != null ? req.body.unitPrice : p.sellingPrice) || 0),
+      costPrice: round2(Number(p.costPrice) || 0),
+    };
+    line.cost = round2(line.unitPrice * qty); // billed amount for this line
+    const jcMerged = { ...jc, parts: (Array.isArray(jc.parts) ? jc.parts : []).concat([line]) };
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jcMerged)]);
+    await client.query('COMMIT');
+    audit(req, 'issue-part', 'jobCards', req.params.id, (p.name || '') + ' ×' + qty);
+    res.json({ id: req.params.id, ...jcMerged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Return an issued part from a job card (reverses the stock deduction) ----
+app.post('/api/jobCards/:id/parts/return', asyncH(async (req, res) => {
+  const { lineId } = req.body || {};
+  if (!lineId) return res.status(400).json({ error: 'lineId required' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
+    const jc = jr.rows[0].data;
+    const lines = Array.isArray(jc.parts) ? jc.parts : [];
+    const line = lines.find((l) => l.id === lineId);
+    if (!line) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Part line not found' }); }
+    if (line.partId) {
+      const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [line.partId]);
+      if (pr.rows.length) {
+        const p = pr.rows[0].data, from = Number(p.stock) || 0, to = from + Number(line.qty || 0);
+        const jcNo = 'JC-' + String(jr.rows[0].seq || 0).padStart(4, '0');
+        const mv = { type: 'in', qty: Number(line.qty || 0), from, to, note: 'Returned from ' + jcNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
+        await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [line.partId, JSON.stringify({ ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) })]);
+      }
+    }
+    const jcMerged = { ...jc, parts: lines.filter((l) => l.id !== lineId) };
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jcMerged)]);
+    await client.query('COMMIT');
+    audit(req, 'return-part', 'jobCards', req.params.id, (line.name || '') + ' ×' + line.qty);
+    res.json({ id: req.params.id, ...jcMerged });
   } catch (e) {
     await client.query('ROLLBACK');
     throw e;

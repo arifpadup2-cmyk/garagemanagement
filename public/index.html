@@ -4251,11 +4251,104 @@ function renderJobCardDetail(){
         '<tbody>'+worksRows+'</tbody>'+
       '</table></div></div>'+
       (total?'<div class="so-totals" style="margin-top:16px"><div class="so-totbox">'+
-        '<div class="so-totrow"><span>Subtotal · '+totalWorks+' item'+(totalWorks!==1?'s':'')+'</span><span class="num">'+fmtMoney(total)+'</span></div>'+
-        '<div class="so-totrow grand"><span>Total</span><span class="num">'+fmtMoney(total)+'</span></div>'+
+        '<div class="so-totrow"><span>Labour subtotal · '+totalWorks+' item'+(totalWorks!==1?'s':'')+'</span><span class="num">'+fmtMoney(total)+'</span></div>'+
       '</div></div>':'')+
     '</div>'+
+    renderJcPartsCard(jc)+
     (jc.notes?'<div class="card"><div class="card-title">Internal Notes</div><div style="font-size:13px;color:var(--t2);white-space:pre-wrap">'+esc(jc.notes)+'</div></div>':'');
+}
+
+// Parts issued to a job card — with per-line margin and grand total (labour+parts).
+function renderJcPartsCard(jc){
+  var parts=jc.parts||[];
+  var labour=(jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0);
+  var partsRevenue=parts.reduce(function(s,p){return s+Number(p.cost||0);},0);
+  var partsCost=parts.reduce(function(s,p){return s+Number(p.costPrice||0)*Number(p.qty||0);},0);
+  var partsMargin=partsRevenue-partsCost;
+  var locked=jc.status==='invoiced'||jc.status==='delivered';
+  var rows=parts.map(function(p){
+    var lineCost=Number(p.costPrice||0)*Number(p.qty||0);
+    var lineMargin=Number(p.cost||0)-lineCost;
+    return'<tr>'+
+      '<td style="font-weight:600;color:var(--t1)">'+esc(p.name)+'</td>'+
+      '<td class="num">'+Number(p.qty||0)+'</td>'+
+      '<td class="num">'+fmtMoney(p.unitPrice||0)+'</td>'+
+      '<td class="num" style="color:var(--t3)">'+fmtMoney(p.costPrice||0)+'</td>'+
+      '<td class="num" style="font-weight:700">'+fmtMoney(p.cost||0)+'</td>'+
+      '<td class="num" style="font-weight:600;color:'+(lineMargin>=0?'var(--green)':'var(--red)')+'">'+fmtMoney(lineMargin)+'</td>'+
+      '<td class="num">'+(locked?'':'<button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="returnJcPart(\''+jc.id+'\',\''+p.id+'\')" title="Return to stock">Return</button>')+'</td>'+
+    '</tr>';
+  }).join('');
+  var grand=labour+partsRevenue;
+  return'<div class="card">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+      '<div class="card-title" style="margin:0">Parts Used</div>'+
+      (locked?'':'<button class="btn btn-secondary btn-sm" onclick="openIssuePart(\''+jc.id+'\')">+ Add Part</button>')+
+    '</div>'+
+    (parts.length?
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Part</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Cost</th><th class="num">Line Total</th><th class="num">Margin</th><th></th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="so-totals" style="margin-top:16px"><div class="so-totbox">'+
+        '<div class="so-totrow"><span>Parts revenue</span><span class="num">'+fmtMoney(partsRevenue)+'</span></div>'+
+        '<div class="so-totrow"><span>Parts cost</span><span class="num" style="color:var(--t3)">'+fmtMoney(partsCost)+'</span></div>'+
+        '<div class="so-totrow"><span>Parts margin</span><span class="num" style="color:'+(partsMargin>=0?'var(--green)':'var(--red)')+'">'+fmtMoney(partsMargin)+'</span></div>'+
+        '<div class="so-totrow grand"><span>Job total (labour + parts)</span><span class="num">'+fmtMoney(grand)+'</span></div>'+
+      '</div></div>':
+      '<div class="empty" style="padding:18px 0">No parts issued to this job yet.'+(locked?'':' Use <b>+ Add Part</b> to draw parts from inventory.')+'</div>')+
+  '</div>';
+}
+
+var _issueJcId=null;
+function openIssuePart(jcId){
+  _issueJcId=jcId;
+  var avail=parts.filter(function(p){return Number(p.stock||0)>0;});
+  var ov=document.getElementById('issue-part-modal');
+  if(!ov){ov=document.createElement('div');ov.id='issue-part-modal';ov.className='dlg-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:460px" role="dialog" aria-modal="true" aria-label="Add part to job"><div class="dlg-title">Add Part to Job</div>'+
+    (avail.length?
+      '<div class="form-group"><label>Part</label><select id="ip-part" onchange="ipSyncPrice()">'+
+        avail.map(function(p){return'<option value="'+esc(p.id)+'" data-price="'+Number(p.sellingPrice||0)+'" data-stock="'+Number(p.stock||0)+'">'+esc(p.name)+' — '+Number(p.stock||0)+' in stock @ '+fmtMoney(p.sellingPrice||0)+'</option>';}).join('')+
+      '</select></div>'+
+      '<div class="form-row"><div class="form-group"><label>Quantity</label><input type="number" id="ip-qty" min="1" step="1" value="1" oninput="ipSyncPrice()"></div>'+
+      '<div class="form-group"><label>Unit Price</label><input type="number" id="ip-price" min="0" step="0.01"></div></div>'+
+      '<div id="ip-hint" style="font-size:12px;color:var(--t3);margin:-4px 0 12px"></div>'+
+      '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'issue-part-modal\').classList.remove(\'open\')">Cancel</button><button class="btn btn-primary" id="ip-add-btn" onclick="applyIssuePart()">Add to Job</button></div>':
+      '<div class="empty" style="padding:8px 0 16px">No parts in stock. Add stock in Inventory first.</div>'+
+      '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'issue-part-modal\').classList.remove(\'open\')">Close</button></div>')+
+  '</div>';
+  ov.classList.add('open');
+  ipSyncPrice();
+}
+function ipSyncPrice(){
+  var sel=document.getElementById('ip-part');if(!sel)return;
+  var opt=sel.options[sel.selectedIndex];if(!opt)return;
+  var price=document.getElementById('ip-price'); if(price&&!price.value)price.value=opt.getAttribute('data-price');
+  var stock=Number(opt.getAttribute('data-stock')||0),qty=Number((document.getElementById('ip-qty')||{}).value||0);
+  var hint=document.getElementById('ip-hint');
+  if(hint)hint.textContent=qty>stock?('Only '+stock+' in stock.'):(qty>0?(stock-qty)+' will remain in stock.':'');
+}
+function applyIssuePart(){
+  var sel=document.getElementById('ip-part');if(!sel||!sel.value){toast('Pick a part.');return;}
+  var qty=Number((document.getElementById('ip-qty')||{}).value||0);
+  var unitPrice=Number((document.getElementById('ip-price')||{}).value||0);
+  if(!(qty>0)){toast('Enter a quantity.');return;}
+  var btn=document.getElementById('ip-add-btn');if(btn){btn.disabled=true;btn.textContent='Adding…';}
+  gmsApi.issuePart(_issueJcId,sel.value,qty,unitPrice).then(function(saved){
+    if(curJobCard&&curJobCard.id===saved.id)curJobCard=saved;
+    var m=document.getElementById('issue-part-modal');if(m)m.classList.remove('open');
+    toast('Part added and stock updated','success');
+    renderJobCardDetail();
+  }).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Add to Job';}toast(e.message||'Could not add part.','error');});
+}
+function returnJcPart(jcId,lineId){
+  confirmDialog({title:'Return part to stock?',message:'This part will be removed from the job and its quantity returned to inventory.',confirmText:'Return',onConfirm:function(){
+    gmsApi.returnPart(jcId,lineId).then(function(saved){
+      if(curJobCard&&curJobCard.id===saved.id)curJobCard=saved;
+      toast('Part returned to stock','success');
+      renderJobCardDetail();
+    }).catch(function(e){toast(e.message||'Could not return part.','error');});
+  }});
 }
 
 // ── STAFF PHOTO HELPERS ──
@@ -4881,12 +4974,16 @@ function convertToInvoice(){
   var jc=curJobCard;if(!jc)return;
   var existing=invoices.find(function(iv){return iv.jobCardId===jc.id;});
   if(existing){showInvoice(existing);return;}
-  var tt=invTaxTotals((jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0));
+  // Invoice items = labour (works) + parts issued to the job.
+  var labourItems=(jc.works||[]).map(function(w){return{description:w.description||'',cost:Number(w.cost)||0};});
+  var partItems=(jc.parts||[]).map(function(p){return{description:(p.name||'Part')+(Number(p.qty)>1?' × '+Number(p.qty):''),cost:Number(p.cost)||0,partId:p.partId,qty:Number(p.qty)||1,unitPrice:Number(p.unitPrice)||0,costPrice:Number(p.costPrice)||0,kind:'part'};});
+  var items=labourItems.concat(partItems);
+  var tt=invTaxTotals(items.reduce(function(s,it){return s+Number(it.cost||0);},0));
   var data={
     jobCardId:jc.id,jobNumber:jcNum(jc),
     customerId:jc.customerId,customerName:jc.customerName,
     vehicleId:jc.vehicleId,vehicleReg:jc.vehicleReg,vehicleMake:jc.vehicleMake,vehicleModel:jc.vehicleModel,
-    items:(jc.works||[]).map(function(w){return{description:w.description||'',cost:Number(w.cost)||0};}),
+    items:items,
     subtotal:tt.subtotal,taxRate:tt.taxRate,taxAmount:tt.taxAmount,
     total:tt.total,status:'unpaid',createdAt:Date.now()
   };
