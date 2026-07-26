@@ -39,6 +39,15 @@ app.use((req, res, next) => {
   res.set('X-Content-Type-Options', 'nosniff');
   res.set('X-Frame-Options', 'DENY');
   res.set('Referrer-Policy', 'same-origin');
+  res.set('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+  // CSP: the SPA is a single self-contained document (inline styles/scripts,
+  // data: images, same-origin API/images). No external origins are needed.
+  res.set('Content-Security-Policy',
+    "default-src 'self'; img-src 'self' data: blob:; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' data: https://fonts.gstatic.com; " +
+    "script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
+    "object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   next();
 });
 
@@ -156,12 +165,38 @@ function verifyToken(tok) {
     return p;
   } catch (_) { return null; }
 }
+// Token revocation: tokens issued before `authEpoch` are rejected. Bumping it
+// (POST /api/logout-all) invalidates every outstanding token at once — the
+// "sign out all devices" panic button. Persisted in settings so it survives
+// restarts. (Per-token revocation isn't possible with stateless tokens; the
+// 30-day expiry bounds exposure, and this gives a real global kill switch.)
+let authEpoch = 0;
+async function loadAuthEpoch() {
+  try {
+    const { rows } = await pool.query(`SELECT data FROM settings WHERE id = 'auth'`);
+    if (rows.length && Number(rows[0].data.epoch)) authEpoch = Number(rows[0].data.epoch);
+  } catch (_) {}
+}
+async function bumpAuthEpoch() {
+  authEpoch = Date.now();
+  await pool.query(`INSERT INTO settings (id, data) VALUES ('auth', $1)
+    ON CONFLICT (id) DO UPDATE SET data = settings.data || $1`, [JSON.stringify({ epoch: authEpoch })]);
+}
 function requireAuth(req, res, next) {
   const h = req.headers.authorization || '';
   const p = verifyToken(h.startsWith('Bearer ') ? h.slice(7) : null);
   if (!p) return res.status(401).json({ error: 'Unauthorized' });
+  if (authEpoch && Number(p.iat || 0) < authEpoch) return res.status(401).json({ error: 'Session ended — please sign in again.' });
   req.auth = p;
   next();
+}
+
+// Lightweight audit trail: who did what, when. Fire-and-forget so it never
+// blocks or fails a real request.
+function audit(req, action, coll, docId, summary) {
+  const a = req.auth || {};
+  pool.query(`INSERT INTO audit_log (at, actor, role, action, coll, doc_id, summary) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [Date.now(), a.name || '?', a.role || '?', action, coll || '', docId || '', (summary || '').slice(0, 200)]).catch(() => {});
 }
 
 // Brute-force guard. Keyed on BOTH source IP and the target account, so an
@@ -343,7 +378,12 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
   }
   const body = sanitizeDoc(req.params.coll, { ...req.body });
   const id = body.id || crypto.randomUUID();
+  const isNew = !body.id;
   delete body.id;
+  // Actor attribution for the audit trail.
+  const actor = (req.auth && req.auth.name) || '?';
+  if (isNew && body.createdBy == null) body.createdBy = actor;
+  else if (!isNew) { body.updatedBy = actor; body.updatedAt = Date.now(); }
 
   const client = await pool.connect();
   try {
@@ -364,6 +404,7 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
       vals
     );
     await client.query('COMMIT');
+    audit(req, isNew ? 'create' : 'update', req.params.coll, id, body.seq ? '#' + body.seq : (body.name || ''));
     res.json({ id, ...body });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -418,6 +459,7 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
       }
     }
     await client.query('COMMIT');
+    audit(req, 'pay', 'invoices', req.params.id, fmtAmt(adding));
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -426,6 +468,7 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
     client.release();
   }
 }));
+const fmtAmt = (n) => 'amount ' + round2(n).toFixed(2);
 
 // ---- Quick Invoice (counter sale): invoice + optional cash-book entry, atomic ----
 // Creates the invoice (with a race-free number, totals recomputed from lines)
@@ -464,6 +507,7 @@ app.post('/api/invoices/quick', asyncH(async (req, res) => {
       );
     }
     await client.query('COMMIT');
+    audit(req, 'quick-invoice', 'invoices', id, '#' + inv.seq);
     res.json({ id, ...inv });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -537,6 +581,7 @@ app.post('/api/parts/:id/adjust', asyncH(async (req, res) => {
     const merged = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([movement]) };
     await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
     await client.query('COMMIT');
+    audit(req, 'stock-' + type, 'parts', req.params.id, (p.name || '') + ' ' + from + '→' + to);
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -552,6 +597,8 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
   if (!cfg) return next();
   const patch = sanitizeDoc(req.params.coll, { ...req.body });
   delete patch.id;
+  patch.updatedBy = (req.auth && req.auth.name) || '?';
+  patch.updatedAt = Date.now();
 
   const client = await pool.connect();
   try {
@@ -577,6 +624,7 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     for (const [c, v] of Object.entries(cols)) { vals.push(v); sets.push(`${c} = $${vals.length}`); }
     await client.query(`UPDATE ${cfg.table} SET ${sets.join(', ')} WHERE id = $1`, vals);
     await client.query('COMMIT');
+    audit(req, 'update', req.params.coll, req.params.id, merged.seq ? '#' + merged.seq : (merged.name || ''));
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -620,7 +668,22 @@ app.delete('/api/:coll/:id', asyncH(async (req, res, next) => {
   const blocker = await deleteBlocker(req.params.coll, req.params.id);
   if (blocker) return res.status(409).json({ error: 'Cannot delete — ' + blocker + '. Remove or reassign those first.' });
   await pool.query(`DELETE FROM ${cfg.table} WHERE id = $1`, [req.params.id]);
+  audit(req, 'delete', req.params.coll, req.params.id, '');
   res.json({ ok: true });
+}));
+
+// ---- Sign out all devices (admin) — invalidates every outstanding token ----
+app.post('/api/logout-all', requireAdmin, asyncH(async (req, res) => {
+  await bumpAuthEpoch();
+  audit(req, 'logout-all', '', '', 'all sessions revoked');
+  res.json({ ok: true });
+}));
+
+// ---- Audit log (admin) — most recent activity first ----
+app.get('/api/audit-log', requireAdmin, asyncH(async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 200, 1000);
+  const { rows } = await pool.query(`SELECT at, actor, role, action, coll, doc_id, summary FROM audit_log ORDER BY at DESC LIMIT $1`, [limit]);
+  res.json(rows);
 }));
 
 // ---- Settings (single 'company' doc, merge semantics) ----
@@ -683,5 +746,6 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 const PORT = process.env.PORT || 3000;
 initSchema()
+  .then(loadAuthEpoch)
   .then(() => app.listen(PORT, () => console.log(`GMS server on http://localhost:${PORT}`)))
   .catch((e) => { console.error('Startup failed:', e.message); process.exit(1); });

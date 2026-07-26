@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS parts        (id text PRIMARY KEY, data jsonb NOT NUL
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
+CREATE TABLE IF NOT EXISTS audit_log    (id bigserial PRIMARY KEY, at bigint, actor text, role text, action text, coll text, doc_id text, summary text);
 
 -- Sort-column indexes for the ORDER BY on every list query.
 CREATE INDEX IF NOT EXISTS idx_customers_created ON customers(created_at DESC);
@@ -63,6 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_jobcards_status   ON job_cards ((data->>'status')
 CREATE INDEX IF NOT EXISTS idx_vehicles_customer ON vehicles ((data->>'customerId'));
 CREATE INDEX IF NOT EXISTS idx_txn_account       ON transactions ((data->>'accountId'));
 CREATE INDEX IF NOT EXISTS idx_txn_invoice       ON transactions ((data->>'invoiceId'));
+CREATE INDEX IF NOT EXISTS idx_audit_at          ON audit_log(at DESC);
 `;
 
 async function initSchema() {

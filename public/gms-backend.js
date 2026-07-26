@@ -261,6 +261,10 @@
         return r;
       });
     },
+    // Revoke every outstanding token (sign out all devices).
+    logoutAll: function () { return req('POST', '/logout-all', {}); },
+    // Recent audit-log rows (admin only).
+    auditLog: function (limit) { return req('GET', '/audit-log?limit=' + (limit || 200)); },
     // Full data backup as a downloadable JSON blob (admin only).
     exportBackup: function () {
       var tok = authToken();

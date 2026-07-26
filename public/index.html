@@ -2043,9 +2043,27 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-title">Security &amp; Activity</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="font-size:13px;color:var(--t2);max-width:560px">Review recent changes across the system, or sign every device out at once (useful if a device is lost or a password is changed). You will need to sign in again.</div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="showActivityLog()">Activity Log</button>
+            <button class="btn btn-secondary" onclick="signOutAllDevices()">Sign Out All Devices</button>
+          </div>
+        </div>
+      </div>
+
       <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:24px">
         <button id="set-save-btn" class="btn btn-green" onclick="saveCompanySettings()">✓ Save Settings</button>
       </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div id="v-activity-log" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('settings')">← Settings</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">Activity Log</div><div class="page-sub">Recent changes across the system — who did what, and when</div></div>
+      <div id="activity-content"></div>
     </div>
 
   </div><!-- /main-content -->
@@ -2200,8 +2218,8 @@ const TECH_STATUS={
 
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function esc(v){return(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary'};
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -5926,6 +5944,33 @@ function renderSettings(){
   if(vatChk){vatChk.checked=!!s.vatEnabled;document.getElementById('set-vat-rate-wrap').style.opacity=s.vatEnabled?'1':'.45';}
   var vatRate=document.getElementById('set-vat-rate');if(vatRate)vatRate.value=(s.vatRate!=null?s.vatRate:5);
   show('v-settings');
+}
+
+function signOutAllDevices(){
+  confirmDialog({title:'Sign out all devices?',message:'Every signed-in device — including this one — will be signed out and need to log in again.',confirmText:'Sign Out All',onConfirm:function(){
+    (window.gmsApi&&gmsApi.logoutAll?gmsApi.logoutAll():Promise.reject(new Error('unavailable'))).then(function(){
+      toast('All devices signed out','success');
+      setTimeout(function(){doLogout();location.reload();},800);
+    }).catch(function(e){toast(e.message||'Could not sign out devices.','error');});
+  }});
+}
+var ACTION_LABELS={create:'Created',update:'Updated','delete':'Deleted',pay:'Payment',adjust:'Stock','quick-invoice':'Quick invoice','stock-in':'Stock in','stock-out':'Stock out','stock-set':'Stock set','logout-all':'Signed out all devices'};
+function showActivityLog(){show('v-activity-log');renderActivityLog();}
+function renderActivityLog(){
+  var el=document.getElementById('activity-content');if(!el)return;
+  el.innerHTML='<div class="card">'+skelTable(8)+'</div>';
+  gmsApi.auditLog(200).then(function(rows){
+    if(!rows.length){el.innerHTML='<div class="card"><div class="empty">No activity recorded yet.</div></div>';return;}
+    el.innerHTML='<div class="card"><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th><th>Detail</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        return'<tr><td style="white-space:nowrap;color:var(--t2)">'+esc(fmtTs(r.at))+'</td>'+
+          '<td style="font-weight:600">'+esc(r.actor||'?')+'<span style="color:var(--t3);font-weight:500"> · '+esc(r.role||'')+'</span></td>'+
+          '<td>'+esc(ACTION_LABELS[r.action]||r.action)+'</td>'+
+          '<td style="color:var(--t2)">'+esc(r.coll||'')+(r.doc_id?' <span style="color:var(--t3)">'+esc(String(r.doc_id).slice(0,8))+'</span>':'')+'</td>'+
+          '<td style="color:var(--t2)">'+esc(r.summary||'')+'</td></tr>';
+      }).join('')+'</tbody></table></div></div></div>';
+  }).catch(function(e){el.innerHTML='<div class="card"><div class="empty">Could not load activity: '+esc(e.message||'')+'</div></div>';});
 }
 
 function downloadBackup(){
