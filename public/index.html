@@ -67,7 +67,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .lg-mid{position:relative;z-index:2;max-width:520px}
 .lg-eyebrow{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.04);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--lg-tint-border);color:var(--lg-accent-soft);font-size:12px;font-weight:700;letter-spacing:1.6px}
 .lg-hero h1{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:44px;line-height:1.14;color:#F8FAFC;margin:22px 0 18px;letter-spacing:-.5px;text-wrap:balance}
-.lg-hero h1 em{font-style:normal;background:linear-gradient(100deg,#8A5CFF 0%,#4F7BFF 45%,#2EC5F6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lg-hero h1 em{font-style:normal;color:#7AA2FF}
 .lg-sub{font-size:16px;line-height:1.65;color:#D4D4D8;max-width:460px}
 .lg-features{margin-top:38px;display:flex;flex-direction:column;gap:18px}
 .lg-feature{display:flex;align-items:center;gap:14px}
@@ -593,6 +593,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 
 @keyframes deadline-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.97)}}
 .deadline-blink{animation:deadline-blink 1s ease-in-out infinite}
+/* Reduced motion: the overdue badge and the technician alarm stay fully visible
+   and colored, just without the repeating blink / pulse / shake. */
+@media (prefers-reduced-motion:reduce){
+  .deadline-blink{animation:none}
+  #tech-notif-card{animation:none}
+  .tp-alarm-bell{animation:none}
+}
 /* TECH PORTAL — Professional Mobile */
 @keyframes alarmPulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.9)}70%{box-shadow:0 0 0 32px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
 @keyframes bellShake{0%,100%{transform:rotate(0) scale(1)}15%,55%{transform:rotate(-22deg) scale(1.1)}35%,75%{transform:rotate(22deg) scale(1.1)}}
@@ -621,9 +628,11 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .tp-work-card{background:transparent;margin:0;border-bottom:1px solid rgba(0,0,0,.05)}
 .tp-work-card:last-child{border-bottom:none}
 .tp-card-strip{display:none}
-.tp-card-inner{padding:16px 16px 16px 20px;border-left:4px solid #CBD5E1;transition:border-left-color .2s}
-.tp-work-card.tp-active .tp-card-inner{border-left-color:var(--accent)}
-.tp-work-card.tp-done .tp-card-inner{border-left-color:#22C55E}
+/* Status shown by a leading dot (not a side-stripe) + the card's own badge. */
+.tp-card-inner{padding:16px 16px 16px 28px;position:relative}
+.tp-card-inner::before{content:'';position:absolute;left:13px;top:22px;width:9px;height:9px;border-radius:50%;background:#CBD5E1;transition:background .2s}
+.tp-work-card.tp-active .tp-card-inner::before{background:var(--accent)}
+.tp-work-card.tp-done .tp-card-inner::before{background:#22C55E}
 /* Vehicle panel */
 .tp-veh-panel{background:rgba(255,255,255,.75);border-radius:11px;padding:11px 13px;margin-bottom:13px;display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.07)}
 .tp-veh-plate{font-size:15px;font-weight:900;color:#0F172A;background:#FEF08A;border:2px solid #CA8A04;border-radius:7px;padding:5px 10px;letter-spacing:1.5px;flex-shrink:0;line-height:1.2}
@@ -2795,6 +2804,8 @@ function showApp(name){
   applySidebarState(localStorage.getItem('sidebar_mini')==='1');
   if(!firestoreReady){firestoreReady=true;initFirestore();}
   navTo(window.innerWidth<=768?'mob-home':'dashboard');
+  // A11y: make the (static, outside #main-content) sidebar nav keyboard-operable.
+  if(typeof enhanceTables==='function')setTimeout(function(){enhanceTables(document);},50);
 }
 (function checkSession(){
   var raw=localStorage.getItem(SESSION_KEY)||sessionStorage.getItem(SESSION_KEY);
@@ -2908,7 +2919,30 @@ function enhanceTables(root){
     }
     _applyHiddenCols(table);
   });
+  // Keyboard-operable div/span controls (nav, list rows, menu items) + heading
+  // semantics for screen readers. Applied globally after each render.
+  (root||document).querySelectorAll('.snav-item,.bnav-item,.list-item,.tb-mi,.mob-tile,.acc-fn,.jc-fpill').forEach(function(el){
+    if(el.tagName==='BUTTON'||el.tagName==='A')return;
+    if(!el.hasAttribute('role'))el.setAttribute('role','button');
+    if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');
+  });
+  (root||document).querySelectorAll('.page-title').forEach(function(el){
+    if(!el.hasAttribute('role')){el.setAttribute('role','heading');el.setAttribute('aria-level','1');}
+  });
+  (root||document).querySelectorAll('.card-title').forEach(function(el){
+    if(!el.hasAttribute('role')){el.setAttribute('role','heading');el.setAttribute('aria-level','2');}
+  });
 }
+// Enter/Space activate any role=button that isn't a native control (covers nav,
+// list rows, menu items). Native button/input/a keep their own behaviour.
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  var t=e.target;if(!t||!t.getAttribute)return;
+  if(t.getAttribute('role')!=='button')return;
+  if(/^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;
+  if(t.classList.contains('dt-row'))return; // handled by its own listener
+  e.preventDefault();t.click();
+});
 
 // ── Inline edit (cells marked data-edit="field" data-id="id" [data-num]) ──
 document.addEventListener('dblclick',function(e){
