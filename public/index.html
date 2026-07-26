@@ -1097,9 +1097,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="email@example.com"></div>
         </div>
         <div class="form-group"><label>Address</label><input type="text" id="c-address" placeholder="Area, city"></div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-secondary" id="cust-cancel-btn" onclick="navTo('customers')">Cancel</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-cust-btn" onclick="saveCustomer()">Save Customer</button>
+          <button class="btn btn-secondary" id="cust-cancel-btn" onclick="navTo('customers')">Cancel</button>
         </div>
       </div>
     </div>
@@ -1130,9 +1130,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           </div>
         </div>
         <div class="form-group"><label>Notes</label><textarea id="v-notes" placeholder="Any additional notes…"></textarea></div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-secondary" onclick="goBackToCustomer()">Cancel</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-veh-btn" onclick="saveVehicle()">Save Vehicle</button>
+          <button class="btn btn-secondary" onclick="goBackToCustomer()">Cancel</button>
         </div>
       </div>
     </div>
@@ -1398,9 +1398,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <label>4-Digit Login PIN <span style="font-size:11px;color:var(--t3);font-weight:400">(technician uses this to sign in)</span></label>
           <input type="password" id="t-pin" placeholder="Enter 4-digit PIN" maxlength="4" inputmode="numeric" style="max-width:200px">
         </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-secondary" onclick="navTo('technicians')">Cancel</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-tech-btn" onclick="saveTechnician()">Save Technician</button>
+          <button class="btn btn-secondary" onclick="navTo('technicians')">Cancel</button>
         </div>
       </div>
     </div>
@@ -1438,9 +1438,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
             <select id="adv-status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
           </div>
         </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-secondary" onclick="navTo('advisors')">Cancel</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-adv-btn" onclick="saveAdvisor()">Save Advisor</button>
+          <button class="btn btn-secondary" onclick="navTo('advisors')">Cancel</button>
         </div>
       </div>
     </div>
@@ -1527,9 +1527,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <input type="text" id="txn-ref" placeholder="Invoice or receipt number">
         </div>
         <div class="form-group"><label>Notes</label><textarea id="txn-notes" placeholder="Additional notes…" style="min-height:70px"></textarea></div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-secondary" onclick="navTo('accounts')">Cancel</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-txn-btn" onclick="saveTransaction()">Save</button>
+          <button class="btn btn-secondary" onclick="navTo('accounts')">Cancel</button>
         </div>
       </div>
     </div>
@@ -1565,10 +1565,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Opening Balance (<span class="cur-lbl">QAR</span>)</label><input type="number" id="fin-acc-bal" placeholder="0.00" min="0" step="0.01"></div>
           <div class="form-group"><label>Description</label><input type="text" id="fin-acc-desc" placeholder="Optional notes about this account"></div>
         </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px">
-          <button class="btn btn-secondary" onclick="navTo('fin-accounts')">Cancel</button>
-          <button class="btn btn-danger btn-sm" id="del-fin-acc-btn" onclick="deleteFinAccount()" style="display:none">Delete</button>
+        <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-fin-acc-btn" onclick="saveFinAccount()">Save Account</button>
+          <button class="btn btn-secondary" onclick="navTo('fin-accounts')">Cancel</button>
+          <button class="btn btn-danger" id="del-fin-acc-btn" onclick="deleteFinAccount()" style="display:none;margin-left:auto">Delete</button>
         </div>
       </div>
     </div>
@@ -2008,7 +2008,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 
 <!-- PAYMENT MODAL -->
 <div id="pay-modal-overlay" onclick="closePaymentModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:16px">
-  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3)">
+  <div onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Record Payment" style="background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3)">
     <div style="padding:18px 20px;border-bottom:1.5px solid var(--b1);position:sticky;top:0;background:#fff;z-index:1">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:16px;font-weight:700">Record Payment</div>
@@ -2041,7 +2041,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 
 <!-- GL ENTRY MODAL -->
 <div id="gl-entry-overlay" onclick="closeGlEntry()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:16px">
-  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3)">
+  <div onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Ledger Entry" style="background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3)">
     <div style="padding:18px 20px;border-bottom:1.5px solid var(--b1);position:sticky;top:0;background:#fff;z-index:1">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
@@ -2156,8 +2156,8 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings'};
-function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];}
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Accounts','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports'};
+function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtRemaining(dateOut){
@@ -2165,10 +2165,10 @@ function fmtRemaining(dateOut){
   var due=new Date(dateOut+'T00:00:00');
   var today=new Date();today.setHours(0,0,0,0);
   var diff=Math.round((due-today)/(1000*60*60*24));
-  if(diff<0) return{text:'Overdue by '+Math.abs(diff)+' day'+(Math.abs(diff)>1?'s':''),color:'#fff',bg:'#DC2626',icon:'🚨',blink:true};
-  if(diff===0)return{text:'Due Today!',color:'#fff',bg:'#DC2626',icon:'🚨',blink:true};
-  if(diff===1)return{text:'Due Tomorrow',color:'#fff',bg:'#EA580C',icon:'⚠️',blink:false};
-  return{text:diff+' days left',color:'#fff',bg:'#16A34A',icon:'✅',blink:false};
+  if(diff<0) return{text:'Overdue by '+Math.abs(diff)+' day'+(Math.abs(diff)>1?'s':''),color:'#fff',bg:'#DC2626',icon:ico('alertTri',12,'#fff'),blink:true};
+  if(diff===0)return{text:'Due Today!',color:'#fff',bg:'#DC2626',icon:ico('alertTri',12,'#fff'),blink:true};
+  if(diff===1)return{text:'Due Tomorrow',color:'#fff',bg:'#EA580C',icon:ico('clock',12,'#fff'),blink:false};
+  return{text:diff+' days left',color:'#fff',bg:'#16A34A',icon:ico('check',12,'#fff'),blink:false};
 }
 function fmtTs(ts){if(!ts)return'—';return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
 function cur(){return companySettings.currency||'QAR';}
@@ -2230,9 +2230,12 @@ function ico(name,size,color){size=size||18;return '<span class="ico" style="wid
 var MOB_TILES=[
   {id:'dashboard',   icon:_I.dashboard,  ic:'#475569',name:'Dashboard',        bg:'#F1F5F9',ib:'#E2E8F0',badge:null,info:function(){return 'Overview & reports';}},
   {id:'jobcards',    icon:_I.jobcards,   ic:'#EA580C',name:'Job Cards',         bg:'#FFF7ED',ib:'#FFEDD5',badge:function(){var n=jobCards.filter(function(j){return j.status==='in_progress';}).length;return n||null;},info:function(){var n=jobCards.filter(function(j){return j.status==='pending'||j.status==='open';}).length;return n+' pending';}},
+  {id:'workshop',    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4.5" height="16" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="11" rx="1.2"/><rect x="16.5" y="4" width="4.5" height="14" rx="1.2"/></svg>',ic:'#DC2626',name:'Workshop',bg:'#FEF2F2',ib:'#FEE2E2',badge:null,info:function(){var n=jobCards.filter(function(j){return j.status!=='delivered'&&j.status!=='cancelled';}).length;return n+' on the floor';}},
+  {id:'appointments',icon:_I.calendar,   ic:'#0284C7',name:'Appointments',      bg:'#F0F9FF',ib:'#E0F2FE',badge:null,info:function(){var t=new Date().toISOString().slice(0,10);var n=appointments.filter(function(a){return a.date===t&&a.status!=='cancelled';}).length;return n+' today';}},
   {id:'sales',       icon:_I.invoices,   ic:'#0D9488',name:'Sales',             bg:'#F0FDFA',ib:'#CCFBF1',badge:function(){var n=invoices.filter(function(iv){return iv.status==='unpaid';}).length;return n||null;},info:function(){return invoices.length+' invoices';}},
   {id:'customers',   icon:_I.customers,  ic:'#2563EB',name:'Customers',         bg:'#EFF6FF',ib:'#DBEAFE',badge:null,info:function(){return customers.length+' total';}},
   {id:'vehicles',    icon:_I.vehicles,   ic:'#7C3AED',name:'Vehicles',          bg:'#F5F3FF',ib:'#EDE9FE',badge:null,info:function(){return vehicles.length+' registered';}},
+  {id:'inventory',   icon:_I.box,        ic:'#B45309',name:'Inventory',         bg:'#FFFBEB',ib:'#FDE68A',badge:function(){var n=parts.filter(partLow).length;return n||null;},info:function(){return parts.length+' parts';}},
   {id:'technicians', icon:_I.technicians,ic:'#16A34A',name:'Technicians',       bg:'#F0FDF4',ib:'#DCFCE7',badge:null,info:function(){return technicians.filter(function(t){return t.status==='available';}).length+' available';}},
   {id:'advisors',    icon:_I.advisors,   ic:'#0891B2',name:'Service Advisors',  bg:'#ECFEFF',ib:'#CFFAFE',badge:null,info:function(){return advisors.length+' advisors';}},
   {id:'accounts',    icon:_I.accounts,   ic:'#D97706',name:'Accounts',          bg:'#FFFBEB',ib:'#FEF3C7',badge:null,info:function(){var today=new Date().toISOString().slice(0,10);var inc=transactions.filter(function(t){return t.date===today&&t.type==='income';}).reduce(function(s,t){return s+Number(t.amount||0);},0);return inc?cur()+' '+Number(inc).toFixed(0)+' today':'Finances';}},
@@ -2325,6 +2328,7 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'add-fin-account':['Accounts','New Account'],'gen-ledger':['Accounts','General Ledger'],'trial-balance':['Accounts','Trial Balance'],
   'pl-statement':['Accounts','Profit & Loss'],'balance-sheet':['Accounts','Balance Sheet'],'cust-accs':['Accounts','Customer Accounts'],
   'cust-acc-detail':['Accounts','Customer Ledger'],'acc-statement':['Accounts','Statement'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
+  'jc-reports':['Job Cards','Reports'],'cust-reports':['Customers','Reports'],'tech-reports':['Technicians','Reports'],'veh-history':['Vehicles','Service History'],
   'add-appointment':['Appointments','New Appointment'],
   'add-part':['Inventory','Part'],'part':['Inventory','Part Detail']
 };
@@ -2351,6 +2355,14 @@ function tbToggle(id){
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('.tb-mw'))document.querySelectorAll('.tb-menu.open').forEach(function(m){m.classList.remove('open');});
+});
+// Escape closes the payment / GL entry modals
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  var pm=document.getElementById('pay-modal-overlay');
+  if(pm&&pm.style.display!=='none'&&pm.style.display!==''){closePaymentModal();return;}
+  var gl=document.getElementById('gl-entry-overlay');
+  if(gl&&gl.style.display!=='none'&&gl.style.display!==''){closeGlEntry();}
 });
 function tbGo(fn){document.querySelectorAll('.tb-menu.open').forEach(function(m){m.classList.remove('open');});fn();}
 function buildQuickAdd(){
@@ -2595,11 +2607,13 @@ function snapErr(label,firedKey){
 }
 function initFirestore(){
   db.collection('customers').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.customers=true;
     customers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='customers')renderCustomers();
     if(activeNav==='dashboard')renderDashboard();
   },snapErr('customers'));
   db.collection('vehicles').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.vehicles=true;
     vehicles=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='vehicles')renderVehiclesSection();
   },snapErr('vehicles'));
@@ -2613,16 +2627,19 @@ function initFirestore(){
     if(curTech){checkTechNotifications();renderTechPortal();}
   },snapErr('job cards','jobCards'));
   db.collection('technicians').orderBy('name').onSnapshot(function(snap){
+    _fired.technicians=true;
     technicians=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='technicians')renderTechnicians();
     if(activeNav==='dashboard')renderDashboard();
   },snapErr('technicians'));
   db.collection('advisors').orderBy('name').onSnapshot(function(snap){
+    _fired.advisors=true;
     advisors=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='advisors')renderAdvisors();
     if(activeNav==='add-jobcard'||activeNav==='v-add-jobcard')populateAdvisorSelect(document.getElementById('jc-advisor')?document.getElementById('jc-advisor').value:'');
   },snapErr('service advisors'));
   db.collection('appointments').onSnapshot(function(snap){
+    _fired.appointments=true;
     appointments=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='appointments')renderAppointments();
   },snapErr('appointments'));
@@ -3043,6 +3060,7 @@ function statRow(label,val,color){
 
 // CUSTOMERS
 function renderCustomers(){
+  if(!_fired.customers){document.getElementById('customers-list').innerHTML=skelRows(6);return;}
   renderCustDash();
   var el=document.getElementById('customers-list');
   var q=(document.getElementById('cust-search').value||'').toLowerCase();
@@ -3388,6 +3406,7 @@ function wbCard(jc){
 }
 function renderWorkshop(){
   var el=document.getElementById('workshop-board');if(!el)return;
+  if(!_fired.jobCards){el.innerHTML=skelTable(6);return;}
   el.innerHTML='<div class="wb-hint">'+ico('info',15,'var(--t3)')+'<span><b>'+jobCards.length+'</b> job cards on the floor.<span class="wb-hint-drag"> Drag a card to another column to move it through the workflow.</span></span></div>'+
     '<div class="wb-board">'+WB_STAGES.map(function(st){
     var cards=jobCards.filter(function(j){return st.match(j.status);});
@@ -3432,6 +3451,7 @@ function apptShiftWeek(n){if(!apptWeekStart)apptWeekStart=apptMonday(new Date())
 function apptToday(){apptWeekStart=apptMonday(new Date());renderAppointments();}
 function renderAppointments(){
   var el=document.getElementById('appt-content');if(!el)return;
+  if(!_fired.appointments){el.innerHTML=skelTable(4);return;}
   if(!apptWeekStart)apptWeekStart=apptMonday(new Date());
   var days=[];for(var i=0;i<7;i++){days.push(new Date(apptWeekStart.getFullYear(),apptWeekStart.getMonth(),apptWeekStart.getDate()+i));}
   var todayStr=apptYmd(new Date());
@@ -4369,6 +4389,7 @@ function updateWorkStatus(jcId,workId,newWStatus){
 // SERVICE ADVISORS
 function renderAdvisors(){
   var el=document.getElementById('advisors-list');
+  if(!_fired.advisors){el.innerHTML=skelRows(6);return;}
   if(!advisors.length){
     el.innerHTML='<div class="empty">No service advisors added yet.</div>';
     return;
@@ -4448,6 +4469,7 @@ function deleteAdvisor(id,name){
 
 // TECHNICIANS
 function renderTechnicians(){
+  if(!_fired.technicians){document.getElementById('technicians-list').innerHTML=skelRows(6);return;}
   renderTechDash();
   var el=document.getElementById('technicians-list');
   if(!technicians.length){el.innerHTML='<div class="empty">No technicians added yet.</div>';return;}
@@ -4552,6 +4574,7 @@ function renderSales(){
 function renderSalesKpis(){
   var el=document.getElementById('sales-kpis');
   if(!el)return;
+  if(!_fired.invoices){el.innerHTML=skelKpis(4);return;}
   var today=new Date().toISOString().slice(0,10);
   var mStart=today.slice(0,7)+'-01';
   var todayAmt=invoices.filter(function(iv){return new Date(iv.createdAt).toISOString().slice(0,10)===today;}).reduce(function(s,iv){return s+Number(iv.total||0);},0);
@@ -4571,6 +4594,7 @@ function renderSalesKpis(){
 function renderSalesRecent(){
   var el=document.getElementById('sales-recent-list');
   if(!el)return;
+  if(!_fired.invoices){el.innerHTML=skelTable(4);return;}
   var recent=invoices.slice(0,12);
   if(!recent.length){el.innerHTML='<div class="empty">No invoices yet. Use Quick Invoice or create one from a Job Card.</div>';return;}
   el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
@@ -5215,6 +5239,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeJcModal
 
 // ── VEHICLES SECTION ──
 function renderVehiclesSection(){
+  if(!_fired.vehicles){document.getElementById('vehicles-section-list').innerHTML=skelRows(6);return;}
   renderVehDash();
   var el=document.getElementById('vehicles-section-list');
   var q=(document.getElementById('veh-search').value||'').toLowerCase();
@@ -5229,7 +5254,7 @@ function renderVehiclesSection(){
     var activeJob=vJobs.find(function(j){return j.status==='open'||j.status==='in_progress';});
     var jcs=activeJob?JC_STATUS[activeJob.status]||JC_STATUS.open:null;
     return'<div class="list-item" onclick="openVehicleById(\''+v.id+'\')">'+
-      '<div class="li-icon" style="background:#FFF7ED;font-size:22px">🚗</div>'+
+      '<div class="li-icon" style="background:#FFF7ED">'+ico('vehicles',22,'var(--t2)')+'</div>'+
       '<div class="li-body">'+
         '<div class="li-title">'+esc(v.registrationNo)+' — '+esc([v.make,v.model].filter(Boolean).join(' '))+'</div>'+
         '<div class="li-sub">'+esc([v.year,v.color,v.fuelType].filter(Boolean).join(' · '))+(v.customerName?' · 👤 '+esc(v.customerName):'')+'</div>'+
@@ -5376,6 +5401,7 @@ function initAccountsFirestore(){
     if(activeNav==='dashboard')renderDashboard();
   },snapErr('transactions','transactions'));
   db.collection('finAccounts').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.finAccounts=true;
     finAccounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='fin-accounts')renderFinAccounts();
   },snapErr('ledger accounts'));
@@ -5429,6 +5455,7 @@ var ACC_OPTIONS=[
 ];
 
 function renderAccounts(){
+  if(!_fired.transactions){var _se=document.getElementById('acc-summary');if(_se)_se.innerHTML='<div class="r3" style="gap:12px;margin-bottom:20px">'+skelKpis(3)+'</div>';return;}
   var range=getAccRange();
   var from=range.from, to=range.to;
   var inRange=transactions.filter(function(t){return t.date>=from&&t.date<=to;});
@@ -5835,12 +5862,11 @@ function setFinAccType(k){
 function renderFinAccounts(){
   var el=document.getElementById('fin-accs-list');
   if(!el)return;
+  if(!_fired.finAccounts){el.innerHTML=skelRows(6);return;}
   if(!finAccounts.length){
     el.innerHTML=
-      '<div style="text-align:center;padding:32px 20px">'+
-        '<div style="font-size:40px;margin-bottom:12px">📂</div>'+
-        '<div style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:6px">No accounts yet</div>'+
-        '<div style="font-size:13px;color:var(--t2);margin-bottom:20px">Load the standard chart of accounts for a garage business, or create your own.</div>'+
+      '<div class="empty">No accounts yet. Load the standard chart of accounts for a garage business, or create your own.</div>'+
+      '<div style="text-align:center;padding-bottom:24px">'+
         '<button class="btn btn-primary" onclick="seedDefaultFinAccounts(this)"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>Load Default Accounts</button>'+
         '<div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="showAddFinAccount(null)">+ Create Manually</button></div>'+
       '</div>';
@@ -6529,7 +6555,7 @@ function renderBalanceSheet(){
 
   var balanced=Math.abs(check)<0.01;
   var checkHtml='<div style="margin-top:12px;padding:12px 16px;border-radius:var(--r-md);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;background:'+(balanced?'#DCFCE7':'#FEF2F2')+';color:'+(balanced?'#15803D':'#DC2626')+'">'+
-    '<span style="font-size:18px">'+(balanced?'✓':'⚠')+'</span>'+
+    (balanced?ico('check',18,'#16A34A'):ico('alertTri',18,'#DC2626'))+
     (balanced?'Balance Sheet balances — Assets = Liabilities + Equity = '+fmtMoney(totalAssets):
     'Difference of '+fmtMoney(Math.abs(check))+' — check opening balances and transaction postings')+
   '</div>';
@@ -6570,6 +6596,7 @@ function renderCustAccounts(){
   var sumEl=document.getElementById('cust-accs-summary');
   var listEl=document.getElementById('cust-accs-list');
   if(!sumEl||!listEl)return;
+  if(!_fired.invoices){listEl.innerHTML=skelRows(6);return;}
 
   var totalOutstanding=data.reduce(function(s,d){return s+d.outstanding;},0);
   var countOut=data.filter(function(d){return d.outstanding>0.005;}).length;
@@ -6794,7 +6821,7 @@ function renderAccStatement(){
     '<div style="background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:16px;margin-bottom:14px">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'+
         '<div>'+
-          (acc?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+(typeInfo?'<span style="font-size:22px">'+typeInfo.icon+'</span>':'')+'<span style="font-size:16px;font-weight:800;color:var(--t1)">'+esc(acc.name)+'</span></div>':'<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:4px">All Accounts</div>')+
+          (acc?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+(typeInfo?ico(typeInfo.icon,22,typeInfo.color||'currentColor'):'')+'<span style="font-size:16px;font-weight:800;color:var(--t1)">'+esc(acc.name)+'</span></div>':'<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:4px">All Accounts</div>')+
           (acc&&acc.accountNumber?'<div style="font-size:12px;color:var(--t3)">A/C: '+esc(acc.accountNumber)+'</div>':'')+
           '<div style="font-size:12px;color:var(--t3);margin-top:2px">Period: '+esc(periodLabels[stmtPeriod]||stmtPeriod)+'</div>'+
         '</div>'+
@@ -6913,7 +6940,7 @@ function selectVehHistory(v){
   document.getElementById('vh-selected').style.display='block';
   document.getElementById('vh-badge').innerHTML=
     '<div style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--r-md);padding:12px 16px;display:flex;align-items:center;gap:12px">'+
-      '<span style="font-size:28px">🚗</span>'+
+      ico('vehicles',28,'var(--t2)')+
       '<div>'+
         '<div style="font-size:16px;font-weight:800">'+esc(v.registrationNo)+'</div>'+
         '<div style="font-size:13px;color:var(--t2);margin-top:2px">'+esc([v.year,v.make,v.model].filter(Boolean).join(' '))+(v.customerName?' · 👤 '+esc(v.customerName):'')+'</div>'+
