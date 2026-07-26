@@ -448,6 +448,15 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .data-table tbody tr:last-child td{border-bottom:none}
 .data-table tfoot td{padding:13px 14px;font-weight:700;font-size:13px;background:var(--bg);border-top:1.5px solid var(--b1)}
 .data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+/* Enterprise tables: sticky sortable headers + clearer row focus. */
+.data-table thead th{position:sticky;top:0;z-index:2}
+.data-table thead th.sortable{cursor:pointer;user-select:none;padding-right:22px;position:sticky}
+.data-table thead th.sortable:hover{color:var(--t1);background:var(--b1)}
+.data-table thead th.sortable::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;opacity:.25;border-bottom:5px solid currentColor}
+.data-table thead th.sortable.sort-asc::after{opacity:.9;border-bottom:5px solid var(--accent);border-top:none}
+.data-table thead th.sortable.sort-desc::after{opacity:.9;border-top:5px solid var(--accent);border-bottom:none}
+.data-table tbody tr.dt-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.dt-scroll{max-height:calc(100vh - 260px)}
 .dt-wrap{border:1.5px solid var(--b1);border-radius:var(--r-md);overflow:hidden;background:var(--card)}
 /* ── SKELETON LOADING ── */
 .skel{position:relative;overflow:hidden;background:#E9EEF4;border-radius:7px;display:inline-block}
@@ -456,7 +465,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 @media(prefers-reduced-motion:reduce){.skel::after{animation:none}}
 .skel-row{display:flex;align-items:center;gap:14px;padding:14px 15px;border-bottom:1px solid var(--b1)}
 .skel-row:last-child{border-bottom:none}
-.dt-scroll{overflow-x:auto}
+.dt-scroll{overflow:auto}
 /* ── Service Order (job card detail) ── */
 .so-head{padding:0;overflow:hidden}
 .so-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px 20px 16px;border-bottom:1px solid var(--b1)}
@@ -793,6 +802,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
   .view{padding:0!important}
   .card{box-shadow:none;border:1px solid #ddd}
   body{background:#fff}
+  /* Tables print in full — no scroll clipping or frozen-header offset. */
+  .dt-scroll{max-height:none!important;overflow:visible!important}
+  .data-table thead th{position:static!important}
   @page{margin:14mm}
 }
 </style>
@@ -1081,6 +1093,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
     <div id="v-customers" class="view">
       <div class="page-header">
         <div><div class="page-title">Customers</div><div class="page-sub">Customer management</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportCustomers()" style="margin-left:auto;margin-right:8px">Export CSV</button>
         <div class="btn-group">
           <button class="btn btn-secondary btn-sm" onclick="showCustReport()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="6" y="11" width="3" height="8" rx="1"/><rect x="11" y="7" width="3" height="12" rx="1"/><rect x="16" y="3" width="3" height="16" rx="1"/></svg></span>Reports</button>
           <button class="btn btn-primary btn-sm" onclick="showAddCustomer(false)">+ Add Customer</button>
@@ -1256,6 +1269,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Inventory</div><div class="page-sub">Parts &amp; stock management</div></div>
         <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="exportInventory()">Export CSV</button>
           <button class="btn btn-primary btn-sm" onclick="showAddPart(false)">+ Add Part</button>
         </div>
       </div>
@@ -2773,6 +2787,71 @@ function showApp(name){
 document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('l-user').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('l-pass').focus();});
 document.getElementById('tl-pin').addEventListener('keydown',function(e){if(e.key==='Enter')doTechLogin();});
+
+// ── ENTERPRISE TABLE BEHAVIOUR (delegated — works on every .data-table) ──
+// Click a header to sort; keyboard-activate clickable rows. No renderer changes.
+function _cellSortVal(td){
+  if(!td)return '';
+  var t=(td.textContent||'').trim();
+  if(t===''||t==='—')return ''; // blanks group together
+  // Leading number/money (optionally followed by a short badge like "Low"/"Out")
+  // → sort numerically. Plain text (incl. codes like INV-0001, 5W-30) → text.
+  var m=t.match(/^(-?(?:QAR|AED|USD|SAR|OMR|KWD|BHD|EUR|GBP|INR|\$|£|€)?\s*-?[\d,]+(?:\.\d+)?%?)(?:\s*[A-Za-z]{1,6})?$/i);
+  if(m){var n=parseFloat(m[1].replace(/[^0-9.\-]/g,''));if(!isNaN(n))return n;}
+  return t.toLowerCase();
+}
+function _sortTable(table,colIdx,dir){
+  var tbody=table.tBodies[0];if(!tbody)return;
+  var rows=Array.prototype.slice.call(tbody.rows).filter(function(r){return !r.querySelector('td[colspan]');});
+  rows.sort(function(a,b){
+    var av=_cellSortVal(a.cells[colIdx]),bv=_cellSortVal(b.cells[colIdx]);
+    if(av<bv)return dir==='asc'?-1:1;
+    if(av>bv)return dir==='asc'?1:-1;
+    return 0;
+  });
+  rows.forEach(function(r){tbody.appendChild(r);});
+}
+document.addEventListener('click',function(e){
+  var th=e.target.closest?e.target.closest('.data-table thead th'):null;
+  if(!th)return;
+  var table=th.closest('table');var thead=th.parentNode;
+  // Skip empty spacer headers (e.g. action columns) — nothing to sort by.
+  if(!th.textContent.trim()){return;}
+  var idx=Array.prototype.indexOf.call(thead.children,th);
+  var cur=th.classList.contains('sort-asc')?'asc':th.classList.contains('sort-desc')?'desc':'';
+  var dir=cur==='asc'?'desc':'asc';
+  Array.prototype.forEach.call(thead.children,function(h){h.classList.remove('sort-asc','sort-desc');});
+  th.classList.add(dir==='asc'?'sort-asc':'sort-desc');
+  _sortTable(table,idx,dir);
+});
+// Mark non-empty headers sortable + make .dt-row keyboard-operable, after each render.
+function enhanceTables(root){
+  (root||document).querySelectorAll('.data-table thead th').forEach(function(th){
+    if(th.textContent.trim()&&!th.classList.contains('sortable'))th.classList.add('sortable');
+  });
+  (root||document).querySelectorAll('.data-table tbody tr.dt-row').forEach(function(r){
+    if(!r.hasAttribute('tabindex')){r.setAttribute('tabindex','0');r.setAttribute('role','button');}
+  });
+}
+document.addEventListener('keydown',function(e){
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('dt-row')){e.preventDefault();e.target.click();}
+});
+// Export an array of objects to a downloaded CSV (Excel-friendly).
+function exportCsv(filename,rows){
+  if(!rows||!rows.length){toast('Nothing to export.');return;}
+  var cols=Object.keys(rows[0]);
+  var esc2=function(v){v=(v==null?'':String(v));return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var csv=cols.join(',')+'\n'+rows.map(function(r){return cols.map(function(c){return esc2(r[c]);}).join(',');}).join('\n');
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  toast('Exported '+rows.length+' row'+(rows.length!==1?'s':''),'success');
+}
+function exportInventory(){exportCsv('inventory-'+new Date().toISOString().slice(0,10)+'.csv',parts.map(function(p){return{Part:p.name,PartNo:p.partNumber||'',Category:p.category||'',Brand:p.brand||'',Stock:Number(p.stock||0),Cost:Number(p.costPrice||0),Selling:Number(p.sellingPrice||0),Location:p.location||'',StockValue:Number(p.stock||0)*Number(p.costPrice||0)};}));}
+function exportInvoices(){exportCsv('invoices-'+new Date().toISOString().slice(0,10)+'.csv',invoices.map(function(iv){return{Invoice:invNum(iv),Customer:iv.customerName||'',Vehicle:iv.vehicleReg||'',Date:tsToDs(iv.createdAt),Status:iv.status||'',Total:Number(iv.total||0),Paid:Number(iv.totalPaid||0),Balance:Number(iv.total||0)-Number(iv.totalPaid||0)};}));}
+function exportCustomers(){exportCsv('customers-'+new Date().toISOString().slice(0,10)+'.csv',customers.map(function(c){return{Name:c.name||'',Phone:c.phone||'',WhatsApp:c.wa||'',Email:c.email||'',Address:c.address||''};}));}
+// Re-scan on DOM changes so freshly-rendered tables get the behaviour.
+if(window.MutationObserver){var _mo=new MutationObserver(function(){clearTimeout(window._enhT);window._enhT=setTimeout(function(){enhanceTables();},60);});document.addEventListener('DOMContentLoaded',function(){_mo.observe(document.getElementById('main-content')||document.body,{childList:true,subtree:true});});}
 
 // ── SKELETON LOADING (shown until first data snapshot arrives) ──
 var _fired={};
