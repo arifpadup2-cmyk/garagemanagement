@@ -8,6 +8,10 @@
 <meta name="theme-color" content="#0F172A">
 <title>VIWO — Garage Management</title>
 <link rel="icon" type="image/png" href="/brand/viwo-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0E1433">
+<link rel="apple-touch-icon" href="/brand/viwo-icon-192.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
@@ -1784,6 +1788,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div id="aged-content"></div>
     </div>
 
+    <!-- AGED PAYABLES -->
+    <div id="v-aged-payables" class="view">
+      <div class="page-header">
+        <button class="back-btn" onclick="navTo('accounts')">← Finance</button>
+        <div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="window.print()"><span class="ico" style="width:15px;height:15px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>Print</button></div>
+      </div>
+      <div style="margin-bottom:14px"><div class="page-title">Aged Payables</div><div class="page-sub">What you owe suppliers, and for how long</div></div>
+      <div id="agedpay-content"></div>
+    </div>
+
     <!-- VAT SUMMARY -->
     <div id="v-vat-summary" class="view">
       <div class="page-header">
@@ -2141,6 +2155,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <label>Default Invoice Notes</label>
           <textarea id="set-inv-notes" placeholder="e.g. All parts carry a 3-month warranty." rows="2" style="resize:vertical"></textarea>
         </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Books Locked Up To <span style="font-size:11px;color:var(--t3)">(no transactions can be dated on or before this date)</span></label>
+          <input type="date" id="set-lock-date" style="max-width:220px">
+        </div>
       </div>
 
       <div class="card">
@@ -2327,7 +2345,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2499,7 +2517,7 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'add-advisor':['Service Advisors','Add Advisor'],'add-transaction':['Finance','Transaction'],'fin-accounts':['Finance','Chart of Accounts'],
   'add-supplier':['Suppliers','Supplier'],'add-po':['Purchases','New Purchase Order'],'po':['Purchases','Detail'],'add-fin-account':['Finance','New Account'],'gen-ledger':['Finance','General Ledger'],'trial-balance':['Finance','Trial Balance'],
   'pl-statement':['Finance','Profit & Loss'],'balance-sheet':['Finance','Balance Sheet'],'cust-accs':['Finance','Customer Accounts'],
-  'cust-acc-detail':['Finance','Customer Ledger'],'acc-statement':['Finance','Statement'],'cash-flow':['Finance','Cash Flow'],'aged-receivables':['Finance','Aged Receivables'],'vat-summary':['Finance','VAT Summary'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
+  'cust-acc-detail':['Finance','Customer Ledger'],'acc-statement':['Finance','Statement'],'cash-flow':['Finance','Cash Flow'],'aged-receivables':['Finance','Aged Receivables'],'aged-payables':['Finance','Aged Payables'],'vat-summary':['Finance','VAT Summary'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
   'jc-reports':['Job Cards','Reports'],'cust-reports':['Customers','Reports'],'tech-reports':['Technicians','Reports'],'veh-history':['Vehicles','Service History'],
   'add-appointment':['Appointments','New Appointment'],
   'add-part':['Inventory','Part'],'part':['Inventory','Part Detail']
@@ -5485,7 +5503,14 @@ function renderPODetail(){
   var po=curPO;var el=document.getElementById('po-detail');if(!el)return;
   var st=PO_STATUS[po.status]||PO_STATUS.draft;
   var actions=document.getElementById('po-actions');
-  actions.innerHTML=(po.status==='draft'?'<button class="btn btn-secondary btn-sm" onclick="showAddPO(\''+po.id+'\')">Edit</button><button class="btn btn-green btn-sm" onclick="receivePurchaseOrder()">Receive to Stock</button>':'<span style="font-size:12px;color:var(--t3)">Received '+fmtTs(po.receivedAt)+'</span>');
+  var acts='';
+  if(po.status==='draft'){acts='<button class="btn btn-secondary btn-sm" onclick="showAddPO(\''+po.id+'\')">Edit</button><button class="btn btn-green btn-sm" onclick="receivePurchaseOrder()">Receive to Stock</button>';}
+  else{
+    acts='<span style="font-size:12px;color:var(--t3)">Received '+fmtTs(po.receivedAt)+'</span>';
+    if(!po.paid)acts+='<button class="btn btn-primary btn-sm" onclick="payPurchaseOrder()">Mark Paid</button>';
+    else acts+='<span class="badge badge-green" style="margin-left:8px">PAID</span>';
+  }
+  actions.innerHTML=acts;
   var rows=(po.items||[]).map(function(it){return'<tr><td style="font-weight:600">'+esc(it.name)+'</td><td class="num">'+Number(it.qty||0)+'</td><td class="num">'+fmtMoney(it.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(Number(it.qty||0)*Number(it.unitCost||0))+'</td></tr>';}).join('');
   el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(poNum(po))+'</div><div class="so-created">Created '+fmtTs(po.createdAt)+'</div></div><div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
     '<div class="so-spec"><div class="so-spec-item"><div class="so-spec-k">'+ico('truck',13,'var(--t3)')+'Supplier</div><div class="so-spec-v">'+esc(po.supplierName||'—')+'</div></div>'+(po.reference?'<div class="so-spec-item"><div class="so-spec-k">Reference</div><div class="so-spec-v">'+esc(po.reference)+'</div></div>':'')+'</div></div>'+
@@ -5496,6 +5521,21 @@ function receivePurchaseOrder(){
   var po=curPO;if(po.status==='received'){toast('Already received.');return;}
   confirmDialog({title:'Receive to stock?',message:'Add all ordered quantities of '+poNum(po)+' to inventory? This updates part costs and cannot be undone.',confirmText:'Receive',onConfirm:function(){
     gmsApi.receivePO(po.id).then(function(saved){curPO=saved;toast('Stock received for '+poNum(po),'success');renderPODetail();}).catch(function(e){toast(e.message||'Could not receive.','error');});
+  }});
+}
+function payPurchaseOrder(){
+  var po=curPO;if(po.paid){toast('Already paid.');return;}
+  confirmDialog({title:'Record supplier payment?',message:'Record payment of '+fmtMoney(po.total)+' to '+esc(po.supplierName||'supplier')+' for '+poNum(po)+'? This posts an expense.',confirmText:'Record Payment',onConfirm:function(){
+    var acc=findDefaultAccount('cash');
+    var txn={type:'expense',date:new Date().toISOString().slice(0,10),amount:Number(po.total||0),
+      description:'Supplier payment – '+poNum(po),category:'Spare Parts',paymentMethod:'cash',
+      accountId:acc?acc.id:'',accountName:acc?acc.name:'',
+      partyType:'vendor',partyName:po.supplierName||'',reference:poNum(po),purchaseOrderId:po.id,createdAt:Date.now()};
+    // Post the expense, then flag the PO paid — order matters for aged payables.
+    db.collection('transactions').add(txn).then(function(){
+      return db.collection('purchaseOrders').doc(po.id).update({paid:true,paidAt:Date.now()});
+    }).then(function(){curPO.paid=true;curPO.paidAt=Date.now();toast('Supplier payment recorded','success');renderPODetail();})
+    .catch(function(e){toast('Could not record payment: '+e.message,'error');});
   }});
 }
 
@@ -6116,6 +6156,7 @@ var ACC_OPTIONS=[
   {id:'cf',       group:'Statements',        label:'Cash Flow',          sub:'Monthly money in vs out',             icon:'trendUp',     ic:'#3478FF', action:function(){showCashFlow();}},
   // Analysis & Tax
   {id:'aged',     group:'Analysis & Tax',    label:'Aged Receivables',   sub:'Outstanding by age (30/60/90 days)',  icon:'clock',       ic:'#B45309', action:function(){showAgedReceivables();}},
+  {id:'agedpay',  group:'Analysis & Tax',    label:'Aged Payables',      sub:'Owed to suppliers by age',            icon:'truck',       ic:'#7C3AED', action:function(){showAgedPayables();}},
   {id:'vat',      group:'Analysis & Tax',    label:'VAT Summary',        sub:'Tax collected on sales by month',     icon:'statement',   ic:'#0369A1', action:function(){showVatSummary();}},
   {id:'reports',  group:'Analysis & Tax',    label:'Reports',            sub:'Sales & financial analytics',         icon:'barChart',    ic:'#475569', action:function(){showSalesReports();}},
 ];
@@ -6215,6 +6256,38 @@ function renderAgedReceivables(){
     '<tfoot><tr><td style="font-weight:800">Total</td>'+tots.map(function(v){return'<td class="num" style="font-weight:800">'+(v?fmtMoney(v):'—')+'</td>';}).join('')+'<td class="num" style="font-weight:800;color:var(--red)">'+fmtMoney(grand)+'</td></tr></tfoot>'+
     '</table></div></div></div>'+
     '<div style="font-size:12px;color:var(--t3);margin-top:10px">Aged from the credit due date where set, otherwise the invoice date. Click a row to open the customer’s ledger.</div>';
+}
+
+// ── AGED PAYABLES (owed to suppliers on received-unpaid purchase orders) ──
+function showAgedPayables(){show('v-aged-payables');renderAgedPayables();}
+function renderAgedPayables(){
+  var el=document.getElementById('agedpay-content');if(!el)return;
+  var now=Date.now();
+  var bySup={};
+  purchaseOrders.forEach(function(po){
+    if(po.status!=='received'||po.paid)return;
+    var owed=Number(po.total||0);if(owed<=0.005)return;
+    var basis=Number(po.receivedAt||po.createdAt||now);
+    var days=Math.max(0,Math.floor((now-basis)/86400000));
+    var b=days<=30?0:days<=60?1:days<=90?2:3;
+    var key=po.supplierId||po.supplierName||'?';
+    if(!bySup[key])bySup[key]={name:po.supplierName||'Unknown supplier',b:[0,0,0,0],total:0};
+    bySup[key].b[b]+=owed;bySup[key].total+=owed;
+  });
+  var list=Object.keys(bySup).map(function(k){return bySup[k];}).sort(function(a,b){return b.total-a.total;});
+  if(!list.length){el.innerHTML='<div class="card"><div class="empty">Nothing owed — every received purchase order is paid.</div></div>';return;}
+  var tots=[0,0,0,0],grand=0;
+  var rows=list.map(function(c){
+    for(var i=0;i<4;i++)tots[i]+=c.b[i];grand+=c.total;
+    var cells=c.b.map(function(v,i){return'<td class="num" style="'+(v?(i>=2?'color:var(--red);font-weight:700':'font-weight:600'):'color:var(--t3)')+'">'+(v?fmtMoney(v):'—')+'</td>';}).join('');
+    return'<tr><td style="font-weight:600;color:var(--t1)">'+esc(c.name)+'</td>'+cells+'<td class="num" style="font-weight:800">'+fmtMoney(c.total)+'</td></tr>';
+  }).join('');
+  el.innerHTML='<div class="card"><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Supplier</th><th class="num">Current (0–30d)</th><th class="num">31–60 days</th><th class="num">61–90 days</th><th class="num">Over 90 days</th><th class="num">Total Owed</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody>'+
+    '<tfoot><tr><td style="font-weight:800">Total</td>'+tots.map(function(v){return'<td class="num" style="font-weight:800">'+(v?fmtMoney(v):'—')+'</td>';}).join('')+'<td class="num" style="font-weight:800;color:var(--red)">'+fmtMoney(grand)+'</td></tr></tfoot>'+
+    '</table></div></div></div>'+
+    '<div style="font-size:12px;color:var(--t3);margin-top:10px">Received purchase orders not yet marked paid, aged from the received date. Mark a PO paid from its detail page.</div>';
 }
 
 // ── VAT SUMMARY (output tax by month) ──
@@ -6532,7 +6605,7 @@ function renderSettings(){
   f('set-name',s.name);f('set-tagline',s.tagline);f('set-phone',s.phone);
   f('set-email',s.email);f('set-address',s.address);f('set-city',s.city);
   f('set-country',s.country);f('set-vat',s.vatNumber);f('set-website',s.website);
-  f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);
+  f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);f('set-lock-date',s.lockDate);
   var curSel=document.getElementById('set-currency');if(curSel)curSel.value=s.currency||'QAR';
   var vatChk=document.getElementById('set-vat-enabled');
   if(vatChk){vatChk.checked=!!s.vatEnabled;document.getElementById('set-vat-rate-wrap').style.opacity=s.vatEnabled?'1':'.45';}
@@ -6605,6 +6678,7 @@ function saveCompanySettings(){
     logoUrl:document.getElementById('set-logo').value.trim(),
     invoiceTerms:document.getElementById('set-terms').value.trim(),
     invoiceNotes:document.getElementById('set-inv-notes').value.trim(),
+    lockDate:document.getElementById('set-lock-date').value||'',
     updatedAt:Date.now()
   };
   db.collection('settings').doc('company').set(data,{merge:true}).then(function(){

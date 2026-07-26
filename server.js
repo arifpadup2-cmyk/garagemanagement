@@ -203,6 +203,17 @@ async function loadAuthEpoch() {
     if (rows.length && Number(rows[0].data.epoch)) authEpoch = Number(rows[0].data.epoch);
   } catch (_) {}
 }
+
+// Period lock: no transaction/invoice may be dated on or before this date.
+let periodLockDate = '';
+async function loadPeriodLock() {
+  try {
+    const { rows } = await pool.query(`SELECT data FROM settings WHERE id = 'company'`);
+    periodLockDate = (rows.length && rows[0].data.lockDate) || '';
+  } catch (_) { periodLockDate = ''; }
+}
+function periodLocked(dateStr) { return !!(periodLockDate && dateStr && dateStr <= periodLockDate); }
+function tsToDs(ts) { const t = Number(ts); if (!t) return ''; const d = new Date(t); return isNaN(d) ? '' : d.toISOString().slice(0, 10); }
 async function bumpAuthEpoch() {
   authEpoch = Date.now();
   await pool.query(`INSERT INTO settings (id, data) VALUES ('auth', $1)
@@ -431,6 +442,9 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
     return res.status(400).json({ error: 'Document body required' });
   }
   const body = sanitizeDoc(req.params.coll, { ...req.body });
+  // Reject money records dated into a locked period.
+  if (req.params.coll === 'transactions' && periodLocked(body.date)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '. Use a later date.' });
+  if (req.params.coll === 'invoices' && periodLocked(tsToDs(body.createdAt))) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '. Use a later date.' });
   const id = body.id || crypto.randomUUID();
   const isNew = !body.id;
   delete body.id;
@@ -873,6 +887,7 @@ app.get('/api/settings/company', asyncH(async (req, res) => {
 }));
 app.put('/api/settings/company', asyncH(async (req, res) => {
   const patch = { ...req.body }; delete patch.id;
+  if ('lockDate' in patch) periodLockDate = patch.lockDate || ''; // keep the guard current
   const { rows } = await pool.query(
     `INSERT INTO settings (id, data) VALUES ('company', $1)
      ON CONFLICT (id) DO UPDATE SET data = settings.data || $1
@@ -927,5 +942,6 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 const PORT = process.env.PORT || 3000;
 initSchema()
   .then(loadAuthEpoch)
+  .then(loadPeriodLock)
   .then(() => app.listen(PORT, () => console.log(`GMS server on http://localhost:${PORT}`)))
   .catch((e) => { console.error('Startup failed:', e.message); process.exit(1); });

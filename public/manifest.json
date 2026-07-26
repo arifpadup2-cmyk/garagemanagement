@@ -1,0 +1,15 @@
+{
+  "name": "VIWO Garage Management",
+  "short_name": "VIWO",
+  "description": "Garage management — job cards, workshop, inventory, invoicing and accounts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0E1433",
+  "icons": [
+    { "src": "/brand/viwo-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/viwo-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
