@@ -456,6 +456,20 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 .data-table thead th.sortable.sort-asc::after{opacity:.9;border-bottom:5px solid var(--accent);border-top:none}
 .data-table thead th.sortable.sort-desc::after{opacity:.9;border-top:5px solid var(--accent);border-bottom:none}
 .data-table tbody tr.dt-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* Grid command bar (column chooser) */
+.dt-toolbar{display:flex;justify-content:flex-end;align-items:center;padding:6px 8px;border-bottom:1.5px solid var(--b1);background:var(--card)}
+.dt-colbtn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--t2);background:var(--bg);border:1px solid var(--b1);border-radius:8px;padding:5px 10px;cursor:pointer}
+.dt-colbtn:hover{color:var(--t1);border-color:var(--b2)}
+.dt-colmenu{position:absolute;z-index:var(--z-dropdown);background:var(--card);border:1px solid var(--b1);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;min-width:190px;max-height:320px;overflow:auto}
+.dt-colmenu-h{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);padding:6px 8px 4px}
+.dt-colmenu label{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;font-size:13px;font-weight:500;color:var(--t1);cursor:pointer;margin:0}
+.dt-colmenu label:hover{background:var(--bg)}
+.dt-colmenu input{width:15px;height:15px;accent-color:var(--accent);margin:0}
+/* Inline-edit cells */
+.dt-edit{cursor:text;position:relative}
+.dt-edit:hover{background:var(--accent-lt);box-shadow:inset 0 0 0 1px var(--b2)}
+.dt-edit input{width:100%;border:1.5px solid var(--accent);border-radius:6px;padding:4px 6px;font:inherit;font-size:13px;background:#fff;color:var(--t1);text-align:inherit}
+.dt-edit.saving{opacity:.6}
 .dt-scroll{max-height:calc(100vh - 260px)}
 .dt-wrap{border:1.5px solid var(--b1);border-radius:var(--r-md);overflow:hidden;background:var(--card)}
 /* ── SKELETON LOADING ── */
@@ -2833,7 +2847,47 @@ document.addEventListener('click',function(e){
   th.classList.add(dir==='asc'?'sort-asc':'sort-desc');
   _sortTable(table,idx,dir);
 });
-// Mark non-empty headers sortable + make .dt-row keyboard-operable, after each render.
+// ── Column chooser (persistent, per-table) ──
+function _tableKey(table){
+  var ths=table.tHead?table.tHead.rows[0].cells:[];
+  return Array.prototype.map.call(ths,function(th){return (th.textContent||'').trim();}).join('|');
+}
+function _getHiddenCols(key){try{return JSON.parse(localStorage.getItem('gms_cols_'+key)||'[]');}catch(e){return[];}}
+function _setHiddenCols(key,arr){try{localStorage.setItem('gms_cols_'+key,JSON.stringify(arr));}catch(e){}}
+function _applyHiddenCols(table){
+  var hidden=_getHiddenCols(_tableKey(table));
+  var rows=[].concat(Array.prototype.slice.call(table.tHead?table.tHead.rows:[]),Array.prototype.slice.call(table.tBodies[0]?table.tBodies[0].rows:[]),Array.prototype.slice.call(table.tFoot?table.tFoot.rows:[]));
+  rows.forEach(function(r){Array.prototype.forEach.call(r.cells,function(c,i){
+    // account for colspan cells (tfoot) — skip hiding when colspan present
+    if(c.colSpan>1)return;
+    c.style.display=hidden.indexOf(i)>-1?'none':'';
+  });});
+}
+function _openColMenu(btn,table){
+  document.querySelectorAll('.dt-colmenu').forEach(function(m){m.remove();});
+  var key=_tableKey(table),hidden=_getHiddenCols(key);
+  var ths=table.tHead.rows[0].cells;
+  var menu=document.createElement('div');menu.className='dt-colmenu';
+  menu.innerHTML='<div class="dt-colmenu-h">Show columns</div>'+
+    Array.prototype.map.call(ths,function(th,i){
+      var label=(th.textContent||'').trim();if(!label)return '';
+      return '<label><input type="checkbox" data-i="'+i+'"'+(hidden.indexOf(i)>-1?'':' checked')+'>'+esc(label)+'</label>';
+    }).join('');
+  document.body.appendChild(menu);
+  var r=btn.getBoundingClientRect();
+  menu.style.top=(r.bottom+4+window.scrollY)+'px';
+  menu.style.left=Math.max(8,(r.right-menu.offsetWidth+window.scrollX))+'px';
+  menu.addEventListener('change',function(e){
+    var i=+e.target.getAttribute('data-i');var h=_getHiddenCols(key);
+    if(e.target.checked)h=h.filter(function(x){return x!==i;});else if(h.indexOf(i)<0)h.push(i);
+    _setHiddenCols(key,h);_applyHiddenCols(table);
+  });
+  menu.addEventListener('click',function(e){e.stopPropagation();});
+  setTimeout(function(){document.addEventListener('click',function close(){menu.remove();document.removeEventListener('click',close);});},0);
+}
+
+// Mark non-empty headers sortable, keyboard-enable rows, add a column chooser to
+// wide tables, and re-apply saved hidden columns — after each render.
 function enhanceTables(root){
   (root||document).querySelectorAll('.data-table thead th').forEach(function(th){
     if(th.textContent.trim()&&!th.classList.contains('sortable'))th.classList.add('sortable');
@@ -2841,6 +2895,52 @@ function enhanceTables(root){
   (root||document).querySelectorAll('.data-table tbody tr.dt-row').forEach(function(r){
     if(!r.hasAttribute('tabindex')){r.setAttribute('tabindex','0');r.setAttribute('role','button');}
   });
+  (root||document).querySelectorAll('.dt-wrap').forEach(function(wrap){
+    var table=wrap.querySelector('.data-table');if(!table||!table.tHead)return;
+    var ncols=table.tHead.rows[0].cells.length;
+    // Column chooser only for genuinely wide grids (not 2-col reports).
+    if(ncols>=4&&!wrap.querySelector('.dt-toolbar')){
+      var bar=document.createElement('div');bar.className='dt-toolbar';
+      var btn=document.createElement('button');btn.className='dt-colbtn';btn.type='button';
+      btn.innerHTML='<span class="ico" style="width:13px;height:13px">'+ico('folder',13,'currentColor')+'</span>Columns';
+      btn.onclick=function(e){e.stopPropagation();_openColMenu(btn,table);};
+      bar.appendChild(btn);wrap.insertBefore(bar,wrap.firstChild);
+    }
+    _applyHiddenCols(table);
+  });
+}
+
+// ── Inline edit (cells marked data-edit="field" data-id="id" [data-num]) ──
+document.addEventListener('dblclick',function(e){
+  var td=e.target.closest?e.target.closest('td.dt-edit'):null;
+  if(!td||td.querySelector('input'))return;
+  _beginInlineEdit(td);
+});
+function _fmtInline(val,fmt){
+  if(fmt==='money')return fmtMoney(val);
+  if(fmt==='num')return String(Number(val)||0);
+  return (val==null||val==='')?'—':String(val);
+}
+function _beginInlineEdit(td){
+  var field=td.getAttribute('data-edit'),id=td.getAttribute('data-id'),coll=td.getAttribute('data-coll')||'parts';
+  var fmt=td.getAttribute('data-fmt')||'text';var isNum=(fmt==='money'||fmt==='num');
+  var orig=td.getAttribute('data-raw')!=null?td.getAttribute('data-raw'):td.textContent.trim();
+  td.innerHTML='<input type="'+(isNum?'number':'text')+'" value="'+esc(orig)+'"'+(isNum?' step="'+(fmt==='money'?'0.01':'1')+'" min="0"':'')+'>';
+  var inp=td.querySelector('input');inp.focus();inp.select();
+  var done=function(save){
+    if(td._closing)return;td._closing=true;
+    var val=save?(isNum?Number(inp.value||0):inp.value.trim()):null;
+    if(!save||String(val)===String(orig)){td.textContent=_fmtInline(orig,fmt);td._closing=false;return;}
+    td.classList.add('saving');
+    var patch={};patch[field]=val;
+    db.collection(coll).doc(id).update(patch).then(function(){
+      td.classList.remove('saving');td.setAttribute('data-raw',val);td.textContent=_fmtInline(val,fmt);
+      var arr=(coll==='parts')?parts:null;if(arr){var o=arr.find(function(x){return x.id===id;});if(o)o[field]=val;}
+      toast('Saved','success');td._closing=false;
+    }).catch(function(err){td.classList.remove('saving');td.textContent=_fmtInline(orig,fmt);toast('Could not save: '+err.message,'error');td._closing=false;});
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();done(true);}else if(e.key==='Escape'){e.preventDefault();done(false);}});
+  inp.addEventListener('blur',function(){done(true);});
 }
 document.addEventListener('keydown',function(e){
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('dt-row')){e.preventDefault();e.target.click();}
@@ -3925,9 +4025,9 @@ function renderInventory(){
         '<td><div style="font-weight:700;color:var(--t1)">'+esc(p.name)+'</div>'+(p.partNumber?'<div style="font-size:11px;color:var(--t3)">'+esc(p.partNumber)+'</div>':'')+'</td>'+
         '<td style="color:var(--t2)">'+esc([p.category,p.brand].filter(Boolean).join(' · ')||'—')+'</td>'+
         '<td class="num"><span style="font-weight:800">'+s+'</span>'+badge+'</td>'+
-        '<td class="num">'+(p.costPrice?fmtMoney(p.costPrice):'—')+'</td>'+
-        '<td class="num">'+(p.sellingPrice?fmtMoney(p.sellingPrice):'—')+'</td>'+
-        '<td style="color:var(--t2)">'+esc(p.location||'—')+'</td>'+
+        '<td class="num dt-edit" data-edit="costPrice" data-id="'+esc(p.id)+'" data-coll="parts" data-fmt="money" data-raw="'+Number(p.costPrice||0)+'" title="Double-click to edit" onclick="event.stopPropagation()">'+(p.costPrice?fmtMoney(p.costPrice):'—')+'</td>'+
+        '<td class="num dt-edit" data-edit="sellingPrice" data-id="'+esc(p.id)+'" data-coll="parts" data-fmt="money" data-raw="'+Number(p.sellingPrice||0)+'" title="Double-click to edit" onclick="event.stopPropagation()">'+(p.sellingPrice?fmtMoney(p.sellingPrice):'—')+'</td>'+
+        '<td class="dt-edit" style="color:var(--t2)" data-edit="location" data-id="'+esc(p.id)+'" data-coll="parts" data-fmt="text" data-raw="'+esc(p.location||'')+'" title="Double-click to edit" onclick="event.stopPropagation()">'+esc(p.location||'—')+'</td>'+
         '<td class="num" style="font-weight:700">'+fmtMoney(s*Number(p.costPrice||0))+'</td>'+
       '</tr>';
     }).join('')+'</tbody></table></div></div>';
