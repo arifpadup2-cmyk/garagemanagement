@@ -1,18 +1,17 @@
 /*
- * VIWO boot intro — vanilla-JS port of the original brand animation
- * ("Viwo Logo Intro final code"): letters rise in, the i-dot ball wakes,
- * hops twice, winds up and leaps onto the W; impact flash/ring/debris;
- * the brand gradient floods the W which reforms into the VIWO mark,
- * glides to centre and its dot pops in with a shine sweep.
- * Same beat-sheet, coordinates, easing and particle seeds as the source.
- * Plays once per browser session, ~7s, honours prefers-reduced-motion.
+ * VIWO brand animation — vanilla-JS port of the original ("Viwo Logo Intro
+ * final code"): letters rise in, the i-dot ball wakes, hops twice, winds up
+ * and leaps onto the W; impact flash/ring/debris; the brand gradient floods
+ * the W which reforms into the VIWO mark, glides to centre and its dot pops in
+ * with a shine sweep. Same beat-sheet, coordinates, easing and particle seeds.
+ *
+ * Two uses:
+ *   1. Boot intro  — fullscreen white overlay, plays once per session (~7s).
+ *   2. window.ViwoIntro.mountLoop(el) — renders into a container and LOOPS;
+ *      letters tinted white for the dark sidebar rail. Honours reduced-motion.
  */
 (function () {
   'use strict';
-  try {
-    if (sessionStorage.getItem('viwo_intro_played')) return;
-    sessionStorage.setItem('viwo_intro_played', '1');
-  } catch (e) {}
 
   var A = '/brand/anim/';
   var LOGO_W = 2400, LOGO_H = 682;
@@ -79,37 +78,31 @@
   function el(tag, css, parent) {
     var d = document.createElement(tag);
     d.style.cssText = css || '';
-    (parent || document.body).appendChild(d);
+    if (parent) parent.appendChild(d);
     return d;
   }
   function maskCss(url) {
     return '-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ');-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;';
   }
   var LAYER = 'position:absolute;inset:0;width:100%;height:100%;';
+  var WHITEN = 'filter:brightness(0) invert(1);-webkit-filter:brightness(0) invert(1);';
 
-  function run() {
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var overlay = el('div', 'position:fixed;inset:0;background:#fff;z-index:2000;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .45s ease;overflow:hidden');
-
-    if (reduce) {
-      var st = el('img', 'width:min(340px,60vw);height:auto', overlay);
-      st.src = '/brand/viwo-logo.png';
-      setTimeout(function () { overlay.style.opacity = '0'; setTimeout(function () { overlay.remove(); }, 500); }, 1100);
-      return;
-    }
-
-    var boxW = Math.min(window.innerWidth * 0.82, 980);
+  // Build the animation into `mount`, sized to boxW. Returns {stop}.
+  // opts: {loop, tintWhite, hold, onEnd}
+  function buildAnim(mount, boxW, opts) {
+    opts = opts || {};
     var S = boxW / LOGO_W, boxH = LOGO_H * S, K = boxW / 1180;
     var wordShift = -(CX.word - LOGO_W / 2) * S;
     var dotD = 118 * S;
+    var tint = opts.tintWhite ? WHITEN : '';
 
-    var stage = el('div', 'position:relative;width:' + boxW + 'px;height:' + boxH + 'px;will-change:transform', overlay);
+    var stage = el('div', 'position:relative;width:' + boxW + 'px;height:' + boxH + 'px;will-change:transform', mount);
 
     // letters
     var letters = {};
     [['v', CX.v, 0.15], ['istem', CX.i, 0.15], ['wl', CX.w, 0.15], ['o', CX.o, 0.15]].forEach(function (d) {
       var wrap = el('div', LAYER + 'opacity:0;transform-origin:' + (d[1] / LOGO_W * 100) + '% 55%;will-change:transform,opacity', stage);
-      var img = el('img', LAYER + 'object-fit:contain;display:block', wrap);
+      var img = el('img', LAYER + 'object-fit:contain;display:block;' + tint, wrap);
       img.src = A + d[0] + '.png';
       letters[d[0]] = { elw: wrap, cx: d[1], s: d[2] };
     });
@@ -147,17 +140,22 @@
     var mglow = el('div', 'position:absolute;border-radius:50%;background:radial-gradient(ellipse,rgba(86,158,255,.12),rgba(86,158,255,0) 65%);opacity:0;will-change:opacity', stage);
     var mshadow = el('div', 'position:absolute;border-radius:50%;background:radial-gradient(ellipse,rgba(14,20,51,.30),rgba(14,20,51,0) 70%);opacity:0', stage);
 
-    var t0 = null, done = false;
+    var t0 = null, done = false, stopped = false, raf = 0;
+    var HOLD = opts.hold || 0;
     function frame(now) {
+      if (stopped) return;
       if (t0 === null) t0 = now;
       var t = (now - t0) / 1000;
-      if (t > T_END + 0.25 && !done) {
-        done = true;
-        overlay.style.opacity = '0';
-        setTimeout(function () { overlay.remove(); }, 500);
-        return;
+      if (t > T_END + 0.25) {
+        if (opts.loop) {
+          if (t > T_END + 0.25 + HOLD) { t0 = now; raf = requestAnimationFrame(frame); return; }
+          t = T_END; // freeze on the finished logo during the rest beat
+        } else if (!done) {
+          done = true;
+          if (opts.onEnd) opts.onEnd();
+          return;
+        } else return;
       }
-      if (done) return;
 
       // letters rise; later dissolve toward the W
       for (var key in letters) {
@@ -340,16 +338,61 @@
       var shake = (t >= T_FX && shp > 0) ? Math.sin(t * 62) * 3.2 * K * shp * shp : 0;
       stage.style.transform = 'translate3d(' + wordShift + 'px,' + shake + 'px,0) scale(' + cam + ')';
 
-      requestAnimationFrame(frame);
+      raf = requestAnimationFrame(frame);
     }
 
     // start once the layer images are ready (they're small; cap the wait)
     var imgs = ['v', 'istem', 'wl', 'o', 'markW', 'mark', 'markdot'].map(function (n) { var i = new Image(); i.src = A + n + '.png'; return i; });
     var started = false;
-    function start() { if (started) return; started = true; requestAnimationFrame(frame); }
+    function start() { if (started || stopped) return; started = true; raf = requestAnimationFrame(frame); }
     Promise.all(imgs.map(function (i) { return i.decode ? i.decode().catch(function () {}) : Promise.resolve(); })).then(start);
     setTimeout(start, 900);
+
+    return { stop: function () { stopped = true; if (raf) cancelAnimationFrame(raf); } };
   }
+
+  // ── Boot intro: fullscreen white overlay, once per session ──
+  function run() {
+    try {
+      if (sessionStorage.getItem('viwo_intro_played')) return;
+      sessionStorage.setItem('viwo_intro_played', '1');
+    } catch (e) {}
+
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var overlay = el('div', 'position:fixed;inset:0;background:#fff;z-index:2000;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .45s ease;overflow:hidden', document.body);
+
+    if (reduce) {
+      var st = el('img', 'width:min(340px,60vw);height:auto', overlay);
+      st.src = '/brand/viwo-logo.png';
+      setTimeout(function () { overlay.style.opacity = '0'; setTimeout(function () { overlay.remove(); }, 500); }, 1100);
+      return;
+    }
+    var boxW = Math.min(window.innerWidth * 0.82, 980);
+    buildAnim(overlay, boxW, {
+      loop: false,
+      onEnd: function () { overlay.style.opacity = '0'; setTimeout(function () { overlay.remove(); }, 500); }
+    });
+  }
+
+  // ── Sidebar: looping brand animation, tinted white for the dark rail ──
+  window.ViwoIntro = {
+    mountLoop: function (container, opts) {
+      opts = opts || {};
+      if (!container) return null;
+      if (container._viwoAnim) { container._viwoAnim.stop(); container._viwoAnim = null; }
+      container.innerHTML = '';
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) {
+        var img = el('img', 'height:100%;width:auto;display:block', container);
+        img.src = '/brand/viwo-word-white.png'; img.alt = 'VIWO';
+        return null;
+      }
+      var boxW = Math.max(96, Math.min(container.clientWidth || 150, 220));
+      var ctl = buildAnim(container, boxW, { loop: true, tintWhite: opts.tintWhite !== false, hold: opts.hold != null ? opts.hold : 1.4 });
+      container._viwoAnim = ctl;
+      return ctl;
+    }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
