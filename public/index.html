@@ -564,6 +564,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 #v-accounts .fd-rt{font-size:12.5px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #v-accounts .fd-rm{font-size:11px;color:var(--t3)}
 #v-accounts .fd-ramt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+/* ── Premium KPI summary strip (shared across list pages) ── */
+.erp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.erp-kpis .kpi-val{white-space:nowrap}
 /* ── SKELETON LOADING ── */
 .skel{position:relative;overflow:hidden;background:#E9EEF4;border-radius:7px;display:inline-block}
 .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:skelShimmer 1.5s infinite}
@@ -2099,7 +2102,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <span class="acc-fn-sub" style="font-size:12px;color:var(--t2)">Invoice-wise, item-wise &amp; service-wise analytics with date filters.</span></span>
         </button>
       </div>
-      <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Recent Invoices</div>
+      <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Invoices</div>
+      <div class="search-wrap" style="margin-bottom:12px"><input type="text" id="sales-search" placeholder="Search invoice #, customer, vehicle…" oninput="renderSalesRecent()"></div>
       <div id="sales-recent-list"></div>
     </div>
 
@@ -2290,6 +2294,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="page-header">
         <div><div class="page-title">Settings</div><div class="page-sub">Company profile &amp; preferences</div></div>
       </div>
+      <div id="set-summary"></div>
 
       <!-- Company Profile -->
       <div class="card" style="margin-bottom:16px">
@@ -2732,6 +2737,9 @@ function navTo(tab){
   else if(tab==='vehicles'){renderVehiclesSection();}
   else if(tab==='accounts'){setAccFilter(accFilter);renderAccounts();}
   else if(tab==='sales')renderSales();
+  else if(tab==='estimates')renderEstimates();
+  else if(tab==='suppliers')renderSuppliers();
+  else if(tab==='purchases')renderPurchases();
   else if(tab==='fin-accounts')renderFinAccounts();
   else if(tab==='acc-statement')renderAccStatement();
   else if(tab==='cust-accs')renderCustAccounts();
@@ -4099,7 +4107,14 @@ function wbCard(jc){
 function renderWorkshop(){
   var el=document.getElementById('workshop-board');if(!el)return;
   if(!_fired.jobCards){el.innerHTML=skelTable(6);return;}
-  el.innerHTML='<div class="wb-hint">'+ico('info',15,'var(--t3)')+'<span><b>'+jobCards.length+'</b> job cards on the floor.<span class="wb-hint-drag"> Drag a card to another column to move it through the workflow.</span></span></div>'+
+  var wc={};WB_STAGES.forEach(function(st){wc[st.key]=jobCards.filter(function(j){return st.match(j.status);}).length;});
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(jobCards.length,'On Floor','')+
+    erpKpi(wc.pending||0,'Pending','')+
+    erpKpi(wc.in_progress||0,'In Progress','kpi-accent')+
+    erpKpi(wc.completed||0,'Ready to Invoice','kpi-green')+
+  '</div>';
+  el.innerHTML=kpis+'<div class="wb-hint">'+ico('info',15,'var(--t3)')+'<span><b>'+jobCards.length+'</b> job cards on the floor.<span class="wb-hint-drag"> Drag a card to another column to move it through the workflow.</span></span></div>'+
     '<div class="wb-board">'+WB_STAGES.map(function(st){
     var cards=jobCards.filter(function(j){return st.match(j.status);});
     return '<div class="wb-col" ondragover="wbOver(event)" ondragleave="wbLeave(event)" ondrop="wbDrop(event,\''+st.key+'\')">'+
@@ -4170,7 +4185,14 @@ function renderAppointments(){
         }).join(''):'<div class="cal-day-empty">·</div>')+
       '</div></div>';
   }).join('')+'</div>';
-  el.innerHTML=head+grid;
+  var todayC=appointments.filter(function(a){return a.date===todayStr;}).length;
+  var scheduledC=appointments.filter(function(a){return (a.status||'scheduled')==='scheduled';}).length;
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(todayC,'Today','kpi-accent')+
+    erpKpi(weekAppts.length,'This Week','')+
+    erpKpi(scheduledC,'Scheduled','kpi-green')+
+  '</div>';
+  el.innerHTML=kpis+head+grid;
 }
 function apptCustomerChange(){
   var cId=document.getElementById('appt-customer').value;
@@ -5277,11 +5299,17 @@ function updateWorkStatus(jcId,workId,newWStatus){
 function renderAdvisors(){
   var el=document.getElementById('advisors-list');
   if(!_fired.advisors){el.innerHTML=skelRows(6);return;}
+  var activeC=advisors.filter(function(a){return a.status==='active';}).length;
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(advisors.length,'Advisors','')+
+    erpKpi(activeC,'Active','kpi-green')+
+    erpKpi(advisors.length-activeC,'Inactive','')+
+  '</div>';
   if(!advisors.length){
-    el.innerHTML='<div class="empty">No service advisors added yet.</div>';
+    el.innerHTML=kpis+'<div class="empty">No service advisors added yet.</div>';
     return;
   }
-  el.innerHTML=advisors.map(function(a){
+  el.innerHTML=kpis+advisors.map(function(a){
     var statusColor=a.status==='active'?'#16A34A':'#64748B'; // darker inactive → WCAG-AA text contrast
     var statusLabel=a.status==='active'?'Active':'Inactive';
     return'<div class="card" style="margin-bottom:12px">'+
@@ -5486,8 +5514,11 @@ function renderSalesRecent(){
   var el=document.getElementById('sales-recent-list');
   if(!el)return;
   if(!_fired.invoices){el.innerHTML=skelTable(4);return;}
-  var recent=invoices.slice(0,12);
-  if(!recent.length){el.innerHTML='<div class="empty">No invoices yet. Use Quick Invoice or create one from a Job Card.</div>';return;}
+  var q=((document.getElementById('sales-search')||{}).value||'').trim().toLowerCase();
+  var recent=q
+    ? invoices.filter(function(iv){return (invNum(iv)+' '+(iv.customerName||'')+' '+(iv.vehicleReg||'')).toLowerCase().indexOf(q)>-1;})
+    : invoices.slice(0,12);
+  if(!recent.length){el.innerHTML='<div class="empty">'+(q?'No invoices match your search.':'No invoices yet. Use Quick Invoice or create one from a Job Card.')+'</div>';return;}
   el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
     '<thead><tr><th>Invoice</th><th>Customer</th><th>Vehicle</th><th>Date</th><th>Status</th><th class="num">Amount</th></tr></thead><tbody>'+
     recent.map(function(iv){
@@ -5804,8 +5835,17 @@ function renderEstimates(){
   if(!_fired.estimates){el.innerHTML=skelTable(6);return;}
   var q=((document.getElementById('est-search')||{}).value||'').toLowerCase();
   var list=estimates.filter(function(e){return !q||(estNum(e)+' '+(e.customerName||'')+' '+(e.vehicleReg||'')).toLowerCase().indexOf(q)>-1;});
-  if(!list.length){el.innerHTML='<div class="empty">No estimates yet. Create one to quote work for a customer’s approval.</div>';return;}
-  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+  var awaiting=estimates.filter(function(e){return e.status==='sent';}).length;
+  var approved=estimates.filter(function(e){return e.status==='approved'||e.status==='converted';}).length;
+  var estVal=estimates.reduce(function(s,e){return s+Number(e.total||0);},0);
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(estimates.length,'Estimates','')+
+    erpKpi(awaiting,'Awaiting Approval','kpi-accent')+
+    erpKpi(approved,'Approved','kpi-green')+
+    erpKpi(fmtMoney(estVal),'Total Quoted','')+
+  '</div>';
+  if(!list.length){el.innerHTML=kpis+'<div class="empty">'+(estimates.length?'No estimates match your search.':'No estimates yet. Create one to quote work for a customer’s approval.')+'</div>';return;}
+  el.innerHTML=kpis+'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
     '<thead><tr><th>Estimate</th><th>Customer</th><th>Vehicle</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>'+
     list.map(function(e){var st=EST_STATUS[e.status]||EST_STATUS.draft;
       return'<tr class="dt-row" onclick="openEstimateById(\''+e.id+'\')">'+
@@ -5928,15 +5968,26 @@ function convertEstimateToJobCard(){
 
 // ── SUPPLIERS ──
 var editingSupplierId=null, curSupplier=null;
+// Shared premium KPI card for list-page summary strips.
+function erpKpi(val,label,cls){return '<div class="kpi-card '+(cls||'')+'"><div class="kpi-val">'+val+'</div><div class="kpi-label">'+esc(label)+'</div></div>';}
 function renderSuppliers(){
   var el=document.getElementById('suppliers-list');if(!el)return;
   if(!_fired.suppliers){el.innerHTML=skelTable(6);return;}
   var q=((document.getElementById('sup-search')||{}).value||'').toLowerCase();
   var list=suppliers.filter(function(s){return !q||((s.name||'')+' '+(s.phone||'')+' '+(s.contact||'')).toLowerCase().indexOf(q)>-1;});
-  if(!list.length){el.innerHTML='<div class="empty">No suppliers yet. Add your parts vendors to raise purchase orders.</div>';return;}
-  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Supplier</th><th>Contact</th><th>Phone</th><th>Terms</th></tr></thead><tbody>'+
-    list.map(function(s){return'<tr class="dt-row" onclick="showAddSupplier(\''+s.id+'\')"><td style="font-weight:700">'+esc(s.name)+'</td><td>'+esc(s.contact||'—')+'</td><td>'+esc(s.phone||'—')+'</td><td style="color:var(--t2)">'+esc(s.terms||'—')+'</td></tr>';}).join('')+
-    '</tbody></table></div></div>';
+  var pos=(typeof purchaseOrders!=='undefined'?purchaseOrders:[]);
+  var payable=pos.reduce(function(s,p){return (p.status==='received'&&!p.paid)?s+Number(p.total||0):s;},0);
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(suppliers.length,'Suppliers','')+
+    erpKpi(pos.length,'Purchase Orders','kpi-accent')+
+    erpKpi(fmtMoney(payable),'Payable to Suppliers','kpi-red')+
+  '</div>';
+  var body=!list.length
+    ?'<div class="empty">'+(suppliers.length?'No suppliers match your search.':'No suppliers yet. Add your parts vendors to raise purchase orders.')+'</div>'
+    :'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Supplier</th><th>Contact</th><th>Phone</th><th>Terms</th></tr></thead><tbody>'+
+      list.map(function(s){return'<tr class="dt-row" onclick="showAddSupplier(\''+s.id+'\')"><td style="font-weight:700">'+esc(s.name)+'</td><td>'+esc(s.contact||'—')+'</td><td>'+esc(s.phone||'—')+'</td><td style="color:var(--t2)">'+esc(s.terms||'—')+'</td></tr>';}).join('')+
+      '</tbody></table></div></div>';
+  el.innerHTML=kpis+body;
 }
 function showAddSupplier(id){
   editingSupplierId=id||null;
@@ -5977,8 +6028,17 @@ function renderPurchases(){
   if(!_fired.purchaseOrders){el.innerHTML=skelTable(6);return;}
   var q=((document.getElementById('po-search')||{}).value||'').toLowerCase();
   var list=purchaseOrders.filter(function(p){return !q||((poNum(p))+' '+(p.supplierName||'')).toLowerCase().indexOf(q)>-1;});
-  if(!list.length){el.innerHTML='<div class="empty">No purchase orders yet. Raise one to order parts from a supplier.</div>';return;}
-  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>PO</th><th>Supplier</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>'+
+  var receivedC=purchaseOrders.filter(function(p){return p.status==='received';}).length;
+  var poPayable=purchaseOrders.reduce(function(s,p){return (p.status==='received'&&!p.paid)?s+Number(p.total||0):s;},0);
+  var poVal=purchaseOrders.reduce(function(s,p){return s+Number(p.total||0);},0);
+  var kpis='<div class="erp-kpis">'+
+    erpKpi(purchaseOrders.length,'Purchase Orders','')+
+    erpKpi(receivedC,'Received','kpi-green')+
+    erpKpi(fmtMoney(poPayable),'Payable','kpi-red')+
+    erpKpi(fmtMoney(poVal),'Total Ordered','')+
+  '</div>';
+  if(!list.length){el.innerHTML=kpis+'<div class="empty">'+(purchaseOrders.length?'No purchase orders match your search.':'No purchase orders yet. Raise one to order parts from a supplier.')+'</div>';return;}
+  el.innerHTML=kpis+'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>PO</th><th>Supplier</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>'+
     list.map(function(p){var st=PO_STATUS[p.status]||PO_STATUS.draft;return'<tr class="dt-row" onclick="openPOById(\''+p.id+'\')"><td style="font-weight:700">'+esc(poNum(p))+'</td><td>'+esc(p.supplierName||'—')+'</td><td style="color:var(--t2);white-space:nowrap">'+esc(fmtDate(tsToDs(p.createdAt)))+'</td><td><span class="badge '+st.badge+'">'+st.label+'</span></td><td class="num" style="font-weight:700">'+fmtMoney(p.total||0)+'</td></tr>';}).join('')+
     '</tbody></table></div></div>';
 }
@@ -7189,6 +7249,12 @@ function renderSettings(){
   var vatChk=document.getElementById('set-vat-enabled');
   if(vatChk){vatChk.checked=!!s.vatEnabled;document.getElementById('set-vat-rate-wrap').style.opacity=s.vatEnabled?'1':'.45';}
   var vatRate=document.getElementById('set-vat-rate');if(vatRate)vatRate.value=(s.vatRate!=null?s.vatRate:5);
+  var sumEl=document.getElementById('set-summary');
+  if(sumEl&&typeof erpKpi==='function')sumEl.innerHTML='<div class="erp-kpis" style="margin-top:16px">'+
+    erpKpi(esc(s.currency||'QAR'),'Currency','')+
+    erpKpi(s.vatEnabled?('On · '+(s.vatRate!=null?s.vatRate:5)+'%'):'Off','VAT',s.vatEnabled?'kpi-green':'')+
+    erpKpi(s.lockDate?esc(s.lockDate):'None','Books Locked Until',s.lockDate?'kpi-accent':'')+
+  '</div>';
   show('v-settings');
 }
 
