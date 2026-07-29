@@ -365,11 +365,16 @@ async function loadAuthEpoch() {
 
 // Period lock: no transaction/invoice may be dated on or before this date.
 let periodLockDate = '';
+// Company settings the API needs on every request, cached at boot and refreshed
+// whenever Settings is saved. Three-way match tolerances live here so the
+// garage can loosen them without a deploy.
+let settingsCache = {};
 async function loadPeriodLock() {
   try {
     const { rows } = await pool.query(`SELECT data FROM settings WHERE id = 'company'`);
-    periodLockDate = (rows.length && rows[0].data.lockDate) || '';
-  } catch (_) { periodLockDate = ''; }
+    settingsCache = (rows.length && rows[0].data) || {};
+    periodLockDate = settingsCache.lockDate || '';
+  } catch (_) { periodLockDate = ''; settingsCache = {}; }
 }
 function periodLocked(dateStr) { return !!(periodLockDate && dateStr && dateStr <= periodLockDate); }
 function tsToDs(ts) { const t = Number(ts); if (!t) return ''; const d = new Date(t); return isNaN(d) ? '' : d.toISOString().slice(0, 10); }
@@ -1066,6 +1071,70 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
     const landed = Array.isArray(pi.landedCosts) ? pi.landedCosts : [];
     const landedTotal = round2(landed.reduce((s, c) => s + (Number(c.amount) || 0), 0));
 
+    // ---- Three-way match: order vs receipt vs invoice ----
+    // The control that stops a supplier billing for goods that never arrived.
+    // Quantities are matched against what was actually RECEIVED (not ordered),
+    // and unit prices against what the order agreed. Both allow a tolerance, so
+    // a rounding difference or a small agreed price move doesn't block posting.
+    if (pi.poId) {
+      const por = await client.query(`SELECT data, seq FROM purchase_orders WHERE id = $1`, [pi.poId]);
+      if (!por.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'The purchase order this invoice references no longer exists.' }); }
+      const po = por.rows[0].data;
+      const poNo = docNo('purchaseOrders', por.rows[0].seq);
+      const qtyTol = Number(settingsCache.matchQtyTolerancePct) || 0;
+      const priceTol = Number(settingsCache.matchPriceTolerancePct) || 0;
+
+      // Received quantity per item, summed across every line of the order.
+      const received = new Map();
+      const ordPrice = new Map();
+      for (const l of (Array.isArray(po.items) ? po.items : [])) {
+        if (!l.partId) continue;
+        received.set(l.partId, round2((received.get(l.partId) || 0) + (Number(l.qtyReceived) || 0)));
+        if (!ordPrice.has(l.partId)) ordPrice.set(l.partId, Number(l.unitCost) || 0);
+      }
+      // Quantities already billed on other posted invoices for the same order,
+      // so a supplier cannot bill the same delivery twice across two invoices.
+      const prev = await client.query(
+        `SELECT data FROM purchase_invoices
+          WHERE data->>'poId' = $1 AND id <> $2
+            AND COALESCE(data->>'status','draft') NOT IN ('draft','cancelled')`,
+        [pi.poId, req.params.id]
+      );
+      const billed = new Map();
+      for (const row of prev.rows) {
+        for (const l of (Array.isArray(row.data.items) ? row.data.items : [])) {
+          if (!l.partId) continue;
+          billed.set(l.partId, round2((billed.get(l.partId) || 0) + (Number(l.qty) || 0)));
+        }
+      }
+
+      for (const l of lines) {
+        if (!l.partId) continue;
+        const recd = received.get(l.partId) || 0;
+        const already = billed.get(l.partId) || 0;
+        const ceiling = recd * (1 + qtyTol / 100);
+        if (already + (Number(l.qty) || 0) > ceiling + 1e-9) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({
+            error: `"${l.name || 'Item'}" — invoiced ${round2(already + (Number(l.qty) || 0))} against ${recd} received on ${poNo}` +
+                   (already ? ` (${already} already billed on another invoice)` : '') +
+                   '. Receive the goods first, or correct the invoice.',
+          });
+        }
+        const agreed = ordPrice.get(l.partId);
+        if (agreed > 0) {
+          const limit = agreed * (1 + priceTol / 100);
+          if ((Number(l.unitCost) || 0) > limit + 1e-9) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({
+              error: `"${l.name || 'Item'}" — billed at ${round2(Number(l.unitCost))} but ${poNo} agreed ${round2(agreed)}` +
+                     (priceTol ? ` (tolerance ${priceTol}%)` : '') + '.',
+            });
+          }
+        }
+      }
+    }
+
     // Allocate landed cost across the lines. By value is the default because
     // freight on a consignment tracks its worth; by quantity is offered for
     // bulky low-value goods where weight, not value, drives the charge.
@@ -1634,13 +1703,17 @@ app.get('/api/settings/company', asyncH(async (req, res) => {
 }));
 app.put('/api/settings/company', asyncH(async (req, res) => {
   const patch = { ...req.body }; delete patch.id;
-  if ('lockDate' in patch) periodLockDate = patch.lockDate || ''; // keep the guard current
   const { rows } = await pool.query(
     `INSERT INTO settings (id, data) VALUES ('company', $1)
      ON CONFLICT (id) DO UPDATE SET data = settings.data || $1
      RETURNING data`,
     [JSON.stringify(patch)]
   );
+  // Refresh the whole cache from what was actually stored, not from the patch —
+  // a partial save must not blank a setting it didn't mention. This is what
+  // keeps the period lock and the match tolerances live without a restart.
+  settingsCache = rows[0].data || {};
+  periodLockDate = settingsCache.lockDate || '';
   res.json({ ...rows[0].data, id: 'company' });
 }));
 

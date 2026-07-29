@@ -2689,9 +2689,17 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <label>Default Invoice Notes</label>
           <textarea id="set-inv-notes" placeholder="e.g. All parts carry a 3-month warranty." rows="2" style="resize:vertical"></textarea>
         </div>
-        <div class="form-group" style="margin-bottom:0">
+        <div class="form-group">
           <label>Books Locked Up To <span style="font-size:11px;color:var(--t3)">(no transactions can be dated on or before this date)</span></label>
           <input type="date" id="set-lock-date" style="max-width:220px">
+        </div>
+        <div style="border-top:1.5px solid var(--b1);padding-top:15px;margin-top:4px">
+          <div style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Purchase Invoice Matching</div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:11px">A supplier invoice is checked against what was actually received and the price the order agreed. Leave both at 0 to require an exact match.</div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0"><label>Quantity Tolerance (%)</label><input type="number" id="set-match-qty" min="0" max="100" step="0.1" placeholder="0"></div>
+            <div class="form-group" style="margin-bottom:0"><label>Price Tolerance (%)</label><input type="number" id="set-match-price" min="0" max="100" step="0.1" placeholder="0"></div>
+          </div>
         </div>
       </div>
 
@@ -9104,7 +9112,7 @@ function renderSettings(){
   f('set-name',s.name);f('set-tagline',s.tagline);f('set-phone',s.phone);
   f('set-email',s.email);f('set-address',s.address);f('set-city',s.city);
   f('set-country',s.country);f('set-vat',s.vatNumber);f('set-website',s.website);
-  f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);f('set-lock-date',s.lockDate);
+  f('set-logo',s.logoUrl);f('set-terms',s.invoiceTerms);f('set-inv-notes',s.invoiceNotes);f('set-lock-date',s.lockDate);f('set-match-qty',s.matchQtyTolerancePct);f('set-match-price',s.matchPriceTolerancePct);
   var curSel=document.getElementById('set-currency');if(curSel)curSel.value=s.currency||'QAR';
   var vatChk=document.getElementById('set-vat-enabled');
   if(vatChk){vatChk.checked=!!s.vatEnabled;document.getElementById('set-vat-rate-wrap').style.opacity=s.vatEnabled?'1':'.45';}
@@ -9184,6 +9192,8 @@ function saveCompanySettings(){
     invoiceTerms:document.getElementById('set-terms').value.trim(),
     invoiceNotes:document.getElementById('set-inv-notes').value.trim(),
     lockDate:document.getElementById('set-lock-date').value||'',
+    matchQtyTolerancePct:Number(document.getElementById('set-match-qty').value||0),
+    matchPriceTolerancePct:Number(document.getElementById('set-match-price').value||0),
     updatedAt:Date.now()
   };
   db.collection('settings').doc('company').set(data,{merge:true}).then(function(){

@@ -58,6 +58,19 @@ CREATE TABLE IF NOT EXISTS purchase_returns  (id text PRIMARY KEY, data jsonb NO
 -- Stock lots: the batch / expiry / serial ledger sitting behind parts.stock.
 -- One row per received batch; for serialised items, one row per serial (qty 1).
 CREATE TABLE IF NOT EXISTS stock_lots        (id text PRIMARY KEY, data jsonb NOT NULL, part_id text, created_at bigint);
+
+-- ── Inventory & warehouse (Phase 3) ──
+-- Stock movements are a LEDGER, not an array on the item. Embedding them in the
+-- part document meant every issue rewrote the entire history, which is both a
+-- write-amplification wall and impossible to query across items.
+CREATE TABLE IF NOT EXISTS stock_movements (id text PRIMARY KEY, data jsonb NOT NULL, part_id text, at bigint);
+CREATE TABLE IF NOT EXISTS warehouses      (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
+CREATE TABLE IF NOT EXISTS bins            (id text PRIMARY KEY, data jsonb NOT NULL, warehouse_id text, created_at bigint);
+CREATE TABLE IF NOT EXISTS stock_transfers (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS stock_counts    (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT NULL, part_id text, created_at bigint);
+CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
+CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
