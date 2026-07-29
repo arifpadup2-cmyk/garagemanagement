@@ -737,8 +737,21 @@ app.get('/api/me', asyncH(async (req, res) => {
     return res.json({ role: 'admin', name: a.name, permissions: Object.keys(PERMISSIONS), isBootstrapAdmin: true });
   }
   if (a.role === 'user') {
-    const perms = await permsForRole(a.roleId);
-    return res.json({ role: 'user', name: a.name, userId: a.userId, roleId: a.roleId, permissions: [...perms] });
+    // Read the CURRENT role from the database. This endpoint sits before the
+    // authorizer, so req.auth still carries the roleId the token was minted
+    // with — reporting it back would tell the client its permissions had not
+    // changed when they had, which is the whole point of asking.
+    let roleId = a.roleId, roleName = '';
+    if (a.userId) {
+      const u = await pool.query(`SELECT data FROM users WHERE id = $1`, [a.userId]);
+      if (!u.rows.length || u.rows[0].data.active === false) {
+        return res.status(401).json({ error: 'This account is no longer active. Please sign in again.' });
+      }
+      roleId = u.rows[0].data.roleId || roleId;
+      roleName = u.rows[0].data.roleName || '';
+    }
+    const perms = await permsForRole(roleId);
+    return res.json({ role: 'user', name: a.name, userId: a.userId, roleId, roleName, permissions: [...perms] });
   }
   res.json({ role: a.role || 'none', name: a.name || '', permissions: [] });
 }));
@@ -1421,9 +1434,19 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
       merged.paymentType = paymentType || (payments.length === 1 ? payments[0].method : 'split');
     }
     await client.query(`UPDATE invoices SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    // Resolve the cash-book account SERVER-side. The client sent accountId from
+    // its own finAccounts list, which a role without finance.view never loads —
+    // so payments taken by a service advisor landed in the cash book with no
+    // account at all, invisible to every account-based report.
+    const sysAcc = await sysAccounts(client);
     if (Array.isArray(transactions)) {
       for (const t of transactions) {
-        const doc = sanitizeDoc('transactions', { ...t });
+        const doc = sanitizeDoc('transactions', { ...t, invoiceId: req.params.id });
+        // Fall back to the system cash/bank account rather than storing none.
+        if (!doc.accountId) {
+          doc.accountId = String(doc.paymentMethod || 'cash') === 'cash' ? sysAcc.cash : sysAcc.bank;
+          doc.accountName = doc.accountName || (doc.accountId === sysAcc.cash ? 'Cash' : 'Bank');
+        }
         const tid = doc.id || crypto.randomUUID();
         delete doc.id;
         await client.query(
@@ -1530,6 +1553,11 @@ app.post('/api/invoices/quick', asyncH(async (req, res) => {
     );
     if (transaction && Number(transaction.amount) > 0) {
       const t = sanitizeDoc('transactions', { ...transaction, invoiceId: id });
+      if (!t.accountId) {
+        const qAcc = await sysAccounts(client);
+        t.accountId = String(t.paymentMethod || 'cash') === 'cash' ? qAcc.cash : qAcc.bank;
+        t.accountName = t.accountName || (t.accountId === qAcc.cash ? 'Cash' : 'Bank');
+      }
       const invNo = 'INV-' + String(inv.seq).padStart(4, '0');
       t.description = 'Invoice Payment – ' + invNo; // stamp the real, server-assigned number
       // Cash recorded can never exceed what was actually paid on the invoice.
@@ -2026,6 +2054,9 @@ app.post('/api/purchaseInvoices/:id/pay', asyncH(async (req, res) => {
     }
     const now = Date.now();
     const actor = (req.auth && req.auth.name) || '?';
+    // Resolve the cash-book account server-side, as the customer-payment path
+    // does — a client that cannot read finAccounts sent nothing.
+    const payAcc = await sysAccounts(client);
     const payment = { amount, method, date, at: now, by: actor, reference: String((req.body || {}).reference || '').trim() };
     const newPaid = round2(paid + amount);
     const merged = {
@@ -2042,7 +2073,8 @@ app.post('/api/purchaseInvoices/:id/pay', asyncH(async (req, res) => {
       [crypto.randomUUID(), JSON.stringify({
         type: 'expense', date, amount, description: `Supplier payment – ${piNo}`,
         category: 'Spare Parts', paymentMethod: method,
-        accountId: (req.body || {}).accountId || '', accountName: (req.body || {}).accountName || '',
+        accountId: (req.body || {}).accountId || (method === 'cash' ? payAcc.cash : payAcc.bank),
+        accountName: (req.body || {}).accountName || (method === 'cash' ? 'Cash' : 'Bank'),
         partyType: 'vendor', partyName: pi.supplierName || '', supplierId: pi.supplierId || '',
         reference: piNo, purchaseInvoiceId: req.params.id, createdAt: now, createdBy: actor,
       }), date, now]);

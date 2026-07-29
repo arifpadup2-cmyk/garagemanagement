@@ -3740,7 +3740,26 @@ function showApp(name,roleName){
   // Sessions without a token predate server-side auth — force a fresh sign-in.
   if(raw){try{var s=JSON.parse(raw);if(s&&s.name&&s.token){
       applyPermissions(s.permissions===undefined?null:s.permissions);
-      showApp(s.name,s.roleName);return;}
+      showApp(s.name,s.roleName);
+      // A stored session carries the permissions it was minted with. Re-ask the
+      // server so a role changed since last sign-in takes effect on reload,
+      // rather than persisting until the token expires.
+      if(window.gmsApi&&gmsApi.whoAmI){
+        gmsApi.whoAmI().then(function(me){
+          if(!me)return;
+          var fresh=me.isBootstrapAdmin?null:(me.permissions||[]);
+          var had=s.permissions===undefined?null:s.permissions;
+          if(JSON.stringify(fresh)!==JSON.stringify(had)){
+            applyPermissions(fresh);
+            try{
+              var store=localStorage.getItem(SESSION_KEY)?localStorage:sessionStorage;
+              store.setItem(SESSION_KEY,JSON.stringify(Object.assign({},s,{permissions:fresh,roleName:me.roleName||s.roleName})));
+            }catch(e){}
+            toast('Your access has been updated by an administrator.','info');
+          }
+        }).catch(function(){});
+      }
+      return;}
     if(s&&!s.token){localStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_KEY);}}catch(e){}}
   var traw=localStorage.getItem(TECH_SESSION_KEY)||sessionStorage.getItem(TECH_SESSION_KEY);
   if(traw){try{var ts=JSON.parse(traw);if(ts&&ts.id&&ts.token){
@@ -3962,7 +3981,13 @@ function snapErr(label,firedKey){
 }
 // Subscribe only to what this person may read. Asking for the rest produces a
 // wall of refusals in the console and pointless traffic on every load.
-function subIf(perm,fn){ if(can(perm))fn(); }
+function subIf(perm,fn,firedKeys){
+  if(can(perm)){fn();return;}
+  // Deliberately not subscribing is an ANSWER, not a pending state. Without
+  // this the dashboard and every screen waiting on these flags sat as a loading
+  // skeleton forever for anyone whose role excluded the data.
+  (firedKeys||[]).forEach(function(k){_fired[k]=true;});
+}
 function initFirestore(){
   db.collection('customers').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.customers=true;
@@ -4018,7 +4043,7 @@ function initFirestore(){
       suppliers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='suppliers')renderSuppliers();
     },snapErr('suppliers','suppliers'));
-  });
+  },['suppliers']);
   // Master data feeds every picker in the app, so a change re-renders whichever
   // master screen is open AND any form currently showing a master-backed select.
   db.collection('masters').onSnapshot(function(snap){
@@ -4041,76 +4066,78 @@ function initFirestore(){
       if(activeNav==='warehouses')renderWarehouses();
       if(activeNav==='warehouse')renderWarehouseDetail();
     },snapErr('warehouses','warehouses'));
-  });
+  },['warehouses']);
   subIf('inventory.view',function(){
     db.collection('bins').onSnapshot(function(snap){
       _fired.bins=true;
       bins=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='warehouse')renderWarehouseDetail();
     },snapErr('bins','bins'));
-  });
+  },['bins']);
   subIf('inventory.view',function(){
     db.collection('stockMovements').onSnapshot(function(snap){
       _fired.stockMovements=true;
       stockMovements=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='stock-movements')renderMovements();
+      // Adjust Stock updated the balance and left the history stale otherwise.
+      if(activeNav==='part'&&typeof curPart!=='undefined'&&curPart)renderPartDetail();
     },snapErr('stock movements','stockMovements'));
-  });
+  },['stockMovements']);
   subIf('inventory.view',function(){
     db.collection('stockTransfers').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.stockTransfers=true;
       stockTransfers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='stock-transfers')renderTransfers();
     },snapErr('stock transfers','stockTransfers'));
-  });
+  },['stockTransfers']);
   subIf('inventory.view',function(){
     db.collection('stockCounts').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.stockCounts=true;
       stockCounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='stock-counts')renderCounts();
     },snapErr('stock counts','stockCounts'));
-  });
+  },['stockCounts']);
   subIf('inventory.view',function(){
     db.collection('reservations').onSnapshot(function(snap){
       _fired.reservations=true;
       reservations=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     },snapErr('reservations','reservations'));
-  });
+  },['reservations']);
   subIf('inventory.view',function(){
     db.collection('tools').onSnapshot(function(snap){
       _fired.tools=true;
       tools=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='tools')renderTools();
     },snapErr('tools','tools'));
-  });
+  },['tools']);
   subIf('inventory.view',function(){
     db.collection('toolIssues').onSnapshot(function(snap){
       _fired.toolIssues=true;
       toolIssues=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='tools')renderTools();
     },snapErr('tool issues','toolIssues'));
-  });
+  },['toolIssues']);
   subIf('sales.credit',function(){
     db.collection('creditNotes').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.creditNotes=true;
       creditNotes=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='credit-notes')renderCreditNotes();
     },snapErr('credit notes','creditNotes'));
-  });
+  },['creditNotes']);
   subIf('purchasing.view',function(){
     db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.purchaseRequests=true;
       purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='purchase-requests')renderPRs();
     },snapErr('purchase requests','purchaseRequests'));
-  });
+  },['purchaseRequests']);
   subIf('purchasing.view',function(){
     db.collection('rfqs').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.rfqs=true;
       rfqs=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='rfqs')renderRFQs();
     },snapErr('RFQs','rfqs'));
-  });
+  },['rfqs']);
   subIf('purchasing.view',function(){
     db.collection('goodsReceipts').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.goodsReceipts=true;
@@ -4118,7 +4145,7 @@ function initFirestore(){
       if(activeNav==='goods-receipts')renderGRNs();
       if(activeNav==='po'&&curPO)renderPODetail();
     },snapErr('goods receipts','goodsReceipts'));
-  });
+  },['goodsReceipts']);
   subIf('purchasing.invoice',function(){
     db.collection('purchaseInvoices').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.purchaseInvoices=true;
@@ -4126,27 +4153,27 @@ function initFirestore(){
       if(activeNav==='purchase-invoices')renderPINVs();
       if(activeNav==='aged-payables')renderAgedPayables();
     },snapErr('purchase invoices','purchaseInvoices'));
-  });
+  },['purchaseInvoices']);
   subIf('purchasing.view',function(){
     db.collection('purchaseReturns').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.purchaseReturns=true;
       purchaseReturns=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='purchase-returns')renderPRETs();
     },snapErr('purchase returns','purchaseReturns'));
-  });
+  },['purchaseReturns']);
   subIf('inventory.view',function(){
     db.collection('stockLots').onSnapshot(function(snap){
       _fired.stockLots=true;
       stockLots=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     },snapErr('stock lots','stockLots'));
-  });
+  },['stockLots']);
   subIf('purchasing.view',function(){
     db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.purchaseOrders=true;
       purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='purchases')renderPurchases();
     },snapErr('purchase orders','purchaseOrders'));
-  });
+  },['purchaseOrders']);
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.invoices=true;
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -8540,7 +8567,9 @@ function freeStock(p){return Math.round(((Number(p.stock)||0)-reservedFor(p.id))
 var MOV_TYPE={grn:{label:'Goods Receipt',c:'var(--green)'},return:{label:'Supplier Return',c:'var(--red)'},
   adjust:{label:'Adjustment',c:'var(--accent-text)'},issue:{label:'Issued to Job',c:'var(--amber-dk)'},
   transfer:{label:'Transfer',c:'var(--blue)'},count:{label:'Stock Count',c:'var(--purple)'},
-  invoice:{label:'Counter Sale',c:'var(--amber-dk)'}};
+  invoice:{label:'Counter Sale',c:'var(--amber-dk)'},
+  'issue-return':{label:'Returned from Job',c:'var(--green)'},
+  creditnote:{label:'Customer Return',c:'var(--green)'}};
 
 // ══ WAREHOUSES & BINS ══
 function renderWarehouses(){
@@ -9829,14 +9858,14 @@ function initAccountsFirestore(){
       if(activeNav==='accounts')renderAccounts();
       if(activeNav==='dashboard')renderDashboard();
     },snapErr('transactions','transactions'));
-  });
+  },['transactions']);
   subIf('finance.view',function(){
     db.collection('finAccounts').orderBy('createdAt','desc').onSnapshot(function(snap){
       _fired.finAccounts=true;
       finAccounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
       if(activeNav==='fin-accounts')renderFinAccounts();
     },snapErr('ledger accounts'));
-  });
+  },['finAccounts']);
 }
 
 function getAccRange(){

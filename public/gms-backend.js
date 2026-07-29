@@ -453,6 +453,8 @@
     },
     // What a customer owes against what they are allowed to owe.
     creditStatus: function (customerId) { return req('GET', '/customers/' + customerId + '/credit'); },
+    // Who the server thinks I am and what it will let me do, right now.
+    whoAmI: function () { return req('GET', '/me'); },
     // What to buy: computed server-side so every device gets the same answer.
     reorderReport: function () { return req('GET', '/reports/reorder'); },
     availability: function (partId) { return req('GET', '/parts/' + partId + '/availability'); },
