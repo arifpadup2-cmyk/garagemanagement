@@ -1174,6 +1174,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-item" id="snav-sales-reports" onclick="navShow('snav-sales-reports',showSalesReports)" title="Sales Reports"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="snav-label">Sales Reports</span></div>
       <div class="snav-item" id="snav-jc-reports" onclick="navShow('snav-jc-reports',showJcReport)" title="Job Card Reports"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg></span><span class="snav-label">Job Card Reports</span></div>
       <div class="snav-item" id="snav-cust-reports" onclick="navShow('snav-cust-reports',showCustReport)" title="Customer Reports"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></span><span class="snav-label">Customer Reports</span></div>
+      <div class="snav-item" id="snav-inv-valuation" onclick="navTo('inv-valuation')" title="Inventory Valuation"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="M12 22V12"/></svg></span><span class="snav-label">Inventory Valuation</span></div>
+      <div class="snav-item" id="snav-sales-summary" onclick="navTo('sales-summary')" title="Sales Summary"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></span><span class="snav-label">Sales Summary</span></div>
+      <div class="snav-item" id="snav-workshop-report" onclick="navTo('workshop-report')" title="Workshop Performance"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="snav-label">Workshop Performance</span></div>
       <div class="snav-item" id="snav-tech-reports" onclick="navShow('snav-tech-reports',showTechReport)" title="Technician Reports"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="snav-label">Technician Reports</span></div>
         </div>
       </div>
@@ -1864,6 +1867,35 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="btn-group"><button class="btn btn-primary" id="save-tool-btn" onclick="saveTool()">Save Tool</button>
           <button class="btn btn-secondary" onclick="navTo('tools')">Cancel</button></div>
       </div>
+    </div>
+
+    <!-- ══ ANALYTICS (Phase 8) ══ -->
+    <div id="v-inv-valuation" class="view premium-view">
+      <div class="page-header"><div><div class="page-title">Inventory Valuation</div><div class="page-sub">What the stock on the shelf is worth</div></div></div>
+      <div id="ivl-kpis"></div>
+      <div id="ivl-content"></div>
+    </div>
+    <div id="v-sales-summary" class="view premium-view">
+      <div class="page-header"><div><div class="page-title">Sales Summary</div><div class="page-sub">Revenue, cost of sales and real margin</div></div></div>
+      <div class="card" style="margin-bottom:14px;padding:14px 16px">
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0"><label>From</label><input type="date" id="ss-from" onchange="renderSalesSummary()"></div>
+          <div class="form-group" style="margin-bottom:0"><label>To</label><input type="date" id="ss-to" onchange="renderSalesSummary()"></div>
+        </div>
+      </div>
+      <div id="ss-kpis"></div>
+      <div id="ss-content"></div>
+    </div>
+    <div id="v-workshop-report" class="view premium-view">
+      <div class="page-header"><div><div class="page-title">Workshop Performance</div><div class="page-sub">Throughput, turnaround and technician output</div></div></div>
+      <div class="card" style="margin-bottom:14px;padding:14px 16px">
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0"><label>From</label><input type="date" id="wr-from" onchange="renderWorkshopReport()"></div>
+          <div class="form-group" style="margin-bottom:0"><label>To</label><input type="date" id="wr-to" onchange="renderWorkshopReport()"></div>
+        </div>
+      </div>
+      <div id="wr-kpis"></div>
+      <div id="wr-content"></div>
     </div>
 
     <!-- ══ CREDIT NOTES (Phase 6) ══ -->
@@ -3075,7 +3107,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool','v-credit-notes':'Credit Notes'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool','v-credit-notes':'Credit Notes','v-inv-valuation':'Inventory Valuation','v-sales-summary':'Sales Summary','v-workshop-report':'Workshop Performance'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 // Today in LOCAL time. toISOString() is UTC, which in Doha (+03) reports
@@ -3102,7 +3134,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory','credit-notes':'Credit Notes'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory','credit-notes':'Credit Notes','inv-valuation':'Inventory Valuation','sales-summary':'Sales Summary','workshop-report':'Workshop Performance'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -3243,6 +3275,9 @@ function navTo(tab){
   else if(tab==='stock-counts')renderCounts();
   else if(tab==='reorder')renderReorder();
   else if(tab==='tools')renderTools();
+  else if(tab==='inv-valuation')renderInventoryValuation();
+  else if(tab==='sales-summary')renderSalesSummary();
+  else if(tab==='workshop-report')renderWorkshopReport();
   else if(tab==='credit-notes')renderCreditNotes();
   else if(tab==='purchase-requests')renderPRs();
   else if(tab==='rfqs')renderRFQs();
@@ -3315,7 +3350,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'stock-movements':['Inventory','Stock Movements'],'stock-transfers':['Inventory','Stock Transfers'],'add-transfer':['Inventory','New Transfer'],
   'stock-counts':['Inventory','Stock Count'],'add-count':['Inventory','New Count'],'count':['Inventory','Stock Count'],
   'reorder':['Inventory','Reorder Report'],'tools':['Inventory','Tool Inventory'],'add-tool':['Inventory','Tool'],
-  'credit-notes':['Sales','Credit Notes']
+  'credit-notes':['Sales','Credit Notes'],
+  'inv-valuation':['Reports','Inventory Valuation'],'sales-summary':['Reports','Sales Summary'],'workshop-report':['Reports','Workshop Performance']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -8878,6 +8914,143 @@ function saveCreditNote(invoiceId){
   }).catch(function(e){btn.disabled=false;btn.textContent='Issue Credit Note';toast(e.message||'Could not issue the credit note.','error');});
 }
 
+// ══ ANALYTICS (Phase 8) ══
+// Every figure below is aggregated in Postgres. The old reports summed whole
+// collections in the browser, which was slow and gave a different answer per
+// device depending on what had finished loading.
+function csvEscape(v){var t=String(v==null?'':v);return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}
+function downloadCsv(name,header,rows){
+  var csv=[header.join(',')].concat(rows.map(function(r){return r.map(csvEscape).join(',');})).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},0);
+}
+var _ivl=null,_ss=null,_wr=null;
+
+function renderInventoryValuation(){
+  var el=document.getElementById('ivl-content'),kp=document.getElementById('ivl-kpis');if(!el)return;
+  el.innerHTML=skelTable(8);
+  gmsApi.inventoryValuation().then(function(r){
+    _ivl=r;
+    if(kp)kp.innerHTML='<div class="erp-kpis">'+
+      erpKpi(fmtMoney(r.totalValue),'Stock Value','kpi-green')+
+      erpKpi(r.lineCount,'Items Held','')+
+      erpKpi(r.totalQty,'Total Units','')+
+      erpKpi(r.negativeStockItems,'Negative Stock',r.negativeStockItems?'kpi-red':'')+'</div>';
+    if(!r.items.length){el.innerHTML='<div class="empty">No stock on hand.</div>';return;}
+    el.innerHTML='<div class="card"><div class="card-title">By Category</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Category</th><th class="num">Items</th><th class="num">Units</th><th class="num">Value</th><th class="num">Share</th></tr></thead><tbody>'+
+      r.byCategory.map(function(c){
+        var pct=r.totalValue>0?Math.round(c.value/r.totalValue*1000)/10:0;
+        return '<tr><td style="font-weight:600">'+esc(c.category)+'</td><td class="num">'+c.items+'</td>'+
+          '<td class="num">'+c.qty+'</td><td class="num" style="font-weight:700">'+fmtMoney(c.value)+'</td>'+
+          '<td class="num" style="color:var(--t2)">'+pct+'%</td></tr>';}).join('')+
+      '</tbody></table></div></div></div>'+
+      '<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+        '<span>Items by Value</span>'+
+        '<button class="btn btn-secondary btn-sm" onclick="exportValuation()">Export CSV</button></div>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Item</th><th>Part No.</th><th>Category</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Value</th></tr></thead><tbody>'+
+      r.items.slice(0,200).map(function(i){
+        return '<tr><td style="font-weight:600">'+esc(i.name)+'</td><td style="color:var(--t2)">'+esc(i.partNumber||'—')+'</td>'+
+          '<td style="color:var(--t2)">'+esc(i.category||'—')+'</td>'+
+          '<td class="num" style="color:'+(i.qty<0?'var(--red)':'var(--t1)')+';font-weight:700">'+i.qty+'</td>'+
+          '<td class="num">'+fmtMoney(i.unitCost)+'</td><td class="num" style="font-weight:700">'+fmtMoney(i.value)+'</td></tr>';}).join('')+
+      '</tbody><tfoot><tr><td colspan="5" style="text-align:right;font-weight:800">Total</td>'+
+      '<td class="num" style="font-weight:900">'+fmtMoney(r.totalValue)+'</td></tr></tfoot></table></div></div>'+
+      (r.items.length>200?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Showing the 200 highest-value of '+r.items.length+' items. Export for the full list.</div>':'')+
+      '</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the valuation — '+esc(e.message||'')+'</div>';});
+}
+function exportValuation(){
+  if(!_ivl)return;
+  downloadCsv('inventory-valuation-'+todayStr()+'.csv',
+    ['Item','Part Number','Category','Quantity','Unit Cost','Value'],
+    _ivl.items.map(function(i){return [i.name,i.partNumber,i.category,i.qty,i.unitCost,i.value];}));
+  toast('Exported '+_ivl.items.length+' items','success');
+}
+
+function renderSalesSummary(){
+  var el=document.getElementById('ss-content'),kp=document.getElementById('ss-kpis');if(!el)return;
+  var f=document.getElementById('ss-from'),t=document.getElementById('ss-to');
+  if(f&&!f.value){var d=new Date();d.setDate(1);f.value=d.toISOString().slice(0,10);}
+  if(t&&!t.value)t.value=todayStr();
+  el.innerHTML=skelTable(6);
+  gmsApi.salesSummary(f.value,t.value).then(function(r){
+    _ss=r;
+    if(kp)kp.innerHTML='<div class="erp-kpis">'+
+      erpKpi(fmtMoney(r.netRevenue),'Net Revenue','kpi-green')+
+      erpKpi(fmtMoney(r.costOfSales),'Cost of Sales','')+
+      erpKpi(fmtMoney(r.grossMargin),'Gross Margin',r.grossMargin>=0?'kpi-accent':'kpi-red')+
+      erpKpi(r.grossMarginPct+'%','Margin %','')+
+      erpKpi(fmtMoney(r.outstanding),'Outstanding',r.outstanding>0.005?'kpi-red':'')+'</div>';
+    var maxDay=r.byDay.reduce(function(m,d){return Math.max(m,d.total);},0)||1;
+    el.innerHTML='<div class="card"><div class="card-title">Daily Revenue</div>'+
+      (r.byDay.length?'<div style="display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:10px">'+
+        r.byDay.map(function(d){
+          var h=Math.max(2,Math.round(d.total/maxDay*130));
+          return '<div title="'+esc(fmtDate(d.date))+' — '+esc(fmtMoney(d.total))+'" style="flex:1;min-width:4px;height:'+h+'px;background:var(--accent);border-radius:3px 3px 0 0;opacity:.85"></div>';
+        }).join('')+'</div>':'<div class="empty" style="padding:20px 0">No invoices in this period.</div>')+
+      '</div>'+
+      '<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+        '<span>Top Customers</span><button class="btn btn-secondary btn-sm" onclick="exportSalesSummary()">Export CSV</button></div>'+
+      (r.topCustomers.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>Customer</th><th class="num">Invoices</th><th class="num">Total</th></tr></thead><tbody>'+
+        r.topCustomers.map(function(c){return '<tr><td style="font-weight:600">'+esc(c.customer)+'</td>'+
+          '<td class="num">'+c.invoices+'</td><td class="num" style="font-weight:700">'+fmtMoney(c.total)+'</td></tr>';}).join('')+
+        '</tbody></table></div></div>':'<div class="empty" style="padding:20px 0">Nothing yet.</div>')+
+      '<div style="font-size:12px;color:var(--t3);margin-top:12px">Cost of sales is read from the general ledger, so the margin is the real one rather than selling price minus an estimate.</div>'+
+      '</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the summary — '+esc(e.message||'')+'</div>';});
+}
+function exportSalesSummary(){
+  if(!_ss)return;
+  downloadCsv('sales-by-day-'+todayStr()+'.csv',['Date','Revenue'],
+    _ss.byDay.map(function(d){return [d.date,d.total];}));
+  toast('Exported '+_ss.byDay.length+' days','success');
+}
+
+function renderWorkshopReport(){
+  var el=document.getElementById('wr-content'),kp=document.getElementById('wr-kpis');if(!el)return;
+  var f=document.getElementById('wr-from'),t=document.getElementById('wr-to');
+  if(f&&!f.value){var d=new Date();d.setDate(1);f.value=d.toISOString().slice(0,10);}
+  if(t&&!t.value)t.value=todayStr();
+  el.innerHTML=skelTable(6);
+  gmsApi.workshopReport(f.value,t.value).then(function(r){
+    _wr=r;
+    if(kp)kp.innerHTML='<div class="erp-kpis">'+
+      erpKpi(r.jobCards,'Job Cards','')+
+      erpKpi(fmtMoney(r.labourValue),'Labour Value','kpi-green')+
+      erpKpi(r.avgTurnaroundHours==null?'—':r.avgTurnaroundHours+' h','Avg Turnaround','kpi-accent')+
+      erpKpi(r.qcFailures,'QC Failures',r.qcFailures?'kpi-red':'')+'</div>';
+    var st=Object.entries(r.byStatus||{});
+    el.innerHTML='<div class="card"><div class="card-title">Job Cards by Status</div>'+
+      (st.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Status</th><th class="num">Count</th></tr></thead><tbody>'+
+        st.sort(function(a,b){return b[1]-a[1];}).map(function(x){
+          return '<tr><td style="font-weight:600">'+esc(String(x[0]).replace(/_/g,' '))+'</td><td class="num" style="font-weight:700">'+x[1]+'</td></tr>';
+        }).join('')+'</tbody></table></div></div>':'<div class="empty" style="padding:20px 0">No job cards in this period.</div>')+
+      '</div>'+
+      '<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+        '<span>Technician Output</span><button class="btn btn-secondary btn-sm" onclick="exportWorkshop()">Export CSV</button></div>'+
+      (r.technicians.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>Technician</th><th class="num">Work Items</th><th class="num">Completed</th><th class="num">Labour Value</th></tr></thead><tbody>'+
+        r.technicians.map(function(x){
+          return '<tr><td style="font-weight:600">'+esc(x.technician)+'</td><td class="num">'+x.jobs+'</td>'+
+            '<td class="num" style="font-weight:700;color:'+(x.done===x.jobs?'var(--green)':'var(--t1)')+'">'+x.done+'</td>'+
+            '<td class="num" style="font-weight:700">'+fmtMoney(x.value)+'</td></tr>';}).join('')+
+        '</tbody></table></div></div>':'<div class="empty" style="padding:20px 0">No labour recorded.</div>')+
+      (r.turnaroundSample?'<div style="font-size:12px;color:var(--t3);margin-top:12px">Turnaround is measured check-in to delivery across '+r.turnaroundSample+' completed job'+(r.turnaroundSample===1?'':'s')+'.</div>':'')+
+      '</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the report — '+esc(e.message||'')+'</div>';});
+}
+function exportWorkshop(){
+  if(!_wr)return;
+  downloadCsv('technician-output-'+todayStr()+'.csv',['Technician','Work Items','Completed','Labour Value'],
+    _wr.technicians.map(function(x){return [x.technician,x.jobs,x.done,x.value];}));
+  toast('Exported '+_wr.technicians.length+' technicians','success');
+}
+
 var INV_STATUS={
   unpaid:            {label:'UNPAID',       badge:'badge-red',    color:'var(--red)'},
   credit:            {label:'CREDIT',       badge:'badge-amber',  color:'var(--amber)'},
@@ -10649,63 +10822,32 @@ function openingBalanceEquity(){
 function renderTrialBalance(){
   var el=document.getElementById('tb-content');
   if(!el)return;
-  var asAt=(document.getElementById('tb-date')||{}).value||new Date().toISOString().slice(0,10);
-  var rows=[];
-  var totalDr=0, totalCr=0;
-  function addRow(name,typeLabel,dr,cr){ if(dr<0.005&&cr<0.005)return; rows.push({name:name,type:typeLabel,dr:dr,cr:cr}); totalDr+=dr; totalCr+=cr; }
-
-  // Real-money accounts (cash/bank/fixed assets) from their postings + opening.
-  ['cash','bank','asset'].forEach(function(typeKey){
-    if(typeKey==='asset'){ // AR is derived (see below) — skip the AR finAccount here to avoid double-count
-      finAccounts.filter(function(a){return a.type==='asset'&&a.isActive!==false&&a.name!=='Accounts Receivable';}).forEach(function(acc){
-        var b=_accBal(acc,asAt); addRow(acc.name,'Asset',b>0?b:0,b<0?-b:0);
-      });
-      return;
-    }
-    finAccounts.filter(function(a){return a.type===typeKey&&a.isActive!==false;}).forEach(function(acc){
-      var b=_accBal(acc,asAt), ti=FIN_ACCOUNT_TYPES[typeKey]; addRow(acc.name,ti.label,b>0?b:0,b<0?-b:0);
-    });
-  });
-
-  // Derived accrual lines that make the sheet balance:
-  addRow('Accounts Receivable','Asset',arBalanceAsAt(asAt),0);                 // debit
-  addRow('Sales Revenue','Income',0,accrualRevenue('0000-00-00',asAt));        // credit
-  // Expenses grouped by category (debit)
-  var expByCat={};
-  transactions.filter(function(t){return t.type==='expense'&&t.date<=asAt;}).forEach(function(t){var k=t.category||'Other Expenses';expByCat[k]=(expByCat[k]||0)+Number(t.amount||0);});
-  Object.keys(expByCat).sort().forEach(function(k){ addRow(k,'Expense',expByCat[k],0); });
-  // VAT collected (credit / liability) + other liabilities & equity at opening (credit)
-  addRow('VAT Payable','Liability',0,vatPayableAsAt(asAt));
-  finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).forEach(function(acc){var ob=Number(acc.openingBalance||0);if(ob)addRow(acc.name,'Liability',ob<0?-ob:0,ob>0?ob:0);});
-  finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).forEach(function(acc){var ob=Number(acc.openingBalance||0);if(ob)addRow(acc.name,'Equity',ob<0?-ob:0,ob>0?ob:0);});
-  var obe=openingBalanceEquity(); if(Math.abs(obe)>0.005)addRow('Opening Balance Equity','Equity',obe<0?-obe:0,obe>0?obe:0);
-
-  if(!rows.length){el.innerHTML='<div class="empty">No ledger activity yet. Add accounts and record transactions first.</div>';return;}
-
-  var diff=Math.abs(totalDr-totalCr);
-  var balHtml=diff<0.01?
-    '<div style="margin-top:14px;padding:12px 16px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:var(--r-md);font-size:13px;font-weight:700;color:#15803D;display:flex;align-items:center;gap:9px">'+ico('check',18,'#16A34A')+'In balance — Total Debits = Total Credits = '+fmtMoney(totalDr)+'</div>':
-    '<div style="margin-top:14px;padding:12px 16px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:var(--r-md);font-size:13px;font-weight:700;color:#DC2626;display:flex;align-items:center;gap:9px">'+ico('alertTri',18,'#DC2626')+'Out of balance by '+fmtMoney(diff)+' — ensure all transactions have matching debit and credit entries.</div>';
-
-  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll">'+
-    '<table class="data-table" style="min-width:380px">'+
-    '<thead><tr><th>Account</th><th>Type</th>'+
-      '<th class="num" style="color:#DC2626">Debit</th>'+
-      '<th class="num" style="color:#15803D">Credit</th>'+
-    '</tr></thead><tbody>'+
-    rows.map(function(r){
-      return'<tr>'+
-        '<td style="font-weight:600;color:var(--t1)">'+esc(r.name)+'</td>'+
-        '<td style="color:var(--t2)">'+esc(r.type)+'</td>'+
-        '<td class="num" style="font-weight:700;color:#DC2626">'+(r.dr>0?fmtMoney(r.dr):'—')+'</td>'+
-        '<td class="num" style="font-weight:700;color:#15803D">'+(r.cr>0?fmtMoney(r.cr):'—')+'</td>'+
-      '</tr>';
-    }).join('')+
-    '</tbody><tfoot><tr>'+
-      '<td colspan="2" style="font-weight:900;color:var(--t1)">TOTAL</td>'+
-      '<td class="num" style="font-size:14px;font-weight:900;color:#DC2626">'+fmtMoney(totalDr)+'</td>'+
-      '<td class="num" style="font-size:14px;font-weight:900;color:#15803D">'+fmtMoney(totalCr)+'</td>'+
-    '</tr></tfoot></table></div></div>'+balHtml;
+  var asAt=(document.getElementById('tb-date')||{}).value||todayStr();
+  el.innerHTML=skelTable(8);
+  // Read straight from the general ledger. These figures are SUMs over
+  // journal_lines, so the statement cannot disagree with the books.
+  gmsApi.trialBalance(asAt).then(function(t){
+    if(!t.lines.length){el.innerHTML='<div class="empty">Nothing posted to the ledger yet. Raise an invoice or receive stock and the entries appear here.</div>';return;}
+    var TYPE={asset:'Asset',liability:'Liability',equity:'Equity',income:'Income',expense:'Expense'};
+    var rows=t.lines.map(function(l){
+      return '<tr><td style="font-weight:600">'+esc(l.name)+'</td>'+
+        '<td style="color:var(--t2)">'+esc(TYPE[l.type]||l.type)+'</td>'+
+        '<td class="num" style="font-weight:700">'+(l.balanceDebit?fmtMoney(l.balanceDebit):'—')+'</td>'+
+        '<td class="num" style="font-weight:700">'+(l.balanceCredit?fmtMoney(l.balanceCredit):'—')+'</td></tr>';
+    }).join('');
+    var dr=t.lines.reduce(function(a,l){return a+l.balanceDebit;},0);
+    var cr=t.lines.reduce(function(a,l){return a+l.balanceCredit;},0);
+    el.innerHTML='<div class="card"><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Account</th><th>Type</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+      '<tfoot><tr><td colspan="2" style="font-weight:800;text-align:right">Total</td>'+
+      '<td class="num" style="font-weight:900">'+fmtMoney(dr)+'</td>'+
+      '<td class="num" style="font-weight:900">'+fmtMoney(cr)+'</td></tr></tfoot></table></div></div>'+
+      (t.balanced
+        ? '<div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--green)">✓ In balance — debits equal credits.</div>'
+        : '<div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--red)">⚠ Out of balance by '+fmtMoney(t.difference)+'. This should be impossible — please report it.</div>')+
+      '</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the trial balance — '+esc(e.message||'')+'</div>';});
 }
 
 // ── PROFIT & LOSS ──
@@ -10724,54 +10866,29 @@ function renderPLStatement(){
   var from=(document.getElementById('pl-from')||{}).value||'';
   var to=(document.getElementById('pl-to')||{}).value||'';
   if(!from||!to){el.innerHTML='<div class="empty">Select a date range above.</div>';return;}
-
-  // ACCRUAL P&L: revenue is recognised when invoiced (ex-VAT), not when collected,
-  // plus any non-invoice income; expenses are the payments in the period.
-  var revMap={};
-  invoices.filter(function(iv){var d=tsToDs(iv.createdAt);return d>=from&&d<=to;}).forEach(function(iv){
-    var k=iv.jobCardId?'Service Invoices':'Counter Sales';
-    revMap[k]=(revMap[k]||0)+invSubtotal(iv);
-  });
-  transactions.filter(function(t){return t.type==='income'&&!txnIsInvoiceReceipt(t)&&t.date>=from&&t.date<=to;}).forEach(function(t){
-    var k=t.category||'Other Income';revMap[k]=(revMap[k]||0)+Number(t.amount||0);
-  });
-  var expMap={};
-  transactions.filter(function(t){return t.type==='expense'&&t.date>=from&&t.date<=to;}).forEach(function(t){
-    var k=t.category||'Uncategorised';expMap[k]=(expMap[k]||0)+Number(t.amount||0);
-  });
-  function toGroups(map){return Object.keys(map).sort().map(function(k){return{name:k,amount:map[k]};});}
-  var revGroups=toGroups(revMap), expGroups=toGroups(expMap);
-  var totalRev=revGroups.reduce(function(s,g){return s+g.amount;},0);
-  var totalExp=expGroups.reduce(function(s,g){return s+g.amount;},0);
-  var netProfit=totalRev-totalExp;
-  var isProfit=netProfit>=0;
-
-  function section(title, groups, total, color){
-    var body=groups.length?groups.map(function(g){
-      return'<tr>'+
-        '<td style="font-weight:600;color:var(--t1)">'+esc(g.name)+'</td>'+
-        '<td class="num" style="font-weight:700;color:'+color+'">'+fmtMoney(g.amount)+'</td>'+
-      '</tr>';
-    }).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--t3);padding:20px">No transactions in this period</td></tr>';
-    return'<div class="dt-wrap" style="margin-bottom:18px"><div class="dt-scroll">'+
-      '<table class="data-table" style="min-width:320px">'+
-        '<thead><tr><th>'+esc(title)+'</th><th class="num" style="color:'+color+'">Amount</th></tr></thead>'+
-        '<tbody>'+body+'</tbody>'+
-        '<tfoot><tr>'+
-          '<td style="font-weight:800;color:var(--t1)">Total '+esc(title)+'</td>'+
-          '<td class="num" style="font-size:14px;font-weight:900;color:'+color+'">'+fmtMoney(total)+'</td>'+
-        '</tr></tfoot>'+
-      '</table></div></div>';
-  }
-
-  var npColor=isProfit?'var(--green)':'var(--red)';
-  var html=section('Revenue',revGroups,totalRev,'var(--green)')+
-    section('Expenses',expGroups,totalExp,'var(--red)')+
-    '<div class="card" style="margin:0;border:2px solid '+npColor+';background:'+(isProfit?'var(--green-lt)':'var(--red-lt)')+';padding:16px 20px;display:flex;justify-content:space-between;align-items:center">'+
-      '<div><div style="font-size:14px;font-weight:900;color:'+npColor+'">Net '+(isProfit?'Profit':'Loss')+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+fmtDate(from)+' to '+fmtDate(to)+'</div></div>'+
-      '<div style="font-size:22px;font-weight:900;color:'+npColor+'">'+fmtMoney(Math.abs(netProfit))+'</div>'+
-    '</div>';
-  el.innerHTML=html;
+  el.innerHTML=skelTable(6);
+  // Accrual P&L straight from the ledger: revenue when invoiced, cost of sales
+  // when the goods left, expenses when incurred.
+  gmsApi.profitAndLoss(from,to).then(function(r){
+    function section(title,list,total,col){
+      if(!list.length)return '<div class="card"><div class="card-title">'+title+'</div><div class="empty" style="padding:20px 0">Nothing in this period.</div></div>';
+      return '<div class="card"><div class="card-title">'+title+'</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<tbody>'+list.map(function(x){
+          return '<tr><td style="font-weight:600">'+esc(x.name)+'</td><td class="num" style="font-weight:700;color:'+col+'">'+fmtMoney(x.amount)+'</td></tr>';
+        }).join('')+'</tbody>'+
+        '<tfoot><tr><td style="font-weight:800">Total '+title+'</td><td class="num" style="font-weight:900">'+fmtMoney(total)+'</td></tr></tfoot>'+
+        '</table></div></div></div>';
+    }
+    var net=r.netProfit;
+    el.innerHTML=section('Income',r.income,r.totalIncome,'var(--green)')+
+      section('Expenses',r.expense,r.totalExpense,'var(--red)')+
+      '<div class="card" style="border:2px solid '+(net>=0?'var(--green)':'var(--red)')+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-size:12px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">'+(net>=0?'Net Profit':'Net Loss')+'</div>'+
+        '<div style="font-size:12px;color:var(--t3);margin-top:2px">'+esc(fmtDate(from))+' to '+esc(fmtDate(to))+'</div></div>'+
+        '<div style="font-size:30px;font-weight:900;color:'+(net>=0?'var(--green)':'var(--red)')+';font-variant-numeric:tabular-nums">'+fmtMoney(net)+'</div>'+
+        '</div></div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the profit &amp; loss — '+esc(e.message||'')+'</div>';});
 }
 
 // ── BALANCE SHEET ──
@@ -10785,87 +10902,29 @@ function showBalanceSheet(){
 function renderBalanceSheet(){
   var el=document.getElementById('bs-content');
   if(!el)return;
-  var asAt=(document.getElementById('bs-date')||{}).value||new Date().toISOString().slice(0,10);
-
-  // Helper: sum account balances by type
-  function typeTotal(types){
-    return finAccounts.filter(function(a){return types.indexOf(a.type)>-1&&a.isActive!==false;}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
-  }
-
-  // ASSETS (accrual basis — see the accrual ledger helpers)
-  var cashTotal=typeTotal(['cash']);
-  var bankTotal=typeTotal(['bank']);
-  // Fixed assets exclude the derived AR line (that finAccount stays at opening).
-  var assetTotal=finAccounts.filter(function(a){return a.type==='asset'&&a.isActive!==false&&a.name!=='Accounts Receivable';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
-  var totalAR=arBalanceAsAt(asAt);
-  var totalAssets=cashTotal+bankTotal+assetTotal+totalAR;
-
-  // LIABILITIES: VAT collected on invoices + any other liability openings.
-  var vatPayable=vatPayableAsAt(asAt);
-  var otherLiab=finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
-  var totalLiabilities=vatPayable+otherLiab;
-
-  // EQUITY: contributed capital + accrual retained earnings (revenue − expenses).
-  var equityAccsTotal=finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).reduce(function(s,a){return s+_accBal(a,asAt);},0);
-  var retainedEarnings=accrualRevenue('0000-00-00',asAt)-accrualExpense('0000-00-00',asAt);
-  var obEquity=openingBalanceEquity();
-  var totalEquity=equityAccsTotal+retainedEarnings+obEquity;
-
-  var check=totalAssets-(totalLiabilities+totalEquity);
-
-  function bsSection(title, color, items, total){
-    return'<div class="dt-wrap" style="margin-bottom:16px"><div class="dt-scroll">'+
-      '<table class="data-table" style="min-width:320px">'+
-        '<thead><tr><th>'+esc(title)+'</th><th class="num" style="color:'+color+'">Amount</th></tr></thead>'+
-        '<tbody>'+
-        items.map(function(item){
-          return'<tr>'+
-            '<td style="font-weight:600;color:var(--t1)">'+esc(item.name)+'</td>'+
-            '<td class="num" style="font-weight:700;color:var(--t1)">'+fmtMoney(item.value)+'</td>'+
-          '</tr>';
-        }).join('')+
-        '</tbody>'+
-        '<tfoot><tr>'+
-          '<td style="font-weight:800;color:var(--t1)">Total '+esc(title)+'</td>'+
-          '<td class="num" style="font-size:14px;font-weight:900;color:'+color+'">'+fmtMoney(total)+'</td>'+
-        '</tr></tfoot>'+
-      '</table></div></div>';
-  }
-
-  var assetItems=[
-    {name:'Cash on Hand',value:cashTotal},
-    {name:'Bank Accounts',value:bankTotal},
-    {name:'Accounts Receivable',value:totalAR},
-    {name:'Fixed Assets',value:assetTotal},
-  ].filter(function(i){return i.value!==0;});
-
-  var liabItems=[];
-  if(vatPayable>0.005)liabItems.push({name:'VAT Payable',value:vatPayable});
-  finAccounts.filter(function(a){return a.type==='liability'&&a.isActive!==false&&a.name!=='VAT Payable';}).forEach(function(a){
-    var b=_accBal(a,asAt);
-    if(Math.abs(b)>0.005)liabItems.push({name:a.name,value:b});
-  });
-  if(!liabItems.length)liabItems.push({name:'No liabilities recorded',value:0});
-
-  var equityItems=[];
-  finAccounts.filter(function(a){return a.type==='equity'&&a.isActive!==false&&a.name!=='Retained Earnings';}).forEach(function(a){
-    var b=_accBal(a,asAt);
-    if(Math.abs(b)>0.005)equityItems.push({name:a.name,value:b});
-  });
-  if(Math.abs(obEquity)>0.005)equityItems.push({name:'Opening Balance Equity',value:obEquity});
-  equityItems.push({name:'Retained Earnings (Net Profit)',value:retainedEarnings});
-
-  var balanced=Math.abs(check)<0.01;
-  var checkHtml='<div style="margin-top:12px;padding:12px 16px;border-radius:var(--r-md);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;background:'+(balanced?'#DCFCE7':'#FEF2F2')+';color:'+(balanced?'#15803D':'#DC2626')+'">'+
-    (balanced?ico('check',18,'#16A34A'):ico('alertTri',18,'#DC2626'))+
-    (balanced?'Balance Sheet balances — Assets = Liabilities + Equity = '+fmtMoney(totalAssets):
-    'Difference of '+fmtMoney(Math.abs(check))+' — check opening balances and transaction postings')+
-  '</div>';
-
-  el.innerHTML=bsSection('Assets','var(--blue)',assetItems,totalAssets)+
-    bsSection('Liabilities','var(--accent-dk)',liabItems,totalLiabilities)+
-    bsSection('Equity','var(--t1)',equityItems,totalEquity)+
-    checkHtml;
+  var asAt=(document.getElementById('bs-date')||{}).value||todayStr();
+  el.innerHTML=skelTable(6);
+  // Assets, liabilities and equity are ledger balances. Retained earnings is the
+  // P&L to date, which is what makes the sheet balance.
+  gmsApi.balanceSheet(asAt).then(function(b){
+    function section(title,list,total){
+      return '<div class="card"><div class="card-title">'+title+'</div>'+
+        (list.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><tbody>'+
+          list.map(function(x){return '<tr><td style="font-weight:600">'+esc(x.name)+'</td><td class="num" style="font-weight:700">'+fmtMoney(x.amount)+'</td></tr>';}).join('')+
+          '</tbody><tfoot><tr><td style="font-weight:800">Total '+title+'</td><td class="num" style="font-weight:900">'+fmtMoney(total)+'</td></tr></tfoot></table></div></div>'
+         :'<div class="empty" style="padding:20px 0">Nothing to show.</div>')+'</div>';
+    }
+    el.innerHTML=section('Assets',b.assets,b.totalAssets)+
+      section('Liabilities',b.liabilities,b.totalLiabilities)+
+      section('Equity',b.equity,b.totalEquity)+
+      '<div class="card" style="border:2px solid '+(b.balanced?'var(--green)':'var(--red)')+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
+        '<div><div style="font-size:13px;font-weight:800">Assets '+fmtMoney(b.totalAssets)+'</div>'+
+        '<div style="font-size:12px;color:var(--t3);margin-top:2px">Liabilities '+fmtMoney(b.totalLiabilities)+' + Equity '+fmtMoney(b.totalEquity)+'</div></div>'+
+        '<div style="font-size:14px;font-weight:800;color:'+(b.balanced?'var(--green)':'var(--red)')+'">'+
+          (b.balanced?'✓ Balanced':'⚠ Out by '+fmtMoney(b.difference))+'</div>'+
+        '</div></div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the balance sheet — '+esc(e.message||'')+'</div>';});
 }
 
 // ── CUSTOMER ACCOUNTS ──

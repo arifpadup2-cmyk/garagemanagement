@@ -399,6 +399,18 @@
       return req('GET', '/reports/pl?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
     },
     balanceSheet: function (asAt) { return req('GET', '/reports/balance-sheet?asAt=' + encodeURIComponent(asAt || '')); },
+    generalLedger: function (accountId, from, to) {
+      return req('GET', '/reports/ledger?accountId=' + encodeURIComponent(accountId) +
+        '&from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
+    },
+    // ---- Operational reports, aggregated in Postgres (Phase 8) ----
+    inventoryValuation: function () { return req('GET', '/reports/inventory-valuation'); },
+    salesSummary: function (from, to) {
+      return req('GET', '/reports/sales-summary?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
+    },
+    workshopReport: function (from, to) {
+      return req('GET', '/reports/workshop?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
+    },
     // ---- Sales corrections (Phase 6) ----
     // A credit note reverses value on a posted invoice, optionally restocks the
     // goods and refunds cash — all in one server transaction.

@@ -837,18 +837,10 @@ async function postSalesJournal(client, invId, inv, invNo, actor) {
     { role: 'discount', debit: disc, memo: 'Discount allowed' },
     { role: 'vatOut', credit: tax, memo: 'Output VAT' },
   ];
-  // Cost of sales: what the parts on this invoice actually cost us.
-  let cogs = 0;
-  for (const l of (Array.isArray(inv.items) ? inv.items : [])) {
-    if (!l.partId) continue;
-    const pr = await client.query(`SELECT data FROM parts WHERE id = $1`, [l.partId]);
-    if (!pr.rows.length) continue;
-    cogs = round2(cogs + (Number(pr.rows[0].data.costPrice) || 0) * (Number(l.qty) || 0));
-  }
-  if (cogs > 0) {
-    lines.push({ role: 'cogs', debit: cogs, memo: 'Cost of parts sold' });
-    lines.push({ role: 'inventory', credit: cogs, memo: 'Stock relieved' });
-  }
+  // Cost of sales is NOT posted here. Stock physically leaves when a part is
+  // issued to a job card or sold over the counter, and the cost must post at
+  // that same moment — otherwise ledger inventory and the quantity on the shelf
+  // disagree for as long as the job is open.
   return postJournal(client, {
     date: tsToDs(inv.createdAt) || tsToDs(Date.now()),
     refType: 'invoice', refId: invId, refNo: invNo, by: actor,
@@ -2505,6 +2497,37 @@ app.get('/api/reports/trial-balance', asyncH(async (req, res) => {
   });
 }));
 
+// ---- General ledger: the postings behind one account ----
+app.get('/api/reports/ledger', asyncH(async (req, res) => {
+  const accountId = String(req.query.accountId || '');
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  if (!accountId) return res.status(400).json({ error: 'Choose an account.' });
+  // Opening balance is everything before the window — without it a ledger
+  // extract for a period is just a floating list of numbers.
+  const ob = await pool.query(
+    `SELECT COALESCE(SUM(debit),0) dr, COALESCE(SUM(credit),0) cr FROM journal_lines
+      WHERE account_id = $1 AND entry_date < $2`, [accountId, from]);
+  const opening = round2((Number(ob.rows[0].dr) || 0) - (Number(ob.rows[0].cr) || 0));
+  const { rows } = await pool.query(
+    `SELECT jl.debit, jl.credit, jl.entry_date, jl.data, je.data AS entry
+       FROM journal_lines jl JOIN journal_entries je ON je.id = jl.entry_id
+      WHERE jl.account_id = $1 AND jl.entry_date BETWEEN $2 AND $3
+      ORDER BY jl.entry_date ASC, je.seq ASC`, [accountId, from, to]);
+  let running = opening;
+  const lines = rows.map((r) => {
+    const dr = round2(Number(r.debit) || 0), cr = round2(Number(r.credit) || 0);
+    running = round2(running + dr - cr);
+    return {
+      date: r.entry_date, entryNo: r.entry.no, memo: r.entry.memo,
+      refType: r.entry.refType, refNo: r.entry.refNo,
+      lineMemo: (r.data || {}).memo || '', party: (r.data || {}).partyName || '',
+      debit: dr, credit: cr, balance: running,
+    };
+  });
+  res.json({ accountId, from, to, opening, lines, closing: running });
+}));
+
 app.get('/api/reports/pl', asyncH(async (req, res) => {
   const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
   const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
@@ -2560,6 +2583,143 @@ app.get('/api/reports/balance-sheet', asyncH(async (req, res) => {
     asAt, assets, liabilities, equity,
     totalAssets: ta, totalLiabilities: tl, totalEquity: te,
     difference: diff, balanced: Math.abs(diff) < 0.005,
+  });
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// OPERATIONAL REPORTS (Phase 8)
+// Aggregated in Postgres rather than in the browser. The old reports loaded
+// whole collections into the client and summed them there, which is both slow
+// and gives a different answer on every device depending on what had loaded.
+// ══════════════════════════════════════════════════════════════════════════
+
+// ---- Inventory valuation: what the stock on the shelf is actually worth ----
+app.get('/api/reports/inventory-valuation', asyncH(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, data,
+            COALESCE((data->>'stock')::numeric,0) AS qty,
+            COALESCE((data->>'costPrice')::numeric,0) AS cost
+       FROM parts
+      WHERE COALESCE((data->>'active')::boolean, true) = true`
+  );
+  const items = [];
+  let totalValue = 0, totalQty = 0, negatives = 0;
+  for (const r of rows) {
+    const qty = round2(Number(r.qty) || 0), cost = round2(Number(r.cost) || 0);
+    if (qty === 0) continue;
+    if (qty < 0) negatives++;
+    const value = round2(qty * cost);
+    totalValue = round2(totalValue + value); totalQty = round2(totalQty + qty);
+    items.push({
+      id: r.id, name: r.data.name || '', partNumber: r.data.partNumber || '',
+      category: r.data.category || '', qty, unitCost: cost, value,
+      sellingPrice: round2(Number(r.data.sellingPrice) || 0),
+    });
+  }
+  items.sort((a, b) => b.value - a.value);
+  // By category, because that is how a stock write-down conversation happens.
+  const byCat = {};
+  for (const i of items) {
+    const k = i.category || 'Uncategorised';
+    byCat[k] = byCat[k] || { category: k, qty: 0, value: 0, items: 0 };
+    byCat[k].qty = round2(byCat[k].qty + i.qty);
+    byCat[k].value = round2(byCat[k].value + i.value);
+    byCat[k].items++;
+  }
+  res.json({
+    asAt: tsToDs(Date.now()), items, totalValue, totalQty, lineCount: items.length,
+    negativeStockItems: negatives,
+    byCategory: Object.values(byCat).sort((a, b) => b.value - a.value),
+  });
+}));
+
+// ---- Sales summary: revenue, cost and margin over a period ----
+app.get('/api/reports/sales-summary', asyncH(async (req, res) => {
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  const fromTs = from === '0000-01-01' ? 0 : new Date(from + 'T00:00:00Z').getTime();
+  const toTs = to === '9999-12-31' ? 8.64e15 : new Date(to + 'T23:59:59Z').getTime();
+  const { rows } = await pool.query(
+    `SELECT data FROM invoices
+      WHERE COALESCE(data->>'status','') <> 'cancelled'
+        AND COALESCE((data->>'createdAt')::bigint, 0) BETWEEN $1 AND $2`,
+    [fromTs, toTs]
+  );
+  let gross = 0, tax = 0, discount = 0, collected = 0, credited = 0;
+  const byDay = {}, byCustomer = {};
+  for (const r of rows) {
+    const d = r.data;
+    const t = round2(Number(d.total) || 0);
+    gross = round2(gross + t);
+    tax = round2(tax + (Number(d.taxAmount) || 0));
+    discount = round2(discount + (Number(d.discountAmount) || 0));
+    collected = round2(collected + (Number(d.totalPaid) || 0));
+    credited = round2(credited + (Number(d.creditedTotal) || 0));
+    const day = tsToDs(d.createdAt);
+    byDay[day] = round2((byDay[day] || 0) + t);
+    const c = d.customerName || 'Walk-in';
+    byCustomer[c] = byCustomer[c] || { customer: c, invoices: 0, total: 0 };
+    byCustomer[c].invoices++; byCustomer[c].total = round2(byCustomer[c].total + t);
+  }
+  // Cost of sales for the same window comes from the ledger, so margin is the
+  // real one rather than selling price minus a guess.
+  const cogsRow = await pool.query(
+    `SELECT COALESCE(SUM(jl.debit - jl.credit),0) c FROM journal_lines jl
+       JOIN fin_accounts fa ON fa.id = jl.account_id
+      WHERE fa.data->>'systemRole' = 'cogs' AND jl.entry_date BETWEEN $1 AND $2`,
+    [from, to]
+  );
+  const cogs = round2(Number(cogsRow.rows[0].c) || 0);
+  const net = round2(gross - tax - credited);
+  res.json({
+    from, to, invoiceCount: rows.length,
+    gross, tax, discount, credited, netRevenue: net, collected,
+    outstanding: round2(gross - collected - credited),
+    costOfSales: cogs, grossMargin: round2(net - cogs),
+    grossMarginPct: net > 0 ? Math.round(((net - cogs) / net) * 1000) / 10 : 0,
+    byDay: Object.entries(byDay).map(([date, total]) => ({ date, total })).sort((a, b) => a.date.localeCompare(b.date)),
+    topCustomers: Object.values(byCustomer).sort((a, b) => b.total - a.total).slice(0, 10),
+  });
+}));
+
+// ---- Workshop performance ----
+app.get('/api/reports/workshop', asyncH(async (req, res) => {
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  const fromTs = from === '0000-01-01' ? 0 : new Date(from + 'T00:00:00Z').getTime();
+  const toTs = to === '9999-12-31' ? 8.64e15 : new Date(to + 'T23:59:59Z').getTime();
+  const { rows } = await pool.query(
+    `SELECT data FROM job_cards WHERE COALESCE((data->>'createdAt')::bigint,0) BETWEEN $1 AND $2`,
+    [fromTs, toTs]
+  );
+  const byStatus = {}, byTech = {};
+  let labourValue = 0, turnaroundSum = 0, turnaroundCount = 0, qcFails = 0;
+  for (const r of rows) {
+    const d = r.data;
+    const st = d.status || 'pending';
+    byStatus[st] = (byStatus[st] || 0) + 1;
+    if (d.qc && d.qc.passed === false) qcFails++;
+    for (const w of (Array.isArray(d.works) ? d.works : [])) {
+      const cost = round2(Number(w.cost) || 0);
+      labourValue = round2(labourValue + cost);
+      const t = w.technicianName || 'Unassigned';
+      byTech[t] = byTech[t] || { technician: t, jobs: 0, done: 0, value: 0 };
+      byTech[t].jobs++;
+      if (w.status === 'done') byTech[t].done++;
+      byTech[t].value = round2(byTech[t].value + cost);
+    }
+    // Turnaround measured check-in to delivery, the number a customer feels.
+    if (d.checkIn && d.checkIn.at && d.delivery && d.delivery.at) {
+      turnaroundSum += (d.delivery.at - d.checkIn.at);
+      turnaroundCount++;
+    }
+  }
+  res.json({
+    from, to, jobCards: rows.length, byStatus,
+    labourValue, qcFailures: qcFails,
+    avgTurnaroundHours: turnaroundCount ? Math.round((turnaroundSum / turnaroundCount / 3600000) * 10) / 10 : null,
+    turnaroundSample: turnaroundCount,
+    technicians: Object.values(byTech).sort((a, b) => b.value - a.value),
   });
 }));
 
@@ -2703,6 +2863,17 @@ app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
     await postMovement(client, { partId, partName: p.name, type: 'out', qty, from, to,
       unitCost: p.costPrice, refType: 'issue', refId: req.params.id, refNo: jcNo,
       note: 'Issued to ' + jcNo, by: (req.auth && req.auth.name) || '' });
+    const issueCost = round2((Number(p.costPrice) || 0) * qty);
+    if (issueCost > 0) {
+      await postJournal(client, {
+        date: tsToDs(Date.now()), refType: 'issue', refId: req.params.id, refNo: jcNo,
+        by: (req.auth && req.auth.name) || '', memo: `Parts issued to ${jcNo}`,
+        lines: [
+          { role: 'cogs', debit: issueCost, memo: (p.name || 'Part') + ' x' + qty },
+          { role: 'inventory', credit: issueCost, memo: 'Stock relieved' },
+        ],
+      });
+    }
     await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [partId, JSON.stringify(pMerged)]);
     const line = {
       id: crypto.randomUUID(), partId, name: p.name || '', qty,
@@ -2743,6 +2914,21 @@ app.post('/api/jobCards/:id/parts/return', asyncH(async (req, res) => {
         const jcNo = 'JC-' + String(jr.rows[0].seq || 0).padStart(4, '0');
         const mv = { type: 'in', qty: Number(line.qty || 0), from, to, note: 'Returned from ' + jcNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
         await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [line.partId, JSON.stringify({ ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) })]);
+        await postMovement(client, { partId: line.partId, partName: p.name, type: 'in',
+          qty: Number(line.qty || 0), from, to, unitCost: p.costPrice,
+          refType: 'issue-return', refId: req.params.id, refNo: jcNo,
+          note: 'Returned from ' + jcNo, by: (req.auth && req.auth.name) || '' });
+        const backCost = round2((Number(p.costPrice) || 0) * (Number(line.qty) || 0));
+        if (backCost > 0) {
+          await postJournal(client, {
+            date: tsToDs(Date.now()), refType: 'issue-return', refId: req.params.id, refNo: jcNo,
+            by: (req.auth && req.auth.name) || '', memo: `Parts returned from ${jcNo}`,
+            lines: [
+              { role: 'inventory', debit: backCost, memo: 'Stock back on shelf' },
+              { role: 'cogs', credit: backCost, memo: 'Cost of sales reversed' },
+            ],
+          });
+        }
       }
     }
     const jcMerged = { ...jc, parts: lines.filter((l) => l.id !== lineId) };
