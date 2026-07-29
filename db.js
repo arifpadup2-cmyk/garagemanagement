@@ -72,6 +72,18 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Per-branch stock (step 2 of the branch-access design) ──
+-- The item MASTER stays company-wide (one part number, one description); the
+-- STOCK is per branch. Rows appear here only as writers are converted; until
+-- then partStock() reads through to parts.stock, so nothing drifts and every
+-- existing read keeps returning the right answer. See §5 of the design doc.
+CREATE TABLE IF NOT EXISTS part_branch_stock (
+  part_id    text NOT NULL,
+  branch_id  text NOT NULL,
+  data       jsonb NOT NULL,
+  PRIMARY KEY (part_id, branch_id)
+);
+
 -- ── Branches (step 1 of the branch-access design) ──
 -- The table and the stamping only. NOTHING filters on branch_id yet — see
 -- docs/BRANCH-ACCESS-DESIGN.md for why enforcement must not ship before the
@@ -200,6 +212,7 @@ CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
 CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
 -- The ledger is read by account, by date, and by the document that caused it.
 CREATE INDEX IF NOT EXISTS idx_branches_created  ON branches(created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_pbs_branch        ON part_branch_stock(branch_id);
 CREATE INDEX IF NOT EXISTS idx_bankrec_created   ON bank_recs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bankrec_acct      ON bank_recs ((data->>'accountId'));
 -- Reconciled state lives on the journal line, so an extract can show it.

@@ -815,6 +815,64 @@ async function ensureDefaultBranch() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// PER-BRANCH STOCK — step 2 of docs/BRANCH-ACCESS-DESIGN.md
+//
+// The accessor lands BEFORE any writer is converted, and it READS THROUGH to
+// parts.stock when the branch has no row yet. That is what makes this safe to
+// ship on its own: with no rows stored, every caller gets exactly the answer it
+// got before, so nothing can drift. A backfilled mirror that the fifteen
+// existing writers did not update would drift on the first goods receipt and
+// become stale data that looks authoritative — which is why there is no
+// backfill here.
+//
+// As each writer is converted (§5.4), it starts writing a row, and from that
+// moment this returns the branch figure instead of the fallback.
+// ══════════════════════════════════════════════════════════════════════════
+const PBS_FIELDS = ['stock', 'costPrice', 'reorderLevel', 'minStock', 'maxStock', 'location'];
+
+// Read a part's stock position for one branch, falling back to the item master.
+async function partStock(client, partId, branchId) {
+  const q = client || pool;
+  if (branchId) {
+    const { rows } = await q.query(
+      `SELECT data FROM part_branch_stock WHERE part_id = $1 AND branch_id = $2`, [partId, branchId]);
+    if (rows.length) return { ...rows[0].data, partId, branchId, source: 'branch' };
+  }
+  const p = await q.query(`SELECT data FROM parts WHERE id = $1`, [partId]);
+  if (!p.rows.length) return null;
+  const d = p.rows[0].data;
+  const out = { partId, branchId: branchId || null, source: 'master' };
+  for (const f of PBS_FIELDS) out[f] = d[f] != null ? d[f] : (f === 'location' ? '' : 0);
+  return out;
+}
+
+// Write a part's stock position for one branch. Not called by anything yet —
+// each writer adopts it as it is converted, one at a time, with its reads.
+async function setPartStock(client, partId, branchId, patch) {
+  const cur = await partStock(client, partId, branchId);
+  const next = {};
+  for (const f of PBS_FIELDS) next[f] = patch[f] != null ? patch[f] : (cur ? cur[f] : 0);
+  await client.query(
+    `INSERT INTO part_branch_stock (part_id, branch_id, data) VALUES ($1,$2,$3)
+     ON CONFLICT (part_id, branch_id) DO UPDATE SET data = part_branch_stock.data || EXCLUDED.data`,
+    [partId, branchId, JSON.stringify(next)]);
+  return next;
+}
+
+// Total across every branch, plus whatever still sits only on the master. This
+// is what company-wide reports (valuation, reorder) will use during the
+// transition so their answer does not change as writers are converted.
+async function partStockTotal(client, partId) {
+  const q = client || pool;
+  const { rows } = await q.query(
+    `SELECT COALESCE(SUM(COALESCE((data->>'stock')::numeric,0)),0) n,
+            COUNT(*)::int c FROM part_branch_stock WHERE part_id = $1`, [partId]);
+  if (Number(rows[0].c) > 0) return round2(Number(rows[0].n) || 0);
+  const p = await q.query(`SELECT data FROM parts WHERE id = $1`, [partId]);
+  return p.rows.length ? round2(Number(p.rows[0].data.stock) || 0) : 0;
+}
+
 // ---- Authorization (RBAC) ----
 // Admin: full access. Technician: a tight allowlist — read the shop-floor data
 // they need, update job-card work status, and toggle ONLY their own
