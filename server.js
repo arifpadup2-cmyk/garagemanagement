@@ -265,7 +265,12 @@ const MASTER_KINDS = new Set([
 // Kinds whose rows must hang off a parent, and the parent kind they require.
 const MASTER_PARENT = { vehicleModel: 'vehicleMake' };
 
-async function validateDoc(coll, doc, id) {
+// `client` threads the CALLER'S open transaction through. Without it these
+// helpers took a second connection from the pool while the first was still
+// held, which empties the pool under concurrent load and deadlocks the server
+// against itself.
+async function validateDoc(coll, doc, id, client) {
+  const q = client || pool;
   if (coll === 'masters') {
     if (!MASTER_KINDS.has(doc.kind)) return 'Unknown master data list.';
     if (!doc.name) return 'Name is required.';
@@ -273,7 +278,7 @@ async function validateDoc(coll, doc, id) {
     const parentKind = MASTER_PARENT[doc.kind];
     if (parentKind) {
       if (!doc.parentId) return 'Please choose the parent record first.';
-      const { rows } = await pool.query(`SELECT kind FROM masters WHERE id=$1`, [doc.parentId]);
+      const { rows } = await q.query(`SELECT kind FROM masters WHERE id=$1`, [doc.parentId]);
       if (!rows.length || rows[0].kind !== parentKind) return 'The parent record no longer exists.';
     }
     if (doc.kind === 'taxCode') {
@@ -2470,13 +2475,25 @@ app.post('/api/reservations/reserve', asyncH(async (req, res) => {
 
 // Release a reservation (job cancelled, or the part was actually issued).
 app.post('/api/reservations/:id/release', asyncH(async (req, res) => {
-  const { rows } = await pool.query(`SELECT data FROM reservations WHERE id = $1`, [req.params.id]);
-  if (!rows.length) return res.status(404).json({ error: 'Reservation not found.' });
-  if (rows[0].data.status !== 'open') return res.status(400).json({ error: 'That reservation is already closed.' });
-  const merged = { ...rows[0].data, status: String((req.body || {}).status || 'released'), closedAt: Date.now(), closedBy: (req.auth && req.auth.name) || '?' };
-  await pool.query(`UPDATE reservations SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
-  audit(req, 'release-reservation', 'reservations', req.params.id, merged.partName || '');
-  res.json({ id: req.params.id, ...merged });
+  // Row-locked: two devices releasing the same reservation both read it open
+  // and both wrote a close, so the audit trail showed it released twice.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT data FROM reservations WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Reservation not found.' }); }
+    if (rows[0].data.status !== 'open') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'That reservation is already closed.' }); }
+    const merged = { ...rows[0].data, status: String((req.body || {}).status || 'released'), closedAt: Date.now(), closedBy: (req.auth && req.auth.name) || '?' };
+    await client.query(`UPDATE reservations SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query('COMMIT');
+    audit(req, 'release-reservation', 'reservations', req.params.id, merged.partName || '');
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
 }));
 
 // ---- Tool issue / return ----
@@ -3782,12 +3799,29 @@ app.post('/api/jobCards/:id/parts/return', asyncH(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Lock PART then JOB CARD — the same order the issue path uses. This read is
+    // deliberately unlocked: it only discovers which part the line refers to, so
+    // the locks can then be taken in the agreed order. Locking the job card
+    // first (as this did) inverted the order against issue, and two people
+    // issuing and returning the same part on one job card deadlocked.
+    const peek = await client.query(`SELECT data FROM job_cards WHERE id = $1`, [req.params.id]);
+    if (!peek.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
+    const peekLine = (Array.isArray(peek.rows[0].data.parts) ? peek.rows[0].data.parts : []).find((l) => l.id === lineId);
+    if (peekLine && peekLine.partId) {
+      await client.query(`SELECT 1 FROM parts WHERE id = $1 FOR UPDATE`, [peekLine.partId]);
+    }
     const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
     if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
     const jc = jr.rows[0].data;
     const lines = Array.isArray(jc.parts) ? jc.parts : [];
     const line = lines.find((l) => l.id === lineId);
     if (!line) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Part line not found' }); }
+    // Re-read under the lock we already hold; the line could have changed
+    // between the unlocked peek and here.
+    if (line.partId && peekLine && line.partId !== peekLine.partId) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'That line changed while it was being read. Try again.' });
+    }
     if (line.partId) {
       const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [line.partId]);
       if (pr.rows.length) {
@@ -3891,17 +3925,17 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     // partial patch can't slip past rules the full document would have failed.
     if (req.params.coll === 'masters' || req.params.coll === 'services') {
       merged = sanitizeDoc(req.params.coll, merged);
-      const bad = await validateDoc(req.params.coll, merged, req.params.id);
+      const bad = await validateDoc(req.params.coll, merged, req.params.id, client);
       if (bad) { await client.query('ROLLBACK'); return res.status(400).json({ error: bad }); }
       // Retiring a master that live records still point at would silently blank
       // those fields in the UI — block it the same way a delete is blocked.
       if (merged.active === false && cur.rows[0].data.active !== false) {
-        const inUse = await masterInUse(req.params.coll, req.params.id);
+        const inUse = await masterInUse(req.params.coll, req.params.id, client);
         if (inUse) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Cannot deactivate — ' + inUse + '.' }); }
       }
     }
     if (req.params.coll === 'parts') {
-      const bad = await validateDoc('parts', merged, req.params.id);
+      const bad = await validateDoc('parts', merged, req.params.id, client);
       if (bad) { await client.query('ROLLBACK'); return res.status(400).json({ error: bad }); }
     }
     const cols = extractedColumns(cfg, merged);
@@ -3936,13 +3970,14 @@ const hasRow = async (sql, params) => (await pool.query(sql + ' LIMIT 1', params
 // the foundation every other module reads by id, so removing or retiring a value
 // in use would blank fields on records that are already closed and invoiced.
 // Returns a human reason string, or null when the value is safe to remove.
-async function masterInUse(coll, id) {
+async function masterInUse(coll, id, client) {
+  const q = client || pool;
   if (coll === 'services') {
     if (await hasRow(`SELECT 1 FROM job_cards jc WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(jc.data->'works','[]'::jsonb)) w WHERE w->>'serviceId'=$1)`, [id])) return 'this service is used on job cards';
     if (await hasRow(`SELECT 1 FROM estimates e WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(e.data->'lines','[]'::jsonb)) l WHERE l->>'serviceId'=$1)`, [id])) return 'this service is used on estimates';
     return null;
   }
-  const { rows } = await pool.query(`SELECT kind FROM masters WHERE id=$1`, [id]);
+  const { rows } = await q.query(`SELECT kind FROM masters WHERE id=$1`, [id]);
   if (!rows.length) return null;
   const refs = {
     category:      [[`parts`, 'categoryId', 'parts'], [`services`, 'categoryId', 'services']],

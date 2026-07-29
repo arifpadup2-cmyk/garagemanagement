@@ -210,3 +210,31 @@ account. Either the account is per branch too (which needs the inter-branch
 due-to/due-from pair from §4), or inventory value is consolidated while cost is
 branch-local — and those two give different COGS for the same part sold in
 different branches. **Decide this before writing step 2**, not during.
+
+---
+
+## 6. Known limit: connection pool under heavy contention
+
+Found while testing the lock-ordering fixes, and **not fixed** — recorded so it
+is not rediscovered as a surprise.
+
+`db.js` sets `max: 8` with `connectionTimeoutMillis: 10000`. Each write holds a
+connection for the whole of its transaction, including the time it spends
+waiting on a row lock. Firing ~24 simultaneous writes that all contend on **one
+part row** exhausts the pool: the requests queue, the 10-second connect timeout
+expires, and callers see `timeout exceeded when trying to connect` — a 500, not
+a deadlock.
+
+At 12 concurrent writes on the same row it is comfortable. A garage will not
+have twenty-four people issuing the same part at the same instant, so this is
+not urgent — but it is the ceiling, and it will be reached sooner once branches
+multiply the write traffic.
+
+Options, roughly in order of value:
+1. Raise `max` toward Neon's connection ceiling (check the plan's limit first;
+   Neon pooled endpoints behave differently from direct ones).
+2. Shorten lock hold time — take row locks as late in each transaction as
+   possible, and allocate document numbers immediately before insert rather than
+   at the top of the handler.
+3. Return a clear 503 with a retry hint instead of a generic 500 when the pool
+   times out, so the client can back off rather than surfacing "server error".
