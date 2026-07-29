@@ -3532,8 +3532,116 @@ app.get('/api/export', asyncH(async (req, res) => {
   }
   const s = await pool.query(`SELECT id, data FROM settings`);
   out.settings = s.rows.map((r) => ({ ...r.data, id: r.id }));
+  // journal_lines is not a COLL document table, but a backup without it would
+  // restore journal headers with nothing under them — the books would look
+  // present and be empty.
+  const jl = await pool.query(`SELECT id, entry_id, account_id, debit, credit, entry_date, data FROM journal_lines`);
+  out.journalLines = jl.rows.map((r) => ({
+    id: r.id, entryId: r.entry_id, accountId: r.account_id,
+    debit: Number(r.debit), credit: Number(r.credit), entryDate: r.entry_date, data: r.data,
+  }));
+  const sq = await pool.query(`SELECT coll, last FROM seqs`);
+  out.seqs = sq.rows;
+  // A checksum of what matters, so a restore can say whether the file is whole.
+  out.counts = Object.fromEntries(Object.entries(out).filter(([, v]) => Array.isArray(v)).map(([k, v]) => [k, v.length]));
   res.set('Content-Disposition', 'attachment; filename="gms-backup-' + new Date().toISOString().slice(0, 10) + '.json"');
   res.json(out);
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// RESTORE
+// The counterpart to export, and the reason a backup is worth taking. It is
+// deliberately awkward: admin only, it refuses to run without the operator
+// typing the exact confirmation phrase, and it defaults to reporting what it
+// WOULD do rather than doing it. A restore replaces everything; there is no
+// undo, so the friction is the feature.
+// ══════════════════════════════════════════════════════════════════════════
+const RESTORE_PHRASE = 'REPLACE ALL DATA';
+
+app.post('/api/restore', asyncH(async (req, res) => {
+  if (req.auth.role !== 'admin') return res.status(403).json({ error: 'Only the owner account can restore a backup.' });
+  const body = req.body || {};
+  const backup = body.backup;
+  if (!backup || typeof backup !== 'object') return res.status(400).json({ error: 'No backup file supplied.' });
+  if (backup.app !== 'tecido-gms') return res.status(400).json({ error: 'That file is not a VIWO backup.' });
+
+  // What the file contains, per collection, before anything is touched.
+  const plan = [];
+  for (const [name, cfg] of Object.entries(COLL)) {
+    const incoming = Array.isArray(backup[name]) ? backup[name].length : 0;
+    const { rows } = await pool.query(`SELECT COUNT(*)::int n FROM ${cfg.table}`);
+    plan.push({ collection: name, current: rows[0].n, incoming });
+  }
+  const jlIn = Array.isArray(backup.journalLines) ? backup.journalLines.length : 0;
+  const jlNow = (await pool.query(`SELECT COUNT(*)::int n FROM journal_lines`)).rows[0].n;
+  plan.push({ collection: 'journalLines', current: jlNow, incoming: jlIn });
+
+  const wouldLose = plan.filter((p) => p.current > p.incoming);
+  if (!body.confirm || body.confirm !== RESTORE_PHRASE) {
+    return res.status(200).json({
+      dryRun: true, exportedAt: backup.exportedAt || null, plan, wouldLose,
+      message: `This will REPLACE every record in the system with the contents of the backup taken ${backup.exportedAt || 'at an unknown time'}. ` +
+        (wouldLose.length ? `${wouldLose.length} collection(s) currently hold MORE than the backup does. ` : '') +
+        `To proceed, send confirm: "${RESTORE_PHRASE}".`,
+    });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Order matters: children before parents on the way out.
+    await client.query(`DELETE FROM journal_lines`);
+    for (const [, cfg] of Object.entries(COLL)) await client.query(`DELETE FROM ${cfg.table}`);
+    await client.query(`DELETE FROM settings`);
+
+    let restored = 0;
+    for (const [name, cfg] of Object.entries(COLL)) {
+      for (const doc of (Array.isArray(backup[name]) ? backup[name] : [])) {
+        const { id, ...data } = doc;
+        const cols = extractedColumns(cfg, data);
+        if (cfg.seq && data.seq != null) cols.seq = data.seq;
+        const names = ['id', 'data', ...Object.keys(cols)];
+        const vals = [id || crypto.randomUUID(), JSON.stringify(data), ...Object.values(cols)];
+        await client.query(
+          `INSERT INTO ${cfg.table} (${names.join(',')}) VALUES (${names.map((_, i) => '$' + (i + 1)).join(',')})`, vals);
+        restored++;
+      }
+    }
+    for (const l of (Array.isArray(backup.journalLines) ? backup.journalLines : [])) {
+      await client.query(
+        `INSERT INTO journal_lines (id, entry_id, account_id, debit, credit, entry_date, data) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [l.id || crypto.randomUUID(), l.entryId, l.accountId, l.debit || 0, l.credit || 0, l.entryDate, JSON.stringify(l.data || {})]);
+      restored++;
+    }
+    for (const st of (Array.isArray(backup.settings) ? backup.settings : [])) {
+      const { id, ...data } = st;
+      await client.query(`INSERT INTO settings (id, data) VALUES ($1,$2)`, [id || 'company', JSON.stringify(data)]);
+    }
+    // Numbering must resume above the restored documents, never reissue.
+    for (const sq of (Array.isArray(backup.seqs) ? backup.seqs : [])) {
+      await client.query(`INSERT INTO seqs (coll, last) VALUES ($1,$2)
+                          ON CONFLICT (coll) DO UPDATE SET last = GREATEST(seqs.last, EXCLUDED.last)`,
+        [sq.coll, sq.last]);
+    }
+    await client.query('COMMIT');
+
+    // Caches now describe a database that no longer exists.
+    sysAccountCache = null; roleCache = null;
+    await loadPeriodLock();
+
+    // Every outstanding token refers to the old data — force everyone to sign in.
+    await bumpAuthEpoch();
+
+    audit(req, 'restore', '', '', `${restored} records from ${backup.exportedAt || 'unknown'}`);
+    res.json({ ok: true, restored, from: backup.exportedAt || null,
+      message: 'Restore complete. Everyone has been signed out — sign in again to continue.' });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('Restore failed:', e.message);
+    return res.status(500).json({ error: 'Restore failed and nothing was changed: ' + e.message });
+  } finally {
+    client.release();
+  }
 }));
 
 // ---- Images (bytea). Path is the client-chosen storage path, url-encoded. ----
