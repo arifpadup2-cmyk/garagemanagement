@@ -3200,6 +3200,56 @@ app.post('/api/bank/reconcile', asyncH(async (req, res) => {
   }
 }));
 
+// ---- Customer report ----
+// Was a customers x jobCards cross-product in the browser: every customer
+// re-scanned the whole job-card collection, so it slowed as the square of the
+// data and gave a different answer per device depending on what had loaded.
+app.get('/api/reports/customers', asyncH(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT c.id, c.data,
+            COALESCE(j.jobs, 0)      AS jobs,
+            COALESCE(j.labour, 0)    AS labour,
+            COALESCE(v.vehicles, 0)  AS vehicles,
+            COALESCE(i.invoiced, 0)  AS invoiced,
+            COALESCE(i.paid, 0)      AS paid,
+            j.last_job
+       FROM customers c
+       LEFT JOIN (
+         SELECT jc.data->>'customerId' AS cid, COUNT(*) AS jobs,
+                MAX((jc.data->>'createdAt')::bigint) AS last_job,
+                COALESCE(SUM((SELECT COALESCE(SUM(COALESCE((w->>'cost')::numeric,0)),0)
+                                FROM jsonb_array_elements(COALESCE(jc.data->'works','[]'::jsonb)) w)),0) AS labour
+           FROM job_cards jc GROUP BY 1
+       ) j ON j.cid = c.id
+       LEFT JOIN (
+         SELECT data->>'customerId' AS cid, COUNT(*) AS vehicles FROM vehicles GROUP BY 1
+       ) v ON v.cid = c.id
+       LEFT JOIN (
+         SELECT data->>'customerId' AS cid,
+                COALESCE(SUM(COALESCE((data->>'total')::numeric,0)),0) AS invoiced,
+                COALESCE(SUM(COALESCE((data->>'totalPaid')::numeric,0)),0) AS paid
+           FROM invoices WHERE COALESCE(data->>'status','') <> 'cancelled' GROUP BY 1
+       ) i ON i.cid = c.id`
+  );
+  const customers = rows.map((r) => ({
+    id: r.id, name: r.data.name || '', phone: r.data.phone || '',
+    group: r.data.group || '', customerType: r.data.customerType || 'individual',
+    jobs: Number(r.jobs) || 0, vehicles: Number(r.vehicles) || 0,
+    labourValue: round2(Number(r.labour) || 0),
+    invoiced: round2(Number(r.invoiced) || 0),
+    paid: round2(Number(r.paid) || 0),
+    outstanding: round2((Number(r.invoiced) || 0) - (Number(r.paid) || 0)),
+    lastJobAt: r.last_job ? Number(r.last_job) : null,
+  })).sort((a, b) => b.invoiced - a.invoiced);
+  res.json({
+    generatedAt: Date.now(), count: customers.length,
+    repeatCustomers: customers.filter((c) => c.jobs > 1).length,
+    totalInvoiced: round2(customers.reduce((s, c) => s + c.invoiced, 0)),
+    totalOutstanding: round2(customers.reduce((s, c) => s + c.outstanding, 0)),
+    customers,
+  });
+}));
+
 // ---- Reorder report ----
 // What to buy, computed server-side so the answer is the same on every device
 // and doesn't require loading the whole catalogue into the browser.

@@ -11873,39 +11873,44 @@ function showCustReport(){
   renderCustReport();
 }
 function renderCustReport(){
-  var el=document.getElementById('custr-content');
-  var topCusts=customers.map(function(c){
-    var jobs=jobCards.filter(function(j){return j.customerId===c.id;});
-    var rev=jobs.reduce(function(s,j){return s+(j.works||[]).reduce(function(ws,w){return ws+Number(w.cost||0);},0);},0);
-    var vehs=vehicles.filter(function(v){return v.customerId===c.id;}).length;
-    return{id:c.id,name:c.name,phone:c.phone||'',jobs:jobs.length,rev:rev,vehs:vehs};
-  }).sort(function(a,b){return b.rev-a.rev;});
-  var total=customers.length;
-  var repeat=customers.filter(function(c){return jobCards.filter(function(j){return j.customerId===c.id;}).length>1;}).length;
-  var grandRev=topCusts.reduce(function(s,c){return s+c.rev;},0);
-  var rows=topCusts.slice(0,30).map(function(c,i){
-    return'<tr class="dt-row" onclick="openCustomerById(\''+c.id+'\')">'+
-      '<td style="color:var(--t3);font-size:12px">'+(i+1)+'</td>'+
-      '<td style="font-weight:700">'+esc(c.name)+'</td>'+
-      '<td>'+esc(c.phone)+'</td>'+
-      '<td style="text-align:center">'+c.vehs+'</td>'+
-      '<td style="text-align:center">'+c.jobs+'</td>'+
-      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(c.rev)+'</td>'+
-    '</tr>';
-  }).join('');
-  el.innerHTML=
-    '<div class="r3" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card"><div class="kpi-val">'+total+'</div><div class="kpi-label">Total Customers</div></div>'+
-      '<div class="kpi-card kpi-green"><div class="kpi-val">'+repeat+'</div><div class="kpi-label">Repeat Customers</div></div>'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandRev)+'</div><div class="kpi-label">Total Revenue</div></div>'+
-    '</div>'+
-    '<div class="card">'+
-      '<div class="card-title">Customer Revenue Report — Top 30</div>'+
-      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-        '<thead><tr><th>#</th><th>Customer</th><th>Phone</th><th style="text-align:center">Vehicles</th><th style="text-align:center">Job Cards</th><th class="num">Revenue</th></tr></thead>'+
-        '<tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
-      '</table></div></div>'+
+  var el=document.getElementById('custr-content');if(!el)return;
+  el.innerHTML=skelTable(8);
+  // Aggregated in Postgres. This used to re-scan every job card once per
+  // customer in the browser.
+  gmsApi.customerReport().then(function(r){
+    if(!r.customers.length){el.innerHTML='<div class="empty">No customers yet.</div>';return;}
+    var kpis='<div class="erp-kpis">'+
+      erpKpi(r.count,'Customers','')+
+      erpKpi(r.repeatCustomers,'Repeat Customers','kpi-green')+
+      erpKpi(fmtMoney(r.totalInvoiced),'Total Invoiced','')+
+      erpKpi(fmtMoney(r.totalOutstanding),'Outstanding',r.totalOutstanding>0.005?'kpi-red':'')+
     '</div>';
+    el.innerHTML=kpis+'<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+      '<span>Customers by Value</span><button class="btn btn-secondary btn-sm" onclick="exportCustReport()">Export CSV</button></div>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+      '<th>Customer</th><th>Phone</th><th class="num">Vehicles</th><th class="num">Jobs</th>'+
+      '<th class="num">Invoiced</th><th class="num">Outstanding</th><th>Last Job</th></tr></thead><tbody>'+
+      r.customers.slice(0,200).map(function(c){
+        return '<tr class="dt-row" onclick="openCustomerById(\''+esc(c.id)+'\')">'+
+          '<td style="font-weight:700">'+esc(c.name||'—')+'</td>'+
+          '<td style="color:var(--t2)">'+esc(c.phone||'—')+'</td>'+
+          '<td class="num">'+c.vehicles+'</td><td class="num">'+c.jobs+'</td>'+
+          '<td class="num" style="font-weight:700">'+fmtMoney(c.invoiced)+'</td>'+
+          '<td class="num" style="font-weight:700;color:'+(c.outstanding>0.005?'var(--red)':'var(--t3)')+'">'+
+            (c.outstanding>0.005?fmtMoney(c.outstanding):'—')+'</td>'+
+          '<td style="color:var(--t2);white-space:nowrap">'+esc(c.lastJobAt?fmtTs(c.lastJobAt):'Never')+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>'+
+      (r.customers.length>200?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Showing the top 200 of '+r.customers.length+'. Export for the full list.</div>':'')+
+      '</div>';
+    window._custRep=r;
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the report — '+esc(e.message||'')+'</div>';});
+}
+function exportCustReport(){
+  var r=window._custRep;if(!r)return;
+  downloadCsv('customers-'+todayStr()+'.csv',
+    ['Customer','Phone','Vehicles','Jobs','Invoiced','Paid','Outstanding'],
+    r.customers.map(function(c){return [c.name,c.phone,c.vehicles,c.jobs,c.invoiced,c.paid,c.outstanding];}));
+  toast('Exported '+r.customers.length+' customers','success');
 }
 
 // ── TECH REPORT ──

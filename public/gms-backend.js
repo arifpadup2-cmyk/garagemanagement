@@ -405,6 +405,7 @@
     },
     // ---- Operational reports, aggregated in Postgres (Phase 8) ----
     inventoryValuation: function () { return req('GET', '/reports/inventory-valuation'); },
+    customerReport: function () { return req('GET', '/reports/customers'); },
     salesSummary: function (from, to) {
       return req('GET', '/reports/sales-summary?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
     },
