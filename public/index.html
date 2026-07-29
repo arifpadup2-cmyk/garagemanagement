@@ -11592,6 +11592,80 @@ var INV_RPT_PILLS=[
   {key:'paid',label:'Paid',dot:'#16A34A',bg:'#15803D'},
 ];
 
+// ── Sales analysis: invoice-wise, item-wise, service-wise ──
+// One server call walks the invoice lines; the tabs render from the same
+// payload rather than each re-scanning the collection.
+var _salesAnalysis=null;
+function renderSalesAnalysisInto(el){
+  if(!el)return;
+  el.innerHTML=skelTable(8);
+  gmsApi.salesAnalysis(srFrom,srTo).then(function(r){
+    _salesAnalysis=r;
+    var kpis='<div class="erp-kpis">'+
+      erpKpi(r.invoiceCount,'Invoices','')+
+      erpKpi(fmtMoney(r.gross),'Billed','')+
+      erpKpi(fmtMoney(r.collected),'Collected','kpi-green')+
+      erpKpi(fmtMoney(r.outstanding),'Outstanding',r.outstanding>0.005?'kpi-red':'')+
+    '</div>';
+    var body='';
+    if(salesReportType==='invoice'){
+      body=!r.invoices.length?'<div class="empty">No invoices in this period.</div>':
+        '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+        '<th>Invoice</th><th>Date</th><th>Customer</th><th>Vehicle</th>'+
+        '<th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th></tr></thead><tbody>'+
+        r.invoices.slice(0,300).map(function(x){
+          return '<tr class="dt-row" onclick="openInvoiceById(\''+esc(x.id)+'\')">'+
+            '<td style="font-weight:700">'+esc(x.no)+'</td>'+
+            '<td style="color:var(--t2);white-space:nowrap">'+esc(x.date?fmtDate(x.date):'—')+'</td>'+
+            '<td>'+esc(x.customer)+'</td><td style="color:var(--t2)">'+esc(x.vehicle||'—')+'</td>'+
+            '<td class="num" style="font-weight:700">'+fmtMoney(x.total)+'</td>'+
+            '<td class="num">'+fmtMoney(x.paid)+'</td>'+
+            '<td class="num" style="font-weight:700;color:'+(x.outstanding>0.005?'var(--red)':'var(--t3)')+'">'+
+              (x.outstanding>0.005?fmtMoney(x.outstanding):'—')+'</td></tr>';
+        }).join('')+'</tbody></table></div></div>'+
+        (r.invoices.length>300?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Showing 300 of '+r.invoices.length+'.</div>':'');
+    } else {
+      var list=salesReportType==='itemwise'?r.items:r.services;
+      var totalRev=salesReportType==='itemwise'?r.itemRevenue:r.serviceRevenue;
+      var what=salesReportType==='itemwise'?'parts':'labour and services';
+      body=!list.length?'<div class="empty">Nothing billed as '+what+' in this period.</div>':
+        '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+        '<th>'+(salesReportType==='itemwise'?'Item':'Service')+'</th><th class="num">Times Billed</th>'+
+        '<th class="num">Qty</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead><tbody>'+
+        list.slice(0,200).map(function(x){
+          var pct=totalRev>0?Math.round(x.revenue/totalRev*1000)/10:0;
+          return '<tr><td style="font-weight:600">'+esc(x.name)+'</td>'+
+            '<td class="num">'+x.lines+'</td><td class="num">'+(x.qty||'—')+'</td>'+
+            '<td class="num" style="font-weight:700">'+fmtMoney(x.revenue)+'</td>'+
+            '<td class="num" style="color:var(--t2)">'+pct+'%</td></tr>';
+        }).join('')+
+        '</tbody><tfoot><tr><td colspan="3" style="text-align:right;font-weight:800">Total</td>'+
+        '<td class="num" style="font-weight:900">'+fmtMoney(totalRev)+'</td><td></td></tr></tfoot>'+
+        '</table></div></div>';
+    }
+    el.innerHTML=kpis+'<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+      '<span>'+(salesReportType==='invoice'?'Invoices':(salesReportType==='itemwise'?'Parts Sold':'Services Sold'))+'</span>'+
+      '<button class="btn btn-secondary btn-sm" onclick="exportSalesAnalysis()">Export CSV</button></div>'+body+'</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the report — '+esc(e.message||'')+'</div>';});
+}
+function renderInvoiceReport(el){renderSalesAnalysisInto(el);}
+function renderItemwiseReport(el){renderSalesAnalysisInto(el);}
+function renderServicewiseReport(el){renderSalesAnalysisInto(el);}
+function exportSalesAnalysis(){
+  var r=_salesAnalysis;if(!r)return;
+  if(salesReportType==='invoice'){
+    downloadCsv('invoices-'+todayStr()+'.csv',['Invoice','Date','Customer','Vehicle','Total','Paid','Outstanding'],
+      r.invoices.map(function(x){return [x.no,x.date,x.customer,x.vehicle,x.total,x.paid,x.outstanding];}));
+    toast('Exported '+r.invoices.length+' invoices','success');
+  } else {
+    var list=salesReportType==='itemwise'?r.items:r.services;
+    downloadCsv((salesReportType==='itemwise'?'parts-sold-':'services-sold-')+todayStr()+'.csv',
+      ['Name','Times Billed','Qty','Revenue'],
+      list.map(function(x){return [x.name,x.lines,x.qty,x.revenue];}));
+    toast('Exported '+list.length+' lines','success');
+  }
+}
+
 function showSalesReports(){
   show('v-sales-reports');
   if(!srFrom){srFrom=new Date().toISOString().slice(0,7)+'-01';}
@@ -11638,183 +11712,13 @@ function srFilteredInvoices(){
   });
 }
 
-function renderInvoiceReport(el){
-  var allInRange=srFilteredInvoices();
-  var q=invRptSearch.toLowerCase();
-  var rCounts={
-    all:allInRange.length,
-    unpaid:allInRange.filter(function(iv){return iv.status==='unpaid';}).length,
-    partial:allInRange.filter(function(iv){return iv.status==='partial';}).length,
-    credit:allInRange.filter(function(iv){return iv.status==='credit';}).length,
-    paid:allInRange.filter(isInvPaid).length,
-  };
-  var pillsHTML='<div class="filter-bar" style="margin-bottom:10px">'+
-    INV_RPT_PILLS.map(function(d){
-      var isA=invRptFilter===d.key;
-      return'<button class="jc-fpill'+(isA?' active':'')+'" onclick="setInvRptFilter(\''+d.key+'\')"'+(isA?' style="background:'+d.bg+'"':'')+'>'+
-        '<span class="jc-fpill-dot" style="background:'+(isA?'rgba(255,255,255,.8)':d.dot)+'"></span>'+
-        '<span>'+d.label+'</span><span class="jc-fpill-count">'+rCounts[d.key]+'</span>'+
-      '</button>';
-    }).join('')+
-  '</div>';
-  var searchHTML='<div class="search-wrap" style="margin-bottom:12px"><input type="text" id="invr-search" placeholder="Search invoice #, customer, vehicle…" oninput="invRptSearch=this.value;renderSalesReport()" value="'+esc(invRptSearch)+'"></div>';
-  var list=allInRange;
-  if(invRptFilter==='unpaid')list=list.filter(function(iv){return iv.status==='unpaid';});
-  else if(invRptFilter==='partial')list=list.filter(function(iv){return iv.status==='partial';});
-  else if(invRptFilter==='credit')list=list.filter(function(iv){return iv.status==='credit';});
-  else if(invRptFilter==='paid')list=list.filter(isInvPaid);
-  if(q)list=list.filter(function(iv){return[invNum(iv),iv.customerName,iv.vehicleReg].some(function(v){return v&&v.toLowerCase().includes(q);});});
-  if(!list.length){el.innerHTML=pillsHTML+searchHTML+'<div class="empty">No invoices match the current filter.</div>';return;}
-  var totalAmt=list.reduce(function(s,iv){return s+Number(iv.total||0);},0);
-  var totalPaid=list.reduce(function(s,iv){return s+Number(iv.totalPaid||0);},0);
-  var unpaidC=list.filter(function(iv){return iv.status==='unpaid';}).length;
-  var creditC=list.filter(function(iv){return iv.status==='credit';}).length;
-  var partialC=list.filter(function(iv){return iv.status==='partial';}).length;
-  var paidC=list.filter(isInvPaid).length;
-  var rows=list.map(function(iv){
-    var st=getInvSt(iv);
-    var paid=iv.totalPaid||0; var bal=iv.total-paid;
-    return'<tr class="dt-row" onclick="goToInvoiceReport(\''+iv.id+'\')">'+
-      '<td style="font-weight:700">'+esc(invNum(iv))+'</td>'+
-      '<td>'+esc(iv.customerName||'')+'</td>'+
-      '<td>'+esc(iv.vehicleReg||'')+'</td>'+
-      '<td style="white-space:nowrap">'+fmtDate(tsToDs(iv.createdAt))+'</td>'+
-      '<td class="num" style="font-weight:600">'+fmtMoney(iv.total)+'</td>'+
-      '<td class="num" style="color:var(--green)">'+fmtMoney(paid)+'</td>'+
-      '<td class="num" style="color:'+(bal>0?'var(--red)':'var(--t3)')+'">'+fmtMoney(bal)+'</td>'+
-      '<td><span class="badge '+st.badge+'">'+st.label+'</span></td>'+
-    '</tr>';
-  }).join('');
-  el.innerHTML=pillsHTML+searchHTML+
-    '<div class="r4" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card"><div class="kpi-val">'+list.length+'</div><div class="kpi-label">Invoices</div></div>'+
-      '<div class="kpi-card kpi-green"><div class="kpi-val" style="font-size:16px">'+fmtMoney(totalAmt)+'</div><div class="kpi-label">Total Invoiced</div></div>'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val" style="font-size:16px">'+fmtMoney(totalPaid)+'</div><div class="kpi-label">Collected</div></div>'+
-      '<div class="kpi-card kpi-red"><div class="kpi-val" style="font-size:16px">'+fmtMoney(totalAmt-totalPaid)+'</div><div class="kpi-label">Outstanding</div></div>'+
-    '</div>'+
-    '<div class="r4" style="gap:8px;margin-bottom:16px">'+
-      '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--green)">'+paidC+'</div><div style="font-size:11px;font-weight:700;color:var(--green)">PAID</div></div>'+
-      '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--accent)">'+partialC+'</div><div style="font-size:11px;font-weight:700;color:var(--accent)">PARTIAL</div></div>'+
-      '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--amber)">'+creditC+'</div><div style="font-size:11px;font-weight:700;color:var(--amber)">CREDIT</div></div>'+
-      '<div class="card" style="margin:0;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--red)">'+unpaidC+'</div><div style="font-size:11px;font-weight:700;color:var(--red)">UNPAID</div></div>'+
-    '</div>'+
-    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-      '<thead><tr><th>Invoice #</th><th>Customer</th><th>Vehicle</th><th>Date</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>'+
-      '<tbody>'+rows+'</tbody>'+
-      '<tfoot><tr>'+
-        '<td colspan="4" class="num" style="font-weight:700">Totals</td>'+
-        '<td class="num" style="font-weight:800">'+fmtMoney(totalAmt)+'</td>'+
-        '<td class="num" style="font-weight:800;color:var(--green)">'+fmtMoney(totalPaid)+'</td>'+
-        '<td class="num" style="font-weight:800;color:var(--red)">'+fmtMoney(totalAmt-totalPaid)+'</td>'+
-        '<td></td>'+
-      '</tr></tfoot>'+
-    '</table></div></div>';
-}
 
 function goToInvoiceReport(id){
   var iv=invoices.find(function(x){return x.id===id;});
   if(iv)showInvoice(iv);
 }
 
-function renderItemwiseReport(el){
-  var list=srFilteredInvoices();
-  if(!list.length){el.innerHTML='<div class="empty">No invoices in this period.</div>';return;}
-  var itemMap={};
-  list.forEach(function(iv){
-    (iv.items||[]).forEach(function(item){
-      var desc=(item.description||'(no description)').trim();
-      if(!itemMap[desc])itemMap[desc]={desc:desc,qty:0,total:0,invIds:[]};
-      itemMap[desc].qty++;
-      itemMap[desc].total+=Number(item.cost||0);
-      if(!itemMap[desc].invIds.includes(iv.id))itemMap[desc].invIds.push(iv.id);
-    });
-  });
-  var items=Object.values(itemMap).sort(function(a,b){return b.total-a.total;});
-  if(!items.length){el.innerHTML='<div class="empty">No line items found.</div>';return;}
-  var grandTotal=items.reduce(function(s,i){return s+i.total;},0);
-  var rows=items.map(function(item,idx){
-    var pct=grandTotal?(item.total/grandTotal*100).toFixed(1):0;
-    var barW=grandTotal?Math.round(item.total/grandTotal*100):0;
-    return'<tr>'+
-      '<td style="color:var(--t3);font-size:12px">'+(idx+1)+'</td>'+
-      '<td>'+
-        '<div style="font-weight:600">'+esc(item.desc)+'</div>'+
-        '<div style="margin-top:4px;background:var(--b1);border-radius:99px;height:4px;width:100%;max-width:200px"><div style="height:100%;border-radius:99px;background:var(--accent);width:'+barW+'%"></div></div>'+
-      '</td>'+
-      '<td style="text-align:center;font-weight:600">'+item.qty+'</td>'+
-      '<td style="text-align:center;color:var(--t2)">'+item.invIds.length+'</td>'+
-      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(item.total)+'</td>'+
-      '<td class="num" style="color:var(--t2)">'+pct+'%</td>'+
-    '</tr>';
-  }).join('');
-  el.innerHTML=
-    '<div class="r3" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val">'+items.length+'</div><div class="kpi-label">Unique Items</div></div>'+
-      '<div class="kpi-card kpi-green"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandTotal)+'</div><div class="kpi-label">Total Revenue</div></div>'+
-      '<div class="kpi-card"><div class="kpi-val">'+items.reduce(function(s,i){return s+i.qty;},0)+'</div><div class="kpi-label">Line Items</div></div>'+
-    '</div>'+
-    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-      '<thead><tr><th>#</th><th>Item / Service</th><th style="text-align:center">Qty</th><th style="text-align:center">Invoices</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>'+
-      '<tbody>'+rows+'</tbody>'+
-      '<tfoot><tr><td colspan="4" class="num" style="font-weight:700">Total</td><td class="num" style="font-weight:800">'+fmtMoney(grandTotal)+'</td><td class="num">100%</td></tr></tfoot>'+
-    '</table></div></div>';
-}
 
-function renderServicewiseReport(el){
-  var today=new Date().toISOString().slice(0,10);
-  var jcList=jobCards.filter(function(jc){
-    var d=jc.dateIn||tsToDs(jc.createdAt);
-    return(!srFrom||d>=srFrom)&&(!srTo||d<=srTo);
-  });
-  if(!jcList.length){el.innerHTML='<div class="empty">No job cards in this period.</div>';return;}
-  var svcMap={};
-  jcList.forEach(function(jc){
-    (jc.works||[]).forEach(function(w){
-      var desc=(w.description||'(no description)').trim();
-      if(!svcMap[desc])svcMap[desc]={desc:desc,count:0,done:0,total:0,techs:{}};
-      svcMap[desc].count++;
-      if(w.status==='done')svcMap[desc].done++;
-      svcMap[desc].total+=Number(w.cost||0);
-      var tObj=w.technicianId?technicians.find(function(t){return t.id===w.technicianId;}):null;
-      var tName=tObj?tObj.name:(w.technicianName||'Unassigned');
-      svcMap[desc].techs[tName]=(svcMap[desc].techs[tName]||0)+1;
-    });
-  });
-  var svcs=Object.values(svcMap).sort(function(a,b){return b.total-a.total;});
-  if(!svcs.length){el.innerHTML='<div class="empty">No services found.</div>';return;}
-  var grandTotal=svcs.reduce(function(s,sv){return s+sv.total;},0);
-  var grandCount=svcs.reduce(function(s,sv){return s+sv.count;},0);
-  var rows=svcs.map(function(sv,idx){
-    var topTechs=Object.entries(sv.techs).sort(function(a,b){return b[1]-a[1];}).slice(0,3)
-      .map(function(e){return esc(e[0])+(e[1]>1?' ('+e[1]+')':'');}).join(', ');
-    var compPct=sv.count?Math.round(sv.done/sv.count*100):0;
-    var pct=grandTotal?(sv.total/grandTotal*100).toFixed(1):0;
-    return'<tr>'+
-      '<td style="color:var(--t3);font-size:12px">'+(idx+1)+'</td>'+
-      '<td style="font-weight:600">'+esc(sv.desc)+'</td>'+
-      '<td style="text-align:center">'+sv.count+'</td>'+
-      '<td style="text-align:center">'+
-        '<div style="font-size:12px">'+sv.done+'/'+sv.count+'</div>'+
-        '<div style="background:var(--b1);border-radius:99px;height:4px;margin-top:3px;width:60px">'+
-          '<div style="height:100%;border-radius:99px;background:var(--green);width:'+compPct+'%"></div></div>'+
-      '</td>'+
-      '<td style="font-size:12px;color:var(--t2);max-width:180px">'+topTechs+'</td>'+
-      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(sv.total)+'</td>'+
-      '<td class="num" style="color:var(--t2)">'+pct+'%</td>'+
-    '</tr>';
-  }).join('');
-  el.innerHTML=
-    '<div class="r3" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val">'+svcs.length+'</div><div class="kpi-label">Service Types</div></div>'+
-      '<div class="kpi-card kpi-green"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandTotal)+'</div><div class="kpi-label">Total Revenue</div></div>'+
-      '<div class="kpi-card"><div class="kpi-val">'+grandCount+'</div><div class="kpi-label">Services Performed</div></div>'+
-    '</div>'+
-    '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-      '<thead><tr><th>#</th><th>Service</th><th style="text-align:center">Count</th><th style="text-align:center">Completed</th><th>Top Technicians</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>'+
-      '<tbody>'+rows+'</tbody>'+
-      '<tfoot><tr><td colspan="5" class="num" style="font-weight:700">Total</td><td class="num" style="font-weight:800">'+fmtMoney(grandTotal)+'</td><td class="num">100%</td></tr></tfoot>'+
-    '</table></div></div>';
-}
 
 // ── JC REPORT ──
 function showJcReport(){

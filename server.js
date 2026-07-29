@@ -3250,6 +3250,57 @@ app.get('/api/reports/customers', asyncH(async (req, res) => {
   });
 }));
 
+// ---- Sales analysis: invoice-wise, item-wise and service-wise ----
+// The one report that genuinely needed new aggregation rather than a repoint.
+// It walks invoice LINES, which the browser was doing across the whole
+// collection every time a tab was clicked.
+app.get('/api/reports/sales-analysis', asyncH(async (req, res) => {
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  const fromTs = from === '0000-01-01' ? 0 : new Date(from + 'T00:00:00Z').getTime();
+  const toTs = to === '9999-12-31' ? 8.64e15 : new Date(to + 'T23:59:59Z').getTime();
+  const { rows } = await pool.query(
+    `SELECT id, seq, data FROM invoices
+      WHERE COALESCE(data->>'status','') <> 'cancelled'
+        AND COALESCE((data->>'createdAt')::bigint,0) BETWEEN $1 AND $2
+      ORDER BY seq DESC`, [fromTs, toTs]);
+
+  const invoices = [], byItem = {}, byService = {};
+  let gross = 0, collected = 0;
+  for (const r of rows) {
+    const d = r.data;
+    const total = round2(Number(d.total) || 0);
+    const paid = round2(Number(d.totalPaid) || 0);
+    gross = round2(gross + total); collected = round2(collected + paid);
+    invoices.push({
+      id: r.id, no: docNo('invoices', r.seq), date: tsToDs(d.createdAt),
+      customer: d.customerName || 'Walk-in', vehicle: d.vehicleReg || '',
+      status: d.status || '', total, paid, outstanding: round2(total - paid),
+      credited: round2(Number(d.creditedTotal) || 0),
+    });
+    for (const l of (Array.isArray(d.items) ? d.items : [])) {
+      const amount = round2(Number(l.cost) || 0);
+      if (!amount) continue;
+      // A line with a partId is goods; anything else is labour or a service.
+      const bucket = l.partId ? byItem : byService;
+      const key = l.partId || String(l.serviceId || l.description || 'Other');
+      const name = l.name || l.serviceName || l.description || 'Other';
+      bucket[key] = bucket[key] || { key, name, qty: 0, revenue: 0, lines: 0 };
+      bucket[key].qty = round2(bucket[key].qty + (Number(l.qty) || 0));
+      bucket[key].revenue = round2(bucket[key].revenue + amount);
+      bucket[key].lines++;
+    }
+  }
+  const rank = (o) => Object.values(o).sort((a, b) => b.revenue - a.revenue);
+  res.json({
+    from, to, invoiceCount: invoices.length,
+    gross, collected, outstanding: round2(gross - collected),
+    invoices, items: rank(byItem), services: rank(byService),
+    itemRevenue: round2(rank(byItem).reduce((s, x) => s + x.revenue, 0)),
+    serviceRevenue: round2(rank(byService).reduce((s, x) => s + x.revenue, 0)),
+  });
+}));
+
 // ---- Reorder report ----
 // What to buy, computed server-side so the answer is the same on every device
 // and doesn't require loading the whole catalogue into the browser.
