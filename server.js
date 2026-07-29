@@ -1454,6 +1454,24 @@ app.post('/api/invoices/quick', asyncH(async (req, res) => {
         const mv = { type: 'out', qty, from, to, note: 'Sold on ' + invNoStr, at: Date.now(), by: (req.auth && req.auth.name) || '' };
         rows[pid] = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
         await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(rows[pid])]);
+        // The movement ledger, which this path was skipping entirely.
+        await postMovement(client, { partId: pid, partName: p.name, type: 'out', qty, from, to,
+          unitCost: p.costPrice, refType: 'invoice', refId: id, refNo: invNoStr,
+          note: 'Sold on ' + invNoStr, by: (req.auth && req.auth.name) || '' });
+        await consumeLots(client, pid, qty, invNoStr);
+        // Cost of sales, posted where the goods physically leave — the same rule
+        // the job-card issue path follows.
+        const soldCost = round2((Number(p.costPrice) || 0) * qty);
+        if (soldCost > 0) {
+          await postJournal(client, {
+            date: tsToDs(Date.now()), refType: 'invoice', refId: id, refNo: invNoStr,
+            by: (req.auth && req.auth.name) || '', memo: `Parts sold on ${invNoStr}`,
+            lines: [
+              { role: 'cogs', debit: soldCost, memo: (p.name || 'Part') + ' x' + qty },
+              { role: 'inventory', credit: soldCost, memo: 'Stock relieved' },
+            ],
+          });
+        }
       }
     }
     // Never trust a client-supplied totalPaid beyond the invoice total.
@@ -1474,6 +1492,26 @@ app.post('/api/invoices/quick', asyncH(async (req, res) => {
         `INSERT INTO transactions (id, data, txn_date, created_at) VALUES ($1,$2,$3,$4)`,
         [tid, JSON.stringify(t), t.date || null, Number.isFinite(t.createdAt) ? t.createdAt : Date.now()]
       );
+    }
+    // Revenue, tax and discount. This whole sales channel was bypassing the
+    // general ledger: postSalesJournal is called from the generic create path,
+    // and the counter sale has its own endpoint, so nothing here reached the
+    // books. Every walk-in sale understated revenue, VAT and cash.
+    await postSalesJournal(client, id, inv, invNoStr, (req.auth && req.auth.name) || '');
+    // Cash actually tendered settles the receivable the sales journal raised.
+    const tendered = round2(Number(inv.totalPaid) || 0);
+    if (tendered > 0) {
+      const method = String((transaction && transaction.paymentMethod) || inv.paymentMethod || 'cash');
+      await postJournal(client, {
+        date: (transaction && transaction.date) || tsToDs(Date.now()),
+        refType: 'receipt', refId: id, refNo: invNoStr, by: (req.auth && req.auth.name) || '',
+        memo: `Counter sale settled on ${invNoStr}`,
+        lines: [
+          { role: method === 'cash' ? 'cash' : 'bank', debit: tendered, memo: method },
+          { role: 'ar', credit: tendered, memo: 'Settling ' + invNoStr,
+            partyId: inv.customerId, partyName: inv.customerName },
+        ],
+      });
     }
     await client.query('COMMIT');
     audit(req, 'quick-invoice', 'invoices', id, '#' + inv.seq);
@@ -1890,16 +1928,25 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
 
     // The provisional liability from receiving becomes the real payable, and any
     // input VAT is recognised.
-    const piSub = round2(lines.reduce((s, l) => s + ((Number(l.qty) || 0) * (Number(l.unitCost) || 0)), 0));
+    // Derive the journal from the SAME figures sanitizeDoc stored on the
+    // document. Crediting AP with the gross subtotal while /pay caps payment at
+    // the discounted total left a permanent credit balance for a debt that did
+    // not exist — the payable could never clear.
+    const piGross = round2(lines.reduce((s, l) => s + ((Number(l.qty) || 0) * (Number(l.unitCost) || 0)), 0));
+    const piSub = round2(Number(pi.subtotal) != null && Number(pi.subtotal) > 0 ? Number(pi.subtotal) : piGross);
+    const piDisc = round2(Number(pi.discountAmount) || 0);
     const piTax = round2(Number(pi.taxAmount) || 0);
-    const piTotal = round2(piSub + piTax + landedTotal);
+    const piTotal = round2(Number(pi.total) || (piSub - piDisc + piTax + landedTotal));
     await postJournal(client, {
       date: pi.invoiceDate, refType: 'purchaseInvoice', refId: req.params.id, refNo: piNo, by: actor,
       memo: `Supplier invoice ${piNo}` + (pi.invoiceNo ? ' (' + pi.invoiceNo + ')' : ''),
       lines: [
-        { role: 'grni', debit: piSub, memo: 'Clearing goods received' },
+        // GRNI clears at the GROSS figure the goods receipt credited it with.
+        { role: 'grni', debit: piGross, memo: 'Clearing goods received' },
         { role: 'inventory', debit: landedTotal, memo: 'Landed costs onto stock' },
         { role: 'vatIn', debit: piTax, memo: 'Input VAT' },
+        // A supplier discount is income we would otherwise never recognise.
+        { role: 'discount', credit: round2(piDisc + (piGross - piSub)), memo: 'Purchase discount' },
         { role: 'ap', credit: piTotal, memo: 'Payable to ' + (pi.supplierName || 'supplier'),
           partyId: pi.supplierId, partyName: pi.supplierName },
       ],
