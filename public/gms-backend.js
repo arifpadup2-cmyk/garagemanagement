@@ -391,6 +391,27 @@
         return r;
       });
     },
+    // ---- Workshop operations (Phase 5) ----
+    assignBay: function (jcId, bayId) {
+      return req('POST', '/jobCards/' + jcId + '/bay', { bayId: bayId || '' }).then(function (r) {
+        refreshColl('jobCards'); return r;
+      });
+    },
+    checkInVehicle: function (jcId, body) {
+      return req('POST', '/jobCards/' + jcId + '/checkin', body).then(function (r) {
+        refreshColl('jobCards'); return r;
+      });
+    },
+    qualityCheck: function (jcId, body) {
+      return req('POST', '/jobCards/' + jcId + '/qc', body).then(function (r) {
+        refreshColl('jobCards'); return r;
+      });
+    },
+    deliverVehicle: function (jcId, body) {
+      return req('POST', '/jobCards/' + jcId + '/deliver', body).then(function (r) {
+        refreshColl('jobCards'); return r;
+      });
+    },
     // What a customer owes against what they are allowed to owe.
     creditStatus: function (customerId) { return req('GET', '/customers/' + customerId + '/credit'); },
     // What to buy: computed server-side so every device gets the same answer.

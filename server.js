@@ -104,6 +104,7 @@ const COLL = {
   reservations:     { table: 'reservations',      order: 'created_at DESC NULLS LAST', extra: { part_id: 'partId' } },
   tools:            { table: 'tools',             order: 'created_at DESC NULLS LAST' },
   toolIssues:       { table: 'tool_issues',       order: 'created_at DESC NULLS LAST', extra: { tool_id: 'toolId' } },
+  bays:             { table: 'bays',             order: 'created_at ASC NULLS LAST' },
 };
 
 // Document number prefixes, so every module formats a reference identically.
@@ -526,7 +527,7 @@ app.use('/api', requireAuth);
 // Master data is reference material the shop floor reads but never edits, so
 // technicians get GET on masters/services and nothing more.
 const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services',
-  'warehouses', 'bins', 'stockLots', 'stockMovements', 'reservations', 'tools', 'toolIssues']);
+  'warehouses', 'bins', 'stockLots', 'stockMovements', 'reservations', 'tools', 'toolIssues', 'bays']);
 function authorize(req, res, next) {
   const role = req.auth && req.auth.role;
   if (role === 'admin') return next();
@@ -1861,6 +1862,191 @@ app.get('/api/customers/:id/credit', asyncH(async (req, res) => {
   const st = await creditStatus(req.params.id);
   if (!st) return res.status(404).json({ error: 'Customer not found.' });
   res.json(st);
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// WORKSHOP OPERATIONS (Phase 5)
+// The stages between "the car arrived" and "the customer drove away": check-in,
+// a bay to work in, a quality check, and a delivery that cannot happen until
+// both are satisfied.
+// ══════════════════════════════════════════════════════════════════════════
+
+// ---- Bay allocation ----
+// A bay is a physical position. Two cars cannot occupy one, so the allocation is
+// row-locked rather than a flag anybody can set.
+app.post('/api/jobCards/:id/bay', asyncH(async (req, res) => {
+  const bayId = String((req.body || {}).bayId || '');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found.' }); }
+    const jc = jr.rows[0].data;
+    const jcNo = docNo('jobCards', jr.rows[0].seq);
+
+    if (bayId) {
+      const br = await client.query(`SELECT data FROM bays WHERE id = $1 FOR UPDATE`, [bayId]);
+      if (!br.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Bay not found.' }); }
+      if (br.rows[0].data.active === false) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'That bay is out of service.' }); }
+      // Occupied by a job that has not been delivered yet?
+      const occ = await client.query(
+        `SELECT id, seq FROM job_cards
+          WHERE data->>'bayId' = $1 AND id <> $2
+            AND COALESCE(data->>'status','') NOT IN ('delivered','cancelled')
+          LIMIT 1`, [bayId, req.params.id]);
+      if (occ.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: `Bay ${br.rows[0].data.code || ''} is occupied by ${docNo('jobCards', occ.rows[0].seq)}.` });
+      }
+      jc.bayId = bayId;
+      jc.bayCode = br.rows[0].data.code || '';
+      jc.bayAssignedAt = Date.now();
+    } else {
+      jc.bayId = ''; jc.bayCode = ''; jc.bayAssignedAt = null;
+    }
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jc)]);
+    await client.query('COMMIT');
+    audit(req, bayId ? 'assign-bay' : 'free-bay', 'jobCards', req.params.id, `${jcNo} ${jc.bayCode || ''}`);
+    res.json({ id: req.params.id, ...jc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Vehicle check-in ----
+// What the car looked like when it arrived. Recorded once, and not editable
+// afterwards, because its whole value is being the state before work began.
+app.post('/api/jobCards/:id/checkin', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found.' }); }
+    const jc = jr.rows[0].data;
+    if (jc.checkIn && jc.checkIn.at) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'This vehicle has already been checked in.' }); }
+    jc.checkIn = {
+      at: Date.now(), by: (req.auth && req.auth.name) || '?',
+      mileage: Number(b.mileage) || 0,
+      fuelLevel: String(b.fuelLevel || ''),          // E, 1/4, 1/2, 3/4, F
+      damageNotes: String(b.damageNotes || '').trim(),
+      belongings: String(b.belongings || '').trim(),
+      customerPresent: b.customerPresent !== false,
+      photos: Array.isArray(b.photos) ? b.photos : [],
+    };
+    if (jc.checkIn.mileage > 0) jc.mileageIn = jc.checkIn.mileage;
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jc)]);
+    await client.query('COMMIT');
+    audit(req, 'check-in', 'jobCards', req.params.id, docNo('jobCards', jr.rows[0].seq));
+    res.json({ id: req.params.id, ...jc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Quality check ----
+// The gate between "the work is done" and "the customer can have the car".
+app.post('/api/jobCards/:id/qc', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found.' }); }
+    const jc = jr.rows[0].data;
+    const works = Array.isArray(jc.works) ? jc.works : [];
+    // Checking the quality of work that is not finished is meaningless.
+    if (works.length && !works.every((w) => w.status === 'done')) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Finish every work item before the quality check.' });
+    }
+    const items = Array.isArray(b.items) ? b.items : [];
+    const failed = items.filter((i) => i.result === 'fail');
+    const passed = failed.length === 0;
+    jc.qc = {
+      at: Date.now(), by: (req.auth && req.auth.name) || '?',
+      items, passed, notes: String(b.notes || '').trim(),
+      roadTested: !!b.roadTested, washed: !!b.washed,
+    };
+    // A failed check sends the car back to the floor rather than forward.
+    if (!passed) {
+      jc.status = 'in_progress';
+      jc.qcFailedAt = Date.now();
+    }
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jc)]);
+    await client.query('COMMIT');
+    audit(req, passed ? 'qc-pass' : 'qc-fail', 'jobCards', req.params.id,
+      `${docNo('jobCards', jr.rows[0].seq)}${failed.length ? ' — ' + failed.length + ' failed' : ''}`);
+    res.json({ id: req.params.id, ...jc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Delivery ----
+// The last gate. A car leaves only when the work passed QC and the money is
+// settled (or the customer has an approved credit account).
+app.post('/api/jobCards/:id/deliver', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const jr = await client.query(`SELECT data, seq FROM job_cards WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found.' }); }
+    const jc = jr.rows[0].data;
+    const jcNo = docNo('jobCards', jr.rows[0].seq);
+    if (jc.status === 'delivered') { await client.query('ROLLBACK'); return res.status(400).json({ error: jcNo + ' has already been delivered.' }); }
+
+    const blockers = [];
+    const works = Array.isArray(jc.works) ? jc.works : [];
+    if (works.length && !works.every((w) => w.status === 'done')) blockers.push('the work is not finished');
+    if (!jc.qc || !jc.qc.passed) blockers.push('it has not passed the quality check');
+
+    // Money: the invoice must exist and be settled, unless it is on approved credit.
+    const inv = await client.query(`SELECT data FROM invoices WHERE data->>'jobCardId' = $1 LIMIT 1`, [req.params.id]);
+    if (!inv.rows.length) {
+      blockers.push('it has not been invoiced');
+    } else {
+      const iv = inv.rows[0].data;
+      const due = round2((Number(iv.total) || 0) - (Number(iv.totalPaid) || 0));
+      if (due > 0.005 && iv.status !== 'credit') blockers.push(`${due.toFixed(2)} is still unpaid`);
+    }
+    if (blockers.length && !b.override) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: `${jcNo} cannot be delivered — ${blockers.join(', and ')}.`, blockers });
+    }
+
+    jc.status = 'delivered';
+    jc.delivery = {
+      at: Date.now(), by: (req.auth && req.auth.name) || '?',
+      receivedBy: String(b.receivedBy || '').trim(),
+      mileageOut: Number(b.mileageOut) || 0,
+      checklist: Array.isArray(b.checklist) ? b.checklist : [],
+      notes: String(b.notes || '').trim(),
+      overridden: !!(blockers.length && b.override),
+      overrideReason: blockers.length && b.override ? String(b.overrideReason || '').trim() : '',
+    };
+    // Delivering the car frees the bay for the next job.
+    jc.bayId = ''; jc.bayCode = '';
+    await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jc)]);
+    await client.query('COMMIT');
+    audit(req, 'deliver', 'jobCards', req.params.id, jcNo + (jc.delivery.overridden ? ' (OVERRIDDEN)' : ''));
+    res.json({ id: req.params.id, ...jc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
 }));
 
 // ---- Reorder report ----

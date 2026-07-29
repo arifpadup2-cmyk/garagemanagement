@@ -71,6 +71,11 @@ CREATE TABLE IF NOT EXISTS stock_counts    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT NULL, part_id text, created_at bigint);
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
+
+-- ── Workshop operations (Phase 5) ──
+-- A bay is a physical work position. Only one job can occupy one at a time,
+-- which is what makes "the workshop is full" a fact rather than a feeling.
+CREATE TABLE IF NOT EXISTS bays            (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
@@ -151,6 +156,8 @@ CREATE INDEX IF NOT EXISTS idx_resv_status       ON reservations ((data->>'statu
 CREATE INDEX IF NOT EXISTS idx_tools_created     ON tools(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_toolissue_tool    ON tool_issues(tool_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_toolissue_open    ON tool_issues ((data->>'status'));
+CREATE INDEX IF NOT EXISTS idx_bays_created      ON bays(created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_jc_bay            ON job_cards ((data->>'bayId'));
 `;
 
 // Uniqueness constraints are created SEPARATELY and non-fatally: an existing
@@ -200,6 +207,9 @@ const UNIQUE_INDEXES = [
   [`CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_code ON tools
       (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
    'tools (code)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_bays_code ON bays
+      (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'bays (code)'],
 ];
 
 async function initSchema() {
