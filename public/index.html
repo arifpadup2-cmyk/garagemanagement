@@ -11822,49 +11822,38 @@ function showJcReport(){
   renderJcReport();
 }
 function renderJcReport(){
-  var el=document.getElementById('jcr-content');
-  var total=jobCards.length;
-  var open=jobCards.filter(function(j){return j.status==='pending'||j.status==='open';}).length;
-  var inPrg=jobCards.filter(function(j){return j.status==='in_progress';}).length;
-  var comp=jobCards.filter(function(j){return j.status==='completed';}).length;
-  var inv=jobCards.filter(function(j){return j.status==='invoiced';}).length;
-  var del=jobCards.filter(function(j){return j.status==='delivered';}).length;
-  var totalRev=jobCards.reduce(function(s,j){return s+(j.works||[]).reduce(function(ws,w){return ws+Number(w.cost||0);},0);},0);
-  var monthMap={};
-  jobCards.forEach(function(jc){
-    var m=(jc.dateIn||tsToDs(jc.createdAt)).slice(0,7);
-    if(!monthMap[m])monthMap[m]={count:0,rev:0};
-    monthMap[m].count++;
-    monthMap[m].rev+=(jc.works||[]).reduce(function(s,w){return s+Number(w.cost||0);},0);
-  });
-  var months=Object.entries(monthMap).sort(function(a,b){return b[0].localeCompare(a[0]);}).slice(0,12);
-  var mRows=months.map(function(m){
-    var label=new Date(m[0]+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-    return'<tr><td style="font-weight:600">'+label+'</td><td style="text-align:center">'+m[1].count+'</td><td class="num" style="font-weight:700">'+fmtMoney(m[1].rev)+'</td></tr>';
-  }).join('');
-  function jcDot(key){var d=JC_FILTER_DEFS.filter(function(x){return x.key===key;})[0];return d?d.dot:'var(--t3)';}
-  el.innerHTML=
-    '<div class="r4" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card"><div class="kpi-val">'+total+'</div><div class="kpi-label">Total Job Cards</div></div>'+
-      '<div class="kpi-card kpi-accent"><div class="kpi-val">'+open+'</div><div class="kpi-label">Pending</div></div>'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val">'+inPrg+'</div><div class="kpi-label">In Progress</div></div>'+
-      '<div class="kpi-card kpi-accent"><div class="kpi-val" style="font-size:16px">'+fmtMoney(totalRev)+'</div><div class="kpi-label">Total Revenue</div></div>'+
-    '</div>'+
-    '<div class="r2" style="gap:12px;margin-bottom:14px">'+
-      '<div class="card" style="margin:0">'+
-        '<div class="card-title">Status Breakdown</div>'+
-        '<div style="display:flex;flex-direction:column;gap:10px">'+
-          statRow('Pending',open,jcDot('pending'))+statRow('Work In Progress',inPrg,jcDot('in_progress'))+statRow('Work Completed',comp,jcDot('completed'))+statRow('Invoiced',inv,jcDot('invoiced'))+statRow('Delivered',del,jcDot('delivered'))+
-        '</div>'+
+  var el=document.getElementById('jcr-content');if(!el)return;
+  el.innerHTML=skelTable(6);
+  // Counted in Postgres by the workshop aggregate rather than by filtering the
+  // whole job-card collection six times in the browser.
+  gmsApi.workshopReport('2000-01-01',todayStr()).then(function(r){
+    var st=r.byStatus||{};
+    var n=function(k){return Number(st[k]||0);};
+    var LABEL={pending:'Pending',open:'Open',in_progress:'In Progress',completed:'Completed',
+      invoiced:'Invoiced',delivered:'Delivered',cancelled:'Cancelled'};
+    var rows=Object.keys(st).sort(function(a,b){return st[b]-st[a];});
+    if(!r.jobCards){el.innerHTML='<div class="empty">No job cards yet.</div>';return;}
+    el.innerHTML='<div class="erp-kpis">'+
+        erpKpi(r.jobCards,'Job Cards','')+
+        erpKpi(n('pending')+n('open'),'Awaiting Work',(n('pending')+n('open'))?'kpi-accent':'')+
+        erpKpi(n('in_progress'),'On the Floor','')+
+        erpKpi(n('delivered'),'Delivered','kpi-green')+
+        erpKpi(fmtMoney(r.labourValue),'Labour Value','')+
       '</div>'+
-      '<div class="card" style="margin:0">'+
-        '<div class="card-title">Monthly Breakdown (Last 12 Months)</div>'+
-        '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-          '<thead><tr><th>Month</th><th style="text-align:center">Jobs</th><th class="num">Revenue</th></tr></thead>'+
-          '<tbody>'+(mRows||'<tr><td colspan="3" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
-        '</table></div></div>'+
-      '</div>'+
-    '</div>';
+      '<div class="card"><div class="card-title">By Status</div><div class="dt-wrap"><div class="dt-scroll">'+
+      '<table class="data-table"><thead><tr><th>Status</th><th class="num">Job Cards</th><th class="num">Share</th></tr></thead><tbody>'+
+      rows.map(function(k){
+        var pct=r.jobCards?Math.round(st[k]/r.jobCards*1000)/10:0;
+        return '<tr><td style="font-weight:600">'+esc(LABEL[k]||String(k).replace(/_/g,' '))+'</td>'+
+          '<td class="num" style="font-weight:700">'+st[k]+'</td>'+
+          '<td class="num" style="color:var(--t2)">'+pct+'%</td></tr>';
+      }).join('')+
+      '</tbody><tfoot><tr><td style="font-weight:800">Total</td>'+
+      '<td class="num" style="font-weight:900">'+r.jobCards+'</td><td></td></tr></tfoot></table></div></div>'+
+      (r.qcFailures?'<div style="font-size:12.5px;color:var(--red);font-weight:700;margin-top:12px">'+r.qcFailures+' job'+(r.qcFailures===1?'':'s')+' failed a quality check and went back to the floor.</div>':'')+
+      (r.avgTurnaroundHours!=null?'<div style="font-size:12px;color:var(--t3);margin-top:8px">Average turnaround across '+r.turnaroundSample+' completed job'+(r.turnaroundSample===1?'':'s')+': '+r.avgTurnaroundHours+' hours, check-in to delivery.</div>':'')+
+      '</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the report — '+esc(e.message||'')+'</div>';});
 }
 
 // ── CUSTOMER REPORT ──
