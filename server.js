@@ -1925,6 +1925,12 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
 
     // Re-cost the affected items at the landed unit cost. Without this the
     // freight silently disappears and every margin report reads high.
+    // Track how much of the landed cost actually lands on stock. The journal
+    // debited Inventory with the FULL amount while the item re-costing reached
+    // only the units still on hand, so freight on goods already sold inflated
+    // the Inventory account permanently. The shortfall belongs in cost of
+    // sales — those goods have gone.
+    let landedOntoStock = 0;
     for (const l of lines) {
       const p = partRows[l.partId];
       if (!p || !l.landedShare) continue;
@@ -1934,8 +1940,10 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
       const cur = Number(p.costPrice) || 0;
       // Spread this consignment's freight over the units still on hand.
       const uplift = round2(l.landedShare / Math.max(onHand, qty));
+      landedOntoStock = round2(landedOntoStock + uplift * onHand);
       partRows[l.partId] = { ...p, costPrice: round2(cur + uplift) };
     }
+    const landedToCogs = round2(landedTotal - landedOntoStock);
     for (const pid of Object.keys(partRows)) {
       await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
     }
@@ -1957,7 +1965,8 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
       lines: [
         // GRNI clears at the GROSS figure the goods receipt credited it with.
         { role: 'grni', debit: piGross, memo: 'Clearing goods received' },
-        { role: 'inventory', debit: landedTotal, memo: 'Landed costs onto stock' },
+        { role: 'inventory', debit: landedOntoStock, memo: 'Landed costs onto stock' },
+        { role: 'cogs', debit: landedToCogs, memo: 'Landed costs on goods already sold' },
         { role: 'vatIn', debit: piTax, memo: 'Input VAT' },
         // A supplier discount is income we would otherwise never recognise.
         { role: 'discount', credit: round2(piDisc + (piGross - piSub)), memo: 'Purchase discount' },
@@ -2632,7 +2641,13 @@ app.post('/api/creditNotes', asyncH(async (req, res) => {
     }
     sub = round2(sub);
     const rate = Number(inv.taxRate) || 0;
-    const tax = rate > 0 ? round2(sub * rate / 100) : 0;
+    // Tax comes off the same base it went on. The invoice charged VAT on the
+    // DISCOUNTED subtotal, so crediting at the gross rate over-reverses the
+    // liability and leaves VAT payable permanently understated.
+    const invSub = round2(Number(inv.subtotal) || 0);
+    const invDisc = round2(Number(inv.discountAmount) || 0);
+    const taxBasis = invSub > 0 ? (invSub - invDisc) / invSub : 1;
+    const tax = rate > 0 ? round2(sub * taxBasis * rate / 100) : 0;
     const total = round2(sub + tax);
     if (alreadyCredited + total > invTotal + 1e-9) {
       await client.query('ROLLBACK');
@@ -2773,10 +2788,30 @@ app.post('/api/invoices/:id/cancel', asyncH(async (req, res) => {
         return res.status(409).json({ error: `The vehicle on ${invNo} has already been delivered — raise a credit note instead.` });
       }
     }
+    // Reverse the sales journal this invoice posted when it was created.
+    // Cancelling only flipped a status, leaving revenue, tax and the receivable
+    // sitting in the ledger for a document that no longer exists.
+    const je = await client.query(
+      `SELECT data FROM journal_entries WHERE data->>'refId' = $1 AND data->>'refType' IN ('invoice','receipt')`,
+      [req.params.id]);
+    for (const row of je.rows) {
+      const src = row.data;
+      await postJournal(client, {
+        date: tsToDs(Date.now()), refType: 'invoice-cancel', refId: req.params.id, refNo: invNo,
+        by: (req.auth && req.auth.name) || '?', memo: `Reversal of ${src.no} — ${invNo} cancelled`,
+        // Every leg flipped: a reversal is the original with debits and credits
+        // exchanged, which balances by construction.
+        lines: (src.lines || []).map((l) => ({
+          accountId: l.accountId, debit: l.credit, credit: l.debit,
+          memo: 'Reversal — ' + (l.memo || ''), partyId: l.partyId, partyName: l.partyName,
+        })),
+      });
+    }
     const merged = {
       ...inv, status: 'cancelled', cancelledAt: Date.now(),
       cancelledBy: (req.auth && req.auth.name) || '?',
       cancelReason: String((req.body || {}).reason || '').trim(),
+      reversedEntries: je.rows.length,
     };
     await client.query(`UPDATE invoices SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
     await client.query('COMMIT');
@@ -3267,6 +3302,24 @@ app.post('/api/opening-balances', asyncH(async (req, res) => {
     if (existing.rows.length && !b.replace) {
       await client.query('ROLLBACK');
       return res.status(409).json({ error: 'Opening balances have already been posted. Reverse them first if they were wrong.' });
+    }
+    if (existing.rows.length && b.replace) {
+      // replace:true posted a SECOND opening entry and left the first standing,
+      // doubling every figure. Reverse the old one before posting the new.
+      const prior = await client.query(
+        `SELECT data FROM journal_entries WHERE data->>'refType' = 'opening'`);
+      for (const row of prior.rows) {
+        const src = row.data;
+        if (src.refType === 'opening-reversal') continue;
+        await postJournal(client, {
+          date, refType: 'opening-reversal', refNo: 'OPENING', by: (req.auth && req.auth.name) || '?',
+          memo: `Reversal of ${src.no} — opening balances restated`,
+          lines: (src.lines || []).map((l) => ({
+            accountId: l.accountId, debit: l.credit, credit: l.debit,
+            memo: 'Reversal — ' + (l.memo || ''), partyId: l.partyId, partyName: l.partyName,
+          })),
+        });
+      }
     }
 
     const lines = [];
@@ -3816,6 +3869,21 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
       if ('totalPaid' in patch || 'payments' in patch) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Payments must be recorded via the payment endpoint.' });
+      }
+      // Editing the LINES of an invoice that has already been posted would move
+      // the total while the ledger kept the old revenue. An issued invoice is
+      // corrected forwards, with a credit note — the same rule the cancel path
+      // enforces once money has moved.
+      if ('items' in patch) {
+        const posted = await client.query(
+          `SELECT 1 FROM journal_entries WHERE data->>'refId' = $1 AND data->>'refType' = 'invoice' LIMIT 1`,
+          [req.params.id]);
+        if (posted.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({
+            error: 'This invoice has been posted to the ledger — raise a credit note instead of editing its lines.',
+          });
+        }
       }
       merged = sanitizeDoc('invoices', merged);
     }
