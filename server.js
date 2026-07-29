@@ -1747,6 +1747,7 @@ app.post('/api/goodsReceipts', asyncH(async (req, res) => {
           `INSERT INTO stock_lots (id, data, part_id, created_at) VALUES ($1,$2,$3,$4)`,
           [crypto.randomUUID(), JSON.stringify({
             partId: w.pl.partId, partName: p.name || '',
+            warehouseId: body.warehouseId || '', binId: body.binId || '',
             lotNo: String(l.lotNo || '').trim(), serialNo: String(l.serialNo || '').trim(),
             expiryDate: String(l.expiryDate || '').trim(),
             qty: lotQty, remaining: lotQty, unitCost,
@@ -2271,10 +2272,28 @@ app.post('/api/stockTransfers', asyncH(async (req, res) => {
         note: 'Transferred in on ' + no, at: now, by: actor });
       // Follow the lots so batch traceability survives the move.
       if (l.lotId) {
-        await client.query(
-          `UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
-          [l.lotId, JSON.stringify({ warehouseId: b.toWarehouseId, binId: b.toBinId || '' })]
-        );
+        const lr = await client.query(`SELECT data FROM stock_lots WHERE id = $1 FOR UPDATE`, [l.lotId]);
+        if (lr.rows.length) {
+          const lot = lr.rows[0].data;
+          const rem = round2(Number(lot.remaining) || 0);
+          if (qty >= rem - 1e-9) {
+            // The whole batch moved, so the row simply relocates.
+            await client.query(`UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
+              [l.lotId, JSON.stringify({ warehouseId: b.toWarehouseId, binId: b.toBinId || '' })]);
+          } else {
+            // Only part of it moved. Relocating the whole row claimed the
+            // untransferred remainder was at the destination too — split it.
+            await client.query(`UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
+              [l.lotId, JSON.stringify({ remaining: round2(rem - qty) })]);
+            await client.query(
+              `INSERT INTO stock_lots (id, data, part_id, created_at) VALUES ($1,$2,$3,$4)`,
+              [crypto.randomUUID(), JSON.stringify({
+                ...lot, qty, remaining: qty,
+                warehouseId: b.toWarehouseId, binId: b.toBinId || '',
+                splitFromLotId: l.lotId, note: 'Transferred on ' + no, createdAt: now,
+              }), l.partId, now]);
+          }
+        }
       }
     }
 
@@ -2351,6 +2370,22 @@ app.post('/api/stockCounts', asyncH(async (req, res) => {
         });
         await client.query(`UPDATE parts SET data = data || $2::jsonb WHERE id = $1`,
           [l.partId, JSON.stringify({ stock: countedQty })]);
+        // Reconcile the lots to the count. A shortage consumes from the lots
+        // that would have been issued next (expiry-first), so a counted loss
+        // does not leave phantom batches that a recall would chase.
+        if (diff < 0) {
+          await consumeLots(client, l.partId, Math.abs(diff), no);
+        } else if (diff > 0) {
+          // A surplus has no batch identity — record it as an unidentified lot
+          // rather than silently inflating an existing batch.
+          await client.query(
+            `INSERT INTO stock_lots (id, data, part_id, created_at) VALUES ($1,$2,$3,$4)`,
+            [crypto.randomUUID(), JSON.stringify({
+              partId: l.partId, partName: p.name || '', lotNo: 'COUNT-' + no, serialNo: '', expiryDate: '',
+              qty: diff, remaining: diff, unitCost: round2(cost), status: 'available',
+              note: 'Surplus found on ' + no, receivedAt: now, createdAt: now, createdBy: actor,
+            }), l.partId, now]);
+        }
         const val = round2(Math.abs(diff) * cost);
         await postJournal(client, {
           date: b.countDate || tsToDs(now), refType: 'stockCount', refId: id, refNo: no, by: actor,
@@ -3646,6 +3681,13 @@ app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
       unitCost: p.costPrice, refType: 'issue', refId: req.params.id, refNo: jcNo,
       note: 'Issued to ' + jcNo, by: (req.auth && req.auth.name) || '' });
     const lotUse = await consumeLots(client, partId, qty, jcNo);
+    // Close the reservation this issue satisfies. Leaving it open kept the
+    // stock double-committed: physically gone AND still promised to the job.
+    await client.query(
+      `UPDATE reservations SET data = data || $3::jsonb
+        WHERE part_id = $1 AND COALESCE(data->>'jobCardId','') = $2
+          AND COALESCE(data->>'status','open') = 'open'`,
+      [partId, req.params.id, JSON.stringify({ status: 'issued', closedAt: Date.now() })]);
     const issueCost = round2((Number(p.costPrice) || 0) * qty);
     if (issueCost > 0) {
       await postJournal(client, {
@@ -3704,7 +3746,23 @@ app.post('/api/jobCards/:id/parts/return', asyncH(async (req, res) => {
           qty: Number(line.qty || 0), from, to, unitCost: p.costPrice,
           refType: 'issue-return', refId: req.params.id, refNo: jcNo,
           note: 'Returned from ' + jcNo, by: (req.auth && req.auth.name) || '' });
-        const backCost = round2((Number(p.costPrice) || 0) * (Number(line.qty) || 0));
+        // Put the units back into the lots they came out of. Without this the
+        // lot ledger permanently understates what is on the shelf, and a batch
+        // recall would miss units that were returned and re-issued.
+        for (const u of (Array.isArray(line.lots) ? line.lots : [])) {
+          if (!u.lotId || !(Number(u.qty) > 0)) continue;
+          const lr = await client.query(`SELECT data FROM stock_lots WHERE id = $1 FOR UPDATE`, [u.lotId]);
+          if (!lr.rows.length) continue;
+          const rem = round2((Number(lr.rows[0].data.remaining) || 0) + Number(u.qty));
+          await client.query(`UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
+            [u.lotId, JSON.stringify({ remaining: rem, status: 'available' })]);
+        }
+        // Reverse COGS at the cost the line was ISSUED at, not today's weighted
+        // average. A receipt between issue and return moves the average, and
+        // reversing at the new figure leaves a permanent residue in COGS.
+        const issuedCost = Number(line.costPrice) != null && Number(line.costPrice) > 0
+          ? Number(line.costPrice) : (Number(p.costPrice) || 0);
+        const backCost = round2(issuedCost * (Number(line.qty) || 0));
         if (backCost > 0) {
           await postJournal(client, {
             date: tsToDs(Date.now()), refType: 'issue-return', refId: req.params.id, refNo: jcNo,
