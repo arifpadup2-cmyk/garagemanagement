@@ -72,6 +72,12 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Branches (step 1 of the branch-access design) ──
+-- The table and the stamping only. NOTHING filters on branch_id yet — see
+-- docs/BRANCH-ACCESS-DESIGN.md for why enforcement must not ship before the
+-- cross-branch leak suite.
+CREATE TABLE IF NOT EXISTS branches (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
+
 -- ── Bank reconciliation ──
 -- A statement from the bank, and which of our own postings each line matches.
 -- The point is the DIFFERENCE: what the bank says minus what we have matched
@@ -193,6 +199,7 @@ CREATE INDEX IF NOT EXISTS idx_cn_created        ON credit_notes(created_at DESC
 CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
 CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
 -- The ledger is read by account, by date, and by the document that caused it.
+CREATE INDEX IF NOT EXISTS idx_branches_created  ON branches(created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_bankrec_created   ON bank_recs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bankrec_acct      ON bank_recs ((data->>'accountId'));
 -- Reconciled state lives on the journal line, so an extract can show it.
@@ -263,6 +270,8 @@ const UNIQUE_INDEXES = [
    'users (username)'],
   [`CREATE UNIQUE INDEX IF NOT EXISTS uq_roles_name ON roles (lower(data->>'name'))`,
    'roles (name)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_branches_code ON branches (lower(data->>'code'))`,
+   'branches (code)'],
 ];
 
 async function initSchema() {

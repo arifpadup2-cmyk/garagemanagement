@@ -109,6 +109,7 @@ const COLL = {
   users:            { table: 'users',            order: 'created_at ASC NULLS LAST', extra: { username: 'username' } },
   roles:            { table: 'roles',            order: 'created_at ASC NULLS LAST' },
   bankRecs:         { table: 'bank_recs',        order: 'created_at DESC NULLS LAST', seq: true, lock: 1014 },
+  branches:         { table: 'branches',         order: 'created_at ASC NULLS LAST' },
   journalEntries:   { table: 'journal_entries',  order: 'entry_date DESC NULLS LAST, seq DESC', extra: { entry_date: 'date' }, seq: true, lock: 1013 },
 };
 
@@ -660,6 +661,7 @@ const PERM_MAP = {
   transactions: ['finance.view', 'finance.manage'], finAccounts: ['finance.view', 'finance.manage'],
   journalEntries: ['finance.view', 'finance.manage'],
   bankRecs: ['finance.view', 'finance.manage'],
+  branches: ['masters.view', 'admin.settings'],
   technicians: ['jobcards.view', 'admin.users'], advisors: ['jobcards.view', 'admin.users'],
   bays: ['jobcards.view', 'inventory.manage'],
   users: ['admin.users', 'admin.users'], roles: ['admin.users', 'admin.users'],
@@ -740,6 +742,78 @@ app.get('/api/me', asyncH(async (req, res) => {
 app.get('/api/permissions', asyncH(async (req, res) => {
   res.json({ permissions: Object.entries(PERMISSIONS).map(([key, label]) => ({ key, label, group: key.split('.')[0] })) });
 }));
+
+// ══════════════════════════════════════════════════════════════════════════
+// BRANCHES — step 1 of docs/BRANCH-ACCESS-DESIGN.md
+//
+// This creates the default branch and stamps every existing row with it.
+// It does NOT filter anything. No query reads branch_id yet, and none should
+// until the cross-branch leak suite exists (step 6) — a half-scoped system,
+// where some queries filter and some do not, looks safe and is not.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Which tier each collection sits in. Written now so the enforcement step has
+// one place to read from rather than rediscovering the decision per handler.
+const BRANCH_SCOPE = {
+  // Shared: one copy company-wide.
+  masters: 'shared', services: 'shared', roles: 'shared', users: 'shared', branches: 'shared',
+  // Branch-owned: belongs to exactly one branch.
+  jobCards: 'owned', estimates: 'owned', invoices: 'owned', creditNotes: 'owned',
+  purchaseRequests: 'owned', rfqs: 'owned', purchaseOrders: 'owned', goodsReceipts: 'owned',
+  purchaseInvoices: 'owned', purchaseReturns: 'owned', stockTransfers: 'owned',
+  stockCounts: 'owned', bankRecs: 'owned', journalEntries: 'owned', stockMovements: 'owned',
+  reservations: 'owned', toolIssues: 'owned', transactions: 'owned', appointments: 'owned',
+  // Company-wide, but with a home branch for reporting.
+  customers: 'home', vehicles: 'home', suppliers: 'home', parts: 'home',
+  technicians: 'home', advisors: 'home', tools: 'home', warehouses: 'home',
+  bays: 'home', finAccounts: 'home', stockLots: 'home', bins: 'home',
+};
+
+async function ensureDefaultBranch() {
+  try {
+    const existing = await pool.query(`SELECT id, data FROM branches ORDER BY created_at ASC LIMIT 1`);
+    if (existing.rows.length) return existing.rows[0].id;
+
+    const cfg = await pool.query(`SELECT data FROM settings WHERE id = 'company'`);
+    const company = cfg.rows.length ? cfg.rows[0].data : {};
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    await pool.query(`INSERT INTO branches (id, data, created_at) VALUES ($1,$2,$3)`,
+      [id, JSON.stringify({
+        name: company.name || 'Main Branch', code: 'MAIN',
+        address: company.address || '', city: company.city || '',
+        phone: company.phone || '', trn: company.vatNumber || '',
+        isDefault: true, active: true, createdAt: now, createdBy: 'system',
+      }), now]);
+
+    // Everything that exists belongs to this branch by definition — there has
+    // only ever been one. Stamped per collection so a failure part-way leaves
+    // the rest to be picked up on the next boot rather than losing the lot.
+    let stamped = 0;
+    for (const [coll, tier] of Object.entries(BRANCH_SCOPE)) {
+      const c = COLL[coll];
+      if (!c || tier === 'shared') continue;
+      const field = tier === 'owned' ? 'branchId' : 'homeBranchId';
+      const r = await pool.query(
+        `UPDATE ${c.table} SET data = data || $1::jsonb
+          WHERE COALESCE(data->>'${field}','') = ''`,
+        [JSON.stringify({ [field]: id })]
+      );
+      stamped += r.rowCount;
+    }
+    // journal_lines is not a COLL table but is branch-owned like its header.
+    const jl = await pool.query(
+      `UPDATE journal_lines SET data = data || $1::jsonb WHERE COALESCE(data->>'branchId','') = ''`,
+      [JSON.stringify({ branchId: id })]);
+    stamped += jl.rowCount;
+
+    console.log(`Branches: created the default branch and stamped ${stamped} existing row(s). No query filters on it yet.`);
+    return id;
+  } catch (e) {
+    console.warn('[gms] default branch setup skipped:', e.message);
+    return null;
+  }
+}
 
 // ---- Authorization (RBAC) ----
 // Admin: full access. Technician: a tight allowlist — read the shop-floor data
@@ -3896,6 +3970,7 @@ initSchema()
   .then(loadAuthEpoch)
   .then(loadPeriodLock)
   .then(ensureRoles)
+  .then(ensureDefaultBranch)
   .then(migrateMovements)
   .then(() => app.listen(PORT, () => console.log(`GMS server on http://localhost:${PORT}`)))
   .catch((e) => { console.error('Startup failed:', e.message); process.exit(1); });
