@@ -571,6 +571,47 @@ app.post('/api/user-login', loginGuard((req) => String((req.body || {}).username
   });
 }));
 
+// ---- Unified sign-in ----
+// Tries a real user account first, then the bootstrap admin. One call, one
+// answer: a client should not have to fire a request it expects to fail.
+app.post('/api/auth/login', loginGuard((req) => String((req.body || {}).username || '').trim().toLowerCase()),
+  asyncH(async (req, res) => {
+  const username = String((req.body || {}).username || '').trim().toLowerCase();
+  const password = String((req.body || {}).password || '');
+  if (!username || !password) return res.status(400).json({ error: 'Enter your username and password.' });
+
+  const { rows } = await pool.query(`SELECT id, data FROM users WHERE lower(username) = $1`, [username]);
+  const u = rows.length ? rows[0].data : null;
+  if (u && u.active !== false && verifyPin(password, u.passwordHash)) {
+    clearLoginFail(req);
+    const perms = await permsForRole(u.roleId);
+    await pool.query(`UPDATE users SET data = data || $2::jsonb WHERE id = $1`,
+      [rows[0].id, JSON.stringify({ lastLoginAt: Date.now() })]);
+    return res.json({
+      ok: true, name: u.name || u.username, userId: rows[0].id, roleId: u.roleId,
+      roleName: u.roleName || '', permissions: [...perms],
+      token: signToken({ role: 'user', name: u.name || u.username, userId: rows[0].id, roleId: u.roleId }),
+    });
+  }
+
+  // Bootstrap admin: the account that exists so a garage can never lock itself
+  // out of its own system.
+  const U = (process.env.ADMIN_USER || 'arifpadup').toLowerCase();
+  const P = process.env.ADMIN_PASSWORD || '';
+  const NAME = process.env.ADMIN_NAME || 'ARIF';
+  if (P && username === U && P.length === password.length &&
+      crypto.timingSafeEqual(Buffer.from(P), Buffer.from(password))) {
+    clearLoginFail(req);
+    return res.json({ ok: true, name: NAME, permissions: null, roleName: 'Garage Admin',
+      token: signToken({ role: 'admin', name: NAME }) });
+  }
+
+  noteLoginFail(req);
+  // One message for every failure — a wrong username and a wrong password must
+  // not be distinguishable.
+  return res.status(401).json({ ok: false, error: 'Incorrect username or password.' });
+}));
+
 app.use('/api', requireAuth);
 
 // ══════════════════════════════════════════════════════════════════════════

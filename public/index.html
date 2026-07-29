@@ -1197,6 +1197,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-group" id="grp-admin">
         <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-admin" onclick="toggleNavGroup('admin')" title="Administration"><span class="snav-label">Administration</span><span class="snav-chev" aria-hidden="true">▾</span></button>
         <div class="snav-gitems" id="ng-admin">
+      <div class="snav-item" id="snav-users" onclick="navTo('users')" title="Users &amp; Roles"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="snav-label">Users &amp; Roles</span></div>
       <div class="snav-item" id="snav-settings" onclick="navTo('settings')" title="Settings"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="snav-label">Settings</span></div>
         </div>
       </div>
@@ -1866,6 +1867,36 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
         <div class="btn-group"><button class="btn btn-primary" id="save-tool-btn" onclick="saveTool()">Save Tool</button>
           <button class="btn btn-secondary" onclick="navTo('tools')">Cancel</button></div>
+      </div>
+    </div>
+
+    <!-- ══ USER MANAGEMENT (Phase 9) ══ -->
+    <div id="v-users" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Users &amp; Roles</div><div class="page-sub">Who can sign in, and what each of them may do</div></div>
+        <button class="btn btn-primary" onclick="showAddUser()">+ New User</button>
+      </div>
+      <div id="usr-kpis"></div>
+      <div id="usr-list"></div>
+      <div id="role-list" style="margin-top:18px"></div>
+    </div>
+    <div id="v-add-user" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('users')">← Users</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-usr-title">New User</div></div>
+      <div class="card" style="max-width:640px">
+        <div class="form-row">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="usr-name" autocomplete="off"></div>
+          <div class="form-group"><label>Username *</label><input type="text" id="usr-username" placeholder="lowercase, no spaces" autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Role *</label><select id="usr-role"></select></div>
+          <div class="form-group"><label>Password <span style="font-size:11px;color:var(--t3)" id="usr-pw-hint">*</span></label>
+            <input type="password" id="usr-password" autocomplete="new-password" placeholder="At least 8 characters"></div>
+        </div>
+        <div id="usr-role-perms" style="font-size:12px;color:var(--t3);margin-bottom:12px"></div>
+        <label class="chk-row" style="margin-bottom:12px"><input type="checkbox" id="usr-active" checked> <span>Active — can sign in</span></label>
+        <div class="btn-group"><button class="btn btn-primary" id="save-usr-btn" onclick="saveUser()">Save User</button>
+          <button class="btn btn-secondary" onclick="navTo('users')">Cancel</button></div>
       </div>
     </div>
 
@@ -3107,7 +3138,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool','v-credit-notes':'Credit Notes','v-inv-valuation':'Inventory Valuation','v-sales-summary':'Sales Summary','v-workshop-report':'Workshop Performance'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool','v-credit-notes':'Credit Notes','v-inv-valuation':'Inventory Valuation','v-sales-summary':'Sales Summary','v-workshop-report':'Workshop Performance','v-users':'Users & Roles','v-add-user':'User'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 // Today in LOCAL time. toISOString() is UTC, which in Doha (+03) reports
@@ -3134,7 +3165,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory','credit-notes':'Credit Notes','inv-valuation':'Inventory Valuation','sales-summary':'Sales Summary','workshop-report':'Workshop Performance'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory','credit-notes':'Credit Notes','inv-valuation':'Inventory Valuation','sales-summary':'Sales Summary','workshop-report':'Workshop Performance',users:'Users & Roles','add-user':'User'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -3275,6 +3306,7 @@ function navTo(tab){
   else if(tab==='stock-counts')renderCounts();
   else if(tab==='reorder')renderReorder();
   else if(tab==='tools')renderTools();
+  else if(tab==='users')renderUsers();
   else if(tab==='inv-valuation')renderInventoryValuation();
   else if(tab==='sales-summary')renderSalesSummary();
   else if(tab==='workshop-report')renderWorkshopReport();
@@ -3351,7 +3383,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'stock-counts':['Inventory','Stock Count'],'add-count':['Inventory','New Count'],'count':['Inventory','Stock Count'],
   'reorder':['Inventory','Reorder Report'],'tools':['Inventory','Tool Inventory'],'add-tool':['Inventory','Tool'],
   'credit-notes':['Sales','Credit Notes'],
-  'inv-valuation':['Reports','Inventory Valuation'],'sales-summary':['Reports','Sales Summary'],'workshop-report':['Reports','Workshop Performance']
+  'inv-valuation':['Reports','Inventory Valuation'],'sales-summary':['Reports','Sales Summary'],'workshop-report':['Reports','Workshop Performance'],
+  'users':['Administration','Users & Roles'],'add-user':['Administration','User']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -3588,6 +3621,47 @@ function closeConfirm(){var ov=document.getElementById('gms-confirm');if(ov)ov.c
 
 // AUTH — admin credentials are validated server-side (env vars), never stored in this file.
 var SESSION_KEY='gms_session';
+// ── Permission-aware interface ──
+// The server refuses anything a role is not granted; this hides the doors so
+// people are not offered work they will then be told they cannot do.
+// A null permission list means the bootstrap admin, who has everything.
+var myPermissions=null;
+function can(p){return myPermissions===null||myPermissions.indexOf(p)>-1;}
+var NAV_PERM={
+  'snav-masters':'masters.view','snav-services':'masters.view',
+  'snav-customers':'customers.view','snav-vehicles':'vehicles.view',
+  'snav-jobcards':'jobcards.view','snav-workshop':'jobcards.view','snav-estimates':'jobcards.view',
+  'snav-appointments':'jobcards.view',
+  'snav-inventory':'inventory.view','snav-warehouses':'inventory.view','snav-stock-movements':'inventory.view',
+  'snav-stock-transfers':'inventory.view','snav-stock-counts':'inventory.view','snav-reorder':'inventory.view',
+  'snav-tools':'inventory.view','snav-inv-valuation':'inventory.view',
+  'snav-suppliers':'purchasing.view','snav-purchases':'purchasing.view','snav-purchase-requests':'purchasing.view',
+  'snav-rfqs':'purchasing.view','snav-goods-receipts':'purchasing.view',
+  'snav-purchase-invoices':'purchasing.invoice','snav-purchase-returns':'purchasing.view',
+  'snav-sales':'sales.view','snav-credit-notes':'sales.credit','snav-sales-summary':'sales.view',
+  'snav-accounts':'finance.view','snav-fin-accounts':'finance.view','snav-gen-ledger':'finance.view',
+  'snav-trial-balance':'finance.view','snav-pl-statement':'finance.view','snav-balance-sheet':'finance.view',
+  'snav-cust-accs':'finance.view','snav-aged-receivables':'finance.view','snav-aged-payables':'finance.view',
+  'snav-vat-summary':'finance.view','snav-cash-flow':'finance.view',
+  'snav-technicians':'jobcards.view','snav-advisors':'jobcards.view','snav-workshop-report':'reports.view',
+  'snav-sales-reports':'reports.view','snav-jc-reports':'reports.view','snav-cust-reports':'reports.view',
+  'snav-tech-reports':'reports.view',
+  'snav-settings':'admin.settings','snav-users':'admin.users'
+};
+function applyPermissions(perms){
+  myPermissions=(perms&&perms.length)?perms.slice():(perms===null?null:[]);
+  Object.keys(NAV_PERM).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.style.display=can(NAV_PERM[id])?'':'none';
+  });
+  // A nav group with nothing left in it is noise.
+  document.querySelectorAll('.snav-group').forEach(function(g){
+    var items=g.querySelectorAll('.snav-item');
+    var anyVisible=Array.prototype.some.call(items,function(i){return i.style.display!=='none';});
+    g.style.display=(items.length&&!anyVisible)?'none':'';
+  });
+}
+
 async function doLogin(){
   var btn=document.getElementById('login-btn');
   var err=document.getElementById('login-error');
@@ -3596,12 +3670,21 @@ async function doLogin(){
   var remember=document.getElementById('l-remember').checked;
   err.style.display='none';btn.disabled=true;btn.textContent='Signing in…';
   try{
-    var res=await fetch(((window.GMS_API_BASE||'')+'/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    // Try a real user account first; fall back to the bootstrap admin so the
+    // garage can always get in even if every user account is locked out.
+    var base=(window.GMS_API_BASE||'');
+    var post=function(url,body){return fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});};
+    var res=await post('/api/auth/login',{username:user,password:pass});
     var data=await res.json().catch(function(){return {};});
-    if(!res.ok||!data.ok){err.textContent=(data&&data.error)||'Invalid username or password.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;}
-    var session=JSON.stringify({username:user,name:data.name,token:data.token});
+    if(!res.ok||!data.ok){
+      err.textContent=(data&&data.error)||'Incorrect username or password.';
+      err.style.display='block';btn.disabled=false;btn.textContent='Sign In';return;
+    }
+    var session=JSON.stringify({username:user,name:data.name,token:data.token,
+      permissions:data.permissions||null,roleName:data.roleName||'',userId:data.userId||''});
     if(remember)localStorage.setItem(SESSION_KEY,session);else sessionStorage.setItem(SESSION_KEY,session);
-    showApp(data.name);btn.disabled=false;btn.textContent='Sign In';
+    applyPermissions(data.permissions);
+    showApp(data.name,data.roleName);btn.disabled=false;btn.textContent='Sign In';
   }catch(e){err.textContent='Cannot reach server. Try again.';err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function doLogout(){
@@ -3629,11 +3712,13 @@ function applySidebarState(mini){
     if(btn){btn.textContent='‹';btn.title='Collapse sidebar';}
   }
 }
-function showApp(name){
+function showApp(name,roleName){
   curAdminName=name||'';
   document.getElementById('v-login').style.display='none';
   document.getElementById('app-wrap').style.display='block';
   document.getElementById('user-display').textContent=name;
+  var roleEl=document.querySelector('.snav-user-role');
+  if(roleEl)roleEl.textContent=roleName||'Garage Admin';
   var mhu=document.getElementById('mob-hdr-user');
   if(mhu)mhu.textContent=name||'';
   applySidebarState(localStorage.getItem('sidebar_mini')==='1');
@@ -3647,7 +3732,9 @@ function showApp(name){
 (function checkSession(){
   var raw=localStorage.getItem(SESSION_KEY)||sessionStorage.getItem(SESSION_KEY);
   // Sessions without a token predate server-side auth — force a fresh sign-in.
-  if(raw){try{var s=JSON.parse(raw);if(s&&s.name&&s.token){showApp(s.name);return;}
+  if(raw){try{var s=JSON.parse(raw);if(s&&s.name&&s.token){
+      applyPermissions(s.permissions===undefined?null:s.permissions);
+      showApp(s.name,s.roleName);return;}
     if(s&&!s.token){localStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_KEY);}}catch(e){}}
   var traw=localStorage.getItem(TECH_SESSION_KEY)||sessionStorage.getItem(TECH_SESSION_KEY);
   if(traw){try{var ts=JSON.parse(traw);if(ts&&ts.id&&ts.token){
@@ -3853,8 +3940,13 @@ function skelDash(){
 // one toast, log the detail, and release the skeletons for that collection.
 function snapErr(label,firedKey){
   return function(e){
-    console.error('Load failed ['+label+']:',e);
     if(firedKey)_fired[firedKey]=true;
+    // A permission refusal is a correct answer, not a fault. Someone whose role
+    // excludes purchasing should not be told the database is broken.
+    if(e&&(e.status===403||/does not allow|Not permitted/i.test(e.message||''))){
+      return;
+    }
+    console.error('Load failed ['+label+']:',e);
     if(!window._dbErrToasted){
       window._dbErrToasted=true;
       toast('Database error — could not load '+label+'. Check your connection and reload.','error');
@@ -3862,6 +3954,9 @@ function snapErr(label,firedKey){
     }
   };
 }
+// Subscribe only to what this person may read. Asking for the rest produces a
+// wall of refusals in the console and pointless traffic on every load.
+function subIf(perm,fn){ if(can(perm))fn(); }
 function initFirestore(){
   db.collection('customers').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.customers=true;
@@ -3911,11 +4006,13 @@ function initFirestore(){
     if(activeNav==='inventory')renderInventory();
     buildNotifs();
   },snapErr('inventory','parts'));
-  db.collection('suppliers').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.suppliers=true;
-    suppliers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='suppliers')renderSuppliers();
-  },snapErr('suppliers','suppliers'));
+  subIf('purchasing.view',function(){
+    db.collection('suppliers').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.suppliers=true;
+      suppliers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='suppliers')renderSuppliers();
+    },snapErr('suppliers','suppliers'));
+  });
   // Master data feeds every picker in the app, so a change re-renders whichever
   // master screen is open AND any form currently showing a master-backed select.
   db.collection('masters').onSnapshot(function(snap){
@@ -3931,87 +4028,119 @@ function initFirestore(){
     if(activeNav==='services')renderServices();
     if(activeNav==='masters')renderMastersHub();
   },snapErr('services','services'));
-  db.collection('warehouses').onSnapshot(function(snap){
-    _fired.warehouses=true;
-    warehouses=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='warehouses')renderWarehouses();
-    if(activeNav==='warehouse')renderWarehouseDetail();
-  },snapErr('warehouses','warehouses'));
-  db.collection('bins').onSnapshot(function(snap){
-    _fired.bins=true;
-    bins=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='warehouse')renderWarehouseDetail();
-  },snapErr('bins','bins'));
-  db.collection('stockMovements').onSnapshot(function(snap){
-    _fired.stockMovements=true;
-    stockMovements=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='stock-movements')renderMovements();
-  },snapErr('stock movements','stockMovements'));
-  db.collection('stockTransfers').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.stockTransfers=true;
-    stockTransfers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='stock-transfers')renderTransfers();
-  },snapErr('stock transfers','stockTransfers'));
-  db.collection('stockCounts').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.stockCounts=true;
-    stockCounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='stock-counts')renderCounts();
-  },snapErr('stock counts','stockCounts'));
-  db.collection('reservations').onSnapshot(function(snap){
-    _fired.reservations=true;
-    reservations=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-  },snapErr('reservations','reservations'));
-  db.collection('tools').onSnapshot(function(snap){
-    _fired.tools=true;
-    tools=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='tools')renderTools();
-  },snapErr('tools','tools'));
-  db.collection('toolIssues').onSnapshot(function(snap){
-    _fired.toolIssues=true;
-    toolIssues=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='tools')renderTools();
-  },snapErr('tool issues','toolIssues'));
-  db.collection('creditNotes').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.creditNotes=true;
-    creditNotes=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='credit-notes')renderCreditNotes();
-  },snapErr('credit notes','creditNotes'));
-  db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.purchaseRequests=true;
-    purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='purchase-requests')renderPRs();
-  },snapErr('purchase requests','purchaseRequests'));
-  db.collection('rfqs').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.rfqs=true;
-    rfqs=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='rfqs')renderRFQs();
-  },snapErr('RFQs','rfqs'));
-  db.collection('goodsReceipts').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.goodsReceipts=true;
-    goodsReceipts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='goods-receipts')renderGRNs();
-    if(activeNav==='po'&&curPO)renderPODetail();
-  },snapErr('goods receipts','goodsReceipts'));
-  db.collection('purchaseInvoices').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.purchaseInvoices=true;
-    purchaseInvoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='purchase-invoices')renderPINVs();
-    if(activeNav==='aged-payables')renderAgedPayables();
-  },snapErr('purchase invoices','purchaseInvoices'));
-  db.collection('purchaseReturns').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.purchaseReturns=true;
-    purchaseReturns=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='purchase-returns')renderPRETs();
-  },snapErr('purchase returns','purchaseReturns'));
-  db.collection('stockLots').onSnapshot(function(snap){
-    _fired.stockLots=true;
-    stockLots=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-  },snapErr('stock lots','stockLots'));
-  db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.purchaseOrders=true;
-    purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='purchases')renderPurchases();
-  },snapErr('purchase orders','purchaseOrders'));
+  subIf('inventory.view',function(){
+    db.collection('warehouses').onSnapshot(function(snap){
+      _fired.warehouses=true;
+      warehouses=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='warehouses')renderWarehouses();
+      if(activeNav==='warehouse')renderWarehouseDetail();
+    },snapErr('warehouses','warehouses'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('bins').onSnapshot(function(snap){
+      _fired.bins=true;
+      bins=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='warehouse')renderWarehouseDetail();
+    },snapErr('bins','bins'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('stockMovements').onSnapshot(function(snap){
+      _fired.stockMovements=true;
+      stockMovements=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='stock-movements')renderMovements();
+    },snapErr('stock movements','stockMovements'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('stockTransfers').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.stockTransfers=true;
+      stockTransfers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='stock-transfers')renderTransfers();
+    },snapErr('stock transfers','stockTransfers'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('stockCounts').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.stockCounts=true;
+      stockCounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='stock-counts')renderCounts();
+    },snapErr('stock counts','stockCounts'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('reservations').onSnapshot(function(snap){
+      _fired.reservations=true;
+      reservations=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    },snapErr('reservations','reservations'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('tools').onSnapshot(function(snap){
+      _fired.tools=true;
+      tools=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='tools')renderTools();
+    },snapErr('tools','tools'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('toolIssues').onSnapshot(function(snap){
+      _fired.toolIssues=true;
+      toolIssues=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='tools')renderTools();
+    },snapErr('tool issues','toolIssues'));
+  });
+  subIf('sales.credit',function(){
+    db.collection('creditNotes').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.creditNotes=true;
+      creditNotes=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='credit-notes')renderCreditNotes();
+    },snapErr('credit notes','creditNotes'));
+  });
+  subIf('purchasing.view',function(){
+    db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.purchaseRequests=true;
+      purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='purchase-requests')renderPRs();
+    },snapErr('purchase requests','purchaseRequests'));
+  });
+  subIf('purchasing.view',function(){
+    db.collection('rfqs').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.rfqs=true;
+      rfqs=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='rfqs')renderRFQs();
+    },snapErr('RFQs','rfqs'));
+  });
+  subIf('purchasing.view',function(){
+    db.collection('goodsReceipts').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.goodsReceipts=true;
+      goodsReceipts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='goods-receipts')renderGRNs();
+      if(activeNav==='po'&&curPO)renderPODetail();
+    },snapErr('goods receipts','goodsReceipts'));
+  });
+  subIf('purchasing.invoice',function(){
+    db.collection('purchaseInvoices').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.purchaseInvoices=true;
+      purchaseInvoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='purchase-invoices')renderPINVs();
+      if(activeNav==='aged-payables')renderAgedPayables();
+    },snapErr('purchase invoices','purchaseInvoices'));
+  });
+  subIf('purchasing.view',function(){
+    db.collection('purchaseReturns').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.purchaseReturns=true;
+      purchaseReturns=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='purchase-returns')renderPRETs();
+    },snapErr('purchase returns','purchaseReturns'));
+  });
+  subIf('inventory.view',function(){
+    db.collection('stockLots').onSnapshot(function(snap){
+      _fired.stockLots=true;
+      stockLots=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    },snapErr('stock lots','stockLots'));
+  });
+  subIf('purchasing.view',function(){
+    db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.purchaseOrders=true;
+      purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='purchases')renderPurchases();
+    },snapErr('purchase orders','purchaseOrders'));
+  });
   db.collection('invoices').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.invoices=true;
     invoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -9051,6 +9180,87 @@ function exportWorkshop(){
   toast('Exported '+_wr.technicians.length+' technicians','success');
 }
 
+// ══ USERS & ROLES (Phase 9) ══
+var appUsers=[], appRoles=[], editingUserId=null;
+function roleNameOf(id){for(var i=0;i<appRoles.length;i++){if(appRoles[i].id===id)return appRoles[i].name;}return '';}
+function renderUsers(){
+  var el=document.getElementById('usr-list'),kp=document.getElementById('usr-kpis');if(!el)return;
+  Promise.all([
+    db.collection('users').get().then(function(s){return s.docs.map(function(d){return Object.assign({id:d.id},d.data());});}),
+    db.collection('roles').get().then(function(s){return s.docs.map(function(d){return Object.assign({id:d.id},d.data());});})
+  ]).then(function(res){
+    appUsers=res[0];appRoles=res[1];
+    var active=appUsers.filter(function(u){return u.active!==false;}).length;
+    if(kp)kp.innerHTML='<div class="erp-kpis">'+
+      erpKpi(appUsers.length,'Users','')+erpKpi(active,'Active','kpi-green')+
+      erpKpi(appUsers.length-active,'Deactivated',appUsers.length-active?'kpi-accent':'')+
+      erpKpi(appRoles.length,'Roles','')+'</div>';
+    el.innerHTML='<div class="card"><div class="card-title">User Accounts</div>'+
+      (appUsers.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Last Sign-in</th><th>Status</th><th></th></tr></thead><tbody>'+
+        appUsers.map(function(u){
+          return '<tr><td style="font-weight:700">'+esc(u.name||'—')+'</td>'+
+            '<td><span class="badge-code">'+esc(u.username||'')+'</span></td>'+
+            '<td style="color:var(--t2)">'+esc(u.roleName||roleNameOf(u.roleId)||'—')+'</td>'+
+            '<td style="color:var(--t2);white-space:nowrap">'+esc(u.lastLoginAt?fmtTs(u.lastLoginAt):'Never')+'</td>'+
+            '<td>'+(u.active===false?'<span class="badge-off">Deactivated</span>':'<span style="font-size:12px;font-weight:700;color:var(--green)">Active</span>')+'</td>'+
+            '<td class="num"><button class="btn btn-secondary btn-sm" style="padding:4px 10px" onclick="showAddUser(\''+esc(u.id)+'\')">Edit</button></td></tr>';
+        }).join('')+'</tbody></table></div></div>'
+       :'<div class="empty">No user accounts yet. Everyone is sharing the owner login — add accounts so the audit log can say who did what.</div>')+
+      '</div>';
+    document.getElementById('role-list').innerHTML='<div class="card"><div class="card-title">Roles</div>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Role</th><th>Description</th><th class="num">Permissions</th><th class="num">People</th></tr></thead><tbody>'+
+      appRoles.map(function(r){
+        var n=appUsers.filter(function(u){return u.roleId===r.id;}).length;
+        return '<tr><td style="font-weight:700">'+esc(r.name)+(r.system?' <span class="badge-code">built-in</span>':'')+'</td>'+
+          '<td style="color:var(--t2)">'+esc(r.description||'—')+'</td>'+
+          '<td class="num">'+(r.permissions||[]).length+'</td><td class="num">'+n+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>'+
+      '<div style="font-size:12px;color:var(--t3);margin-top:10px">A role in use, or a built-in role, cannot be deleted. Users are deactivated rather than deleted so the audit trail stays intact.</div></div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load users — '+esc(e.message||'')+'</div>';});
+}
+function showAddUser(id){
+  editingUserId=id||null;
+  var u=id?appUsers.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-usr-title').textContent=u?'Edit User':'New User';
+  document.getElementById('usr-name').value=u?(u.name||''):'';
+  document.getElementById('usr-username').value=u?(u.username||''):'';
+  document.getElementById('usr-username').disabled=!!u;   // a username is an identity
+  document.getElementById('usr-password').value='';
+  document.getElementById('usr-pw-hint').textContent=u?'leave blank to keep the current password':'*';
+  document.getElementById('usr-active').checked=!u||u.active!==false;
+  var sel=document.getElementById('usr-role');
+  sel.innerHTML=appRoles.map(function(r){
+    return '<option value="'+esc(r.id)+'"'+(u&&u.roleId===r.id?' selected':'')+'>'+esc(r.name)+'</option>';}).join('');
+  sel.onchange=usrRoleChanged;usrRoleChanged();
+  show('v-add-user');
+}
+function usrRoleChanged(){
+  var el=document.getElementById('usr-role-perms');if(!el)return;
+  var r=appRoles.filter(function(x){return x.id===document.getElementById('usr-role').value;})[0];
+  el.textContent=r?(r.description||'')+' ('+(r.permissions||[]).length+' permissions)':'';
+}
+function saveUser(){
+  var name=document.getElementById('usr-name').value.trim();
+  if(!name){return invalidField('usr-name','Enter the person\'s name.');}
+  var username=document.getElementById('usr-username').value.trim().toLowerCase();
+  if(!/^[a-z0-9._-]{3,32}$/.test(username)){return invalidField('usr-username','Letters, numbers, dot, underscore and hyphen only (3–32 characters).');}
+  var roleId=document.getElementById('usr-role').value;
+  if(!roleId){return invalidField('usr-role','Choose a role.');}
+  var pw=document.getElementById('usr-password').value;
+  if(!editingUserId&&pw.length<8){return invalidField('usr-password','Use at least 8 characters.');}
+  if(editingUserId&&pw&&pw.length<8){return invalidField('usr-password','Use at least 8 characters.');}
+  var data={name:name,username:username,roleId:roleId,roleName:roleNameOf(roleId),
+    active:!!document.getElementById('usr-active').checked};
+  if(pw)data.password=pw;
+  var btn=document.getElementById('save-usr-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save User';toast(e.message||'Could not save.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save User';toast('User saved','success');navTo('users');};
+  if(editingUserId)db.collection('users').doc(editingUserId).update(data).then(done).catch(fail);
+  else{data.createdAt=Date.now();db.collection('users').add(data).then(done).catch(fail);}
+}
+
 var INV_STATUS={
   unpaid:            {label:'UNPAID',       badge:'badge-red',    color:'var(--red)'},
   credit:            {label:'CREDIT',       badge:'badge-amber',  color:'var(--amber)'},
@@ -9606,17 +9816,21 @@ var CAT_COLORS={
 };
 
 function initAccountsFirestore(){
-  db.collection('transactions').orderBy('date','desc').onSnapshot(function(snap){
-    _fired.transactions=true;
-    transactions=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='accounts')renderAccounts();
-    if(activeNav==='dashboard')renderDashboard();
-  },snapErr('transactions','transactions'));
-  db.collection('finAccounts').orderBy('createdAt','desc').onSnapshot(function(snap){
-    _fired.finAccounts=true;
-    finAccounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(activeNav==='fin-accounts')renderFinAccounts();
-  },snapErr('ledger accounts'));
+  subIf('finance.view',function(){
+    db.collection('transactions').orderBy('date','desc').onSnapshot(function(snap){
+      _fired.transactions=true;
+      transactions=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='accounts')renderAccounts();
+      if(activeNav==='dashboard')renderDashboard();
+    },snapErr('transactions','transactions'));
+  });
+  subIf('finance.view',function(){
+    db.collection('finAccounts').orderBy('createdAt','desc').onSnapshot(function(snap){
+      _fired.finAccounts=true;
+      finAccounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(activeNav==='fin-accounts')renderFinAccounts();
+    },snapErr('ledger accounts'));
+  });
 }
 
 function getAccRange(){
