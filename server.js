@@ -90,7 +90,21 @@ const COLL = {
   purchaseOrders: { table: 'purchase_orders', order: 'created_at DESC NULLS LAST', seq: true, lock: 1004 },
   masters:      { table: 'masters',      order: 'kind ASC NULLS LAST, name ASC NULLS LAST', extra: { kind: 'kind', name: 'name' } },
   services:     { table: 'services',     order: 'created_at DESC NULLS LAST' },
+  purchaseRequests: { table: 'purchase_requests', order: 'created_at DESC NULLS LAST', seq: true, lock: 1005 },
+  rfqs:             { table: 'rfqs',              order: 'created_at DESC NULLS LAST', seq: true, lock: 1006 },
+  goodsReceipts:    { table: 'goods_receipts',    order: 'created_at DESC NULLS LAST', seq: true, lock: 1007 },
+  purchaseInvoices: { table: 'purchase_invoices', order: 'created_at DESC NULLS LAST', seq: true, lock: 1008 },
+  purchaseReturns:  { table: 'purchase_returns',  order: 'created_at DESC NULLS LAST', seq: true, lock: 1009 },
+  stockLots:        { table: 'stock_lots',        order: 'created_at ASC NULLS LAST', extra: { part_id: 'partId' } },
 };
+
+// Document number prefixes, so every module formats a reference identically.
+const DOC_PREFIX = {
+  jobCards: 'JC', invoices: 'INV', estimates: 'EST', purchaseOrders: 'PO',
+  purchaseRequests: 'PR', rfqs: 'RFQ', goodsReceipts: 'GRN',
+  purchaseInvoices: 'PINV', purchaseReturns: 'PRTN',
+};
+const docNo = (coll, seq) => (DOC_PREFIX[coll] || 'DOC') + '-' + String(seq || 0).padStart(4, '0');
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
@@ -132,6 +146,43 @@ function sanitizeDoc(coll, doc) {
     }
   }
   if (coll === 'transactions' && typeof doc.amount === 'number') doc.amount = round2(doc.amount);
+  // Purchase documents are costed server-side from their own lines, for the same
+  // reason invoices are: a total that doesn't follow from the lines is how a
+  // supplier gets overpaid.
+  if (coll === 'purchaseOrders' || coll === 'purchaseInvoices' || coll === 'purchaseReturns') {
+    const lines = Array.isArray(doc.items) ? doc.items : [];
+    if (lines.length) {
+      let sub = 0, tax = 0;
+      for (const l of lines) {
+        const qty = Number(l.qty) || 0;
+        const unit = Number(l.unitCost) || 0;
+        const gross = qty * unit;
+        const disc = l.discountPct ? gross * (Number(l.discountPct) || 0) / 100 : 0;
+        const net = round2(gross - disc);
+        l.lineTotal = net;
+        sub += net;
+        tax += net * (Number(l.taxRate) || 0) / 100;
+      }
+      sub = round2(sub);
+      let hdrDisc = 0;
+      if (doc.discountType === 'pct') hdrDisc = round2(sub * (Number(doc.discountValue) || 0) / 100);
+      else if (doc.discountType === 'amount') hdrDisc = round2(Number(doc.discountValue) || 0);
+      hdrDisc = Math.max(0, Math.min(hdrDisc, sub));
+      // A header discount reduces the taxable base proportionally.
+      const taxable = sub - hdrDisc;
+      const taxAmt = sub > 0 ? round2(tax * (taxable / sub)) : 0;
+      // Landed costs (freight, customs, clearing) are part of what the goods
+      // cost you, so they belong in the invoice total and in item cost.
+      const landed = Array.isArray(doc.landedCosts)
+        ? round2(doc.landedCosts.reduce((s, c) => s + (Number(c.amount) || 0), 0)) : 0;
+      doc.subtotal = sub;
+      doc.discountAmount = hdrDisc;
+      doc.taxAmount = taxAmt;
+      doc.landedTotal = landed;
+      doc.total = round2(taxable + taxAmt + landed);
+    }
+    for (const k of ['amountPaid']) if (typeof doc[k] === 'number') doc[k] = round2(doc[k]);
+  }
   // Master data is normalised on the way in so the uniqueness indexes and the
   // lookups that read it can never be defeated by stray whitespace or casing.
   if (coll === 'masters') {
@@ -213,8 +264,27 @@ async function validateDoc(coll, doc, id) {
     if (Number(doc.standardRate) < 0) return 'Standard rate cannot be negative.';
     if (Number(doc.price) < 0) return 'Price cannot be negative.';
   }
+  if (coll === 'purchaseOrders' || coll === 'purchaseRequests' || coll === 'rfqs' || coll === 'purchaseInvoices') {
+    const lines = Array.isArray(doc.items) ? doc.items : [];
+    for (const l of lines) {
+      if ((Number(l.qty) || 0) < 0) return 'Quantities cannot be negative.';
+      if ((Number(l.unitCost) || 0) < 0) return 'Unit costs cannot be negative.';
+      if (l.discountPct != null && (Number(l.discountPct) < 0 || Number(l.discountPct) > 100)) return 'Line discount must be between 0 and 100%.';
+      if (l.taxRate != null && (Number(l.taxRate) < 0 || Number(l.taxRate) > 100)) return 'Tax rate must be between 0 and 100%.';
+    }
+    if (coll !== 'purchaseRequests' && coll !== 'rfqs' && !doc.supplierId) return 'Please choose a supplier.';
+    if (Array.isArray(doc.landedCosts)) {
+      for (const c of doc.landedCosts) if ((Number(c.amount) || 0) < 0) return 'Landed costs cannot be negative.';
+    }
+    if (doc.overReceiptPct != null && (Number(doc.overReceiptPct) < 0 || Number(doc.overReceiptPct) > 100)) {
+      return 'Over-receipt tolerance must be between 0 and 100%.';
+    }
+  }
   if (coll === 'parts') {
     if (doc.name != null && !String(doc.name).trim()) return 'Part name is required.';
+    // A serialised item is counted one unit at a time; a fractional unit of
+    // measure would make the serial ledger and the stock figure disagree.
+    if (doc.trackSerial && doc.trackBatch) return 'An item can be tracked by batch or by serial number, not both.';
     if (Number(doc.costPrice) < 0 || Number(doc.sellingPrice) < 0) return 'Prices cannot be negative.';
     if (doc.minStock != null && doc.maxStock != null &&
         Number(doc.maxStock) > 0 && Number(doc.minStock) > Number(doc.maxStock)) {
@@ -470,6 +540,13 @@ const FILTERABLE = {
   parts: ['category'],
   masters: ['kind', 'parentId'],
   services: ['categoryId', 'active'],
+  purchaseOrders: ['status', 'supplierId'],
+  purchaseRequests: ['status'],
+  rfqs: ['status'],
+  goodsReceipts: ['poId', 'supplierId'],
+  purchaseInvoices: ['status', 'supplierId', 'poId'],
+  purchaseReturns: ['grnId', 'supplierId'],
+  stockLots: ['partId', 'status'],
 };
 
 // ---- List ----
@@ -527,10 +604,17 @@ async function allocSeq(client, coll, table, lock, id) {
   return Number(r.rows[0].last);
 }
 
+// Collections that may ONLY be written by their dedicated endpoint. A goods
+// receipt that did not move stock, or a return that did not come out of a lot,
+// would be a document describing something that never happened — so the generic
+// CRUD path hands these straight on to the engine that owns them.
+const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots']);
+
 // ---- Create (upsert by id) ----
 app.post('/api/:coll', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
   if (!cfg) return next();
+  if (DEDICATED_WRITE.has(req.params.coll)) return next();
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Document body required' });
   }
@@ -792,6 +876,459 @@ app.post('/api/purchaseOrders/:id/receive', asyncH(async (req, res) => {
   }
 }));
 
+// ══════════════════════════════════════════════════════════════════════════
+// GOODS RECEIPT — what actually arrived.
+// A supplier delivery is its own document, not a flag on the order. Deliveries
+// arrive short, arrive twice, and arrive with the wrong things; a PO that can
+// only be "received" in full cannot describe any of that. Every receipt is
+// atomic: the GRN, the stock movement, the lots and the PO's received
+// quantities all commit together or not at all.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/goodsReceipts', asyncH(async (req, res) => {
+  const body = req.body || {};
+  const poId = body.poId;
+  const inLines = Array.isArray(body.items) ? body.items : [];
+  if (!poId) return res.status(400).json({ error: 'A goods receipt must reference a purchase order.' });
+  if (!inLines.length) return res.status(400).json({ error: 'Enter at least one received quantity.' });
+  if (periodLocked(body.receivedDate)) {
+    return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '. Use a later date.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const por = await client.query(`SELECT data, seq FROM purchase_orders WHERE id = $1 FOR UPDATE`, [poId]);
+    if (!por.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase order not found.' }); }
+    const po = por.rows[0].data;
+    const poNo = docNo('purchaseOrders', por.rows[0].seq);
+    if (po.status === 'cancelled') { await client.query('ROLLBACK'); return res.status(400).json({ error: poNo + ' is cancelled.' }); }
+    // Goods may only be received against an order somebody authorised.
+    if (!['approved', 'partial'].includes(po.status)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: poNo + ' must be approved before goods can be received.' });
+    }
+
+    const poLines = Array.isArray(po.items) ? po.items : [];
+    const byLineId = new Map(poLines.map((l, i) => [l.id || String(i), l]));
+
+    // ---- Validate the whole receipt before touching any stock ----
+    const work = [];
+    for (const rl of inLines) {
+      const qty = Number(rl.qty) || 0;
+      if (qty <= 0) continue;
+      const pl = byLineId.get(rl.poLineId);
+      if (!pl) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'A received line does not match this purchase order.' }); }
+      const ordered = Number(pl.qty) || 0;
+      const already = Number(pl.qtyReceived) || 0;
+      const tolerance = Number(po.overReceiptPct) || 0;
+      const ceiling = ordered * (1 + tolerance / 100);
+      if (already + qty > ceiling + 1e-9) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: `Cannot receive ${qty} of "${pl.name}" — ${ordered} ordered, ${already} already received.` +
+                 (tolerance ? ` Over-receipt tolerance is ${tolerance}%.` : ''),
+        });
+      }
+      work.push({ rl, pl, qty });
+    }
+    if (!work.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Enter at least one received quantity.' }); }
+
+    // Lock every affected part in a stable order so concurrent receipts on
+    // overlapping orders can never deadlock.
+    const partIds = [...new Set(work.map((w) => w.pl.partId).filter(Boolean))].sort();
+    const partRows = {};
+    for (const pid of partIds) {
+      const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      // A line whose item was deleted must stop the receipt, not be skipped —
+      // silently receiving nothing is how a PO shows complete with no stock.
+      if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'An item on this order no longer exists. Remove the line first.' }); }
+      partRows[pid] = r.rows[0].data;
+    }
+
+    // Tracked items must arrive with the identity the item master demands.
+    for (const w of work) {
+      const p = partRows[w.pl.partId];
+      const lots = Array.isArray(w.rl.lots) ? w.rl.lots : [];
+      const needs = p.trackBatch || p.trackSerial || p.trackExpiry;
+      if (!needs) continue;
+      const lotQty = round2(lots.reduce((s, l) => s + (Number(l.qty) || 0), 0));
+      if (round2(lotQty) !== round2(w.qty)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `"${p.name}" is tracked — the batch/serial quantities must add up to ${w.qty} (got ${lotQty}).` });
+      }
+      for (const l of lots) {
+        if (p.trackBatch && !String(l.lotNo || '').trim()) { await client.query('ROLLBACK'); return res.status(400).json({ error: `"${p.name}" needs a batch number on every line.` }); }
+        if (p.trackExpiry && !String(l.expiryDate || '').trim()) { await client.query('ROLLBACK'); return res.status(400).json({ error: `"${p.name}" needs an expiry date on every line.` }); }
+        if (p.trackSerial) {
+          if (!String(l.serialNo || '').trim()) { await client.query('ROLLBACK'); return res.status(400).json({ error: `"${p.name}" needs a serial number on every unit.` }); }
+          if (Number(l.qty) !== 1) { await client.query('ROLLBACK'); return res.status(400).json({ error: `"${p.name}" is serialised — each serial covers exactly one unit.` }); }
+        }
+      }
+    }
+
+    const grnId = crypto.randomUUID();
+    const seq = await allocSeq(client, 'goodsReceipts', 'goods_receipts', 1007, grnId);
+    const grnNo = docNo('goodsReceipts', seq);
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+    const grnLines = [];
+
+    for (const w of work) {
+      const p = partRows[w.pl.partId];
+      const from = Number(p.stock) || 0;
+      const to = round2(from + w.qty);
+      const unitCost = round2(Number(w.rl.unitCost != null ? w.rl.unitCost : w.pl.unitCost) || 0);
+      // Weighted average: valuation must reflect the blended cost of what is
+      // actually on the shelf, not just the latest price paid.
+      const oldCost = Number(p.costPrice) || 0;
+      const wac = to > 0 ? round2((from * oldCost + w.qty * unitCost) / to) : unitCost;
+      const mv = { type: 'in', qty: w.qty, from, to, note: `Received on ${grnNo} (${poNo})`, at: now, by: actor, grnId, poId };
+      partRows[w.pl.partId] = { ...p, stock: to, costPrice: wac, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+
+      // One lot row per batch/serial; untracked items still get a lot so cost
+      // layers and returns have something concrete to point at.
+      const lots = Array.isArray(w.rl.lots) && w.rl.lots.length
+        ? w.rl.lots : [{ qty: w.qty, lotNo: '', serialNo: '', expiryDate: '' }];
+      for (const l of lots) {
+        const lotQty = Number(l.qty) || 0;
+        if (lotQty <= 0) continue;
+        await client.query(
+          `INSERT INTO stock_lots (id, data, part_id, created_at) VALUES ($1,$2,$3,$4)`,
+          [crypto.randomUUID(), JSON.stringify({
+            partId: w.pl.partId, partName: p.name || '',
+            lotNo: String(l.lotNo || '').trim(), serialNo: String(l.serialNo || '').trim(),
+            expiryDate: String(l.expiryDate || '').trim(),
+            qty: lotQty, remaining: lotQty, unitCost,
+            grnId, grnNo, poId, poNo,
+            supplierId: po.supplierId || '', supplierName: po.supplierName || '',
+            receivedAt: now, status: 'available', createdAt: now, createdBy: actor,
+          }), w.pl.partId, now]
+        );
+      }
+
+      w.pl.qtyReceived = round2((Number(w.pl.qtyReceived) || 0) + w.qty);
+      grnLines.push({
+        poLineId: w.pl.id, partId: w.pl.partId, name: w.pl.name || p.name || '',
+        qty: w.qty, unitCost, lineTotal: round2(w.qty * unitCost),
+        lots: lots.map((l) => ({ lotNo: l.lotNo || '', serialNo: l.serialNo || '', expiryDate: l.expiryDate || '', qty: Number(l.qty) || 0 })),
+      });
+    }
+
+    for (const pid of partIds) {
+      await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
+    }
+
+    // The order's own status follows from its lines, never from a manual flag.
+    const fullyReceived = poLines.every((l) => (Number(l.qtyReceived) || 0) >= (Number(l.qty) || 0) - 1e-9);
+    const poMerged = { ...po, items: poLines, status: fullyReceived ? 'received' : 'partial', lastReceiptAt: now };
+    await client.query(`UPDATE purchase_orders SET data = $2 WHERE id = $1`, [poId, JSON.stringify(poMerged)]);
+
+    const grn = {
+      poId, poNo, supplierId: po.supplierId || '', supplierName: po.supplierName || '',
+      receivedDate: body.receivedDate || tsToDs(now), deliveryNote: String(body.deliveryNote || '').trim(),
+      notes: String(body.notes || '').trim(),
+      items: grnLines, total: round2(grnLines.reduce((s, l) => s + l.lineTotal, 0)),
+      seq, status: 'posted', createdAt: now, createdBy: actor,
+    };
+    await client.query(`INSERT INTO goods_receipts (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [grnId, JSON.stringify(grn), seq, now]);
+
+    await client.query('COMMIT');
+    audit(req, 'goods-receipt', 'goodsReceipts', grnId, `${grnNo} against ${poNo}`);
+    res.json({ id: grnId, ...grn, purchaseOrder: { id: poId, ...poMerged } });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// PURCHASE INVOICE — what the supplier billed, and the liability it creates.
+// Posting a supplier bill recognises the payable when the goods arrive, which
+// is what makes purchases accrual-based like sales already are. Landed costs
+// (freight, customs, clearing) are allocated onto item cost here, because they
+// are part of what the goods cost and therefore part of COGS.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data, seq FROM purchase_invoices WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase invoice not found.' }); }
+    const pi = r.rows[0].data;
+    const piNo = docNo('purchaseInvoices', r.rows[0].seq);
+    if (pi.status && pi.status !== 'draft') { await client.query('ROLLBACK'); return res.status(400).json({ error: piNo + ' has already been posted.' }); }
+    if (periodLocked(pi.invoiceDate)) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' }); }
+
+    const lines = Array.isArray(pi.items) ? pi.items : [];
+    const landed = Array.isArray(pi.landedCosts) ? pi.landedCosts : [];
+    const landedTotal = round2(landed.reduce((s, c) => s + (Number(c.amount) || 0), 0));
+
+    // Allocate landed cost across the lines. By value is the default because
+    // freight on a consignment tracks its worth; by quantity is offered for
+    // bulky low-value goods where weight, not value, drives the charge.
+    const basis = String(pi.landedAllocation || 'value');
+    const lineVal = lines.map((l) => (Number(l.qty) || 0) * (Number(l.unitCost) || 0));
+    const lineQty = lines.map((l) => Number(l.qty) || 0);
+    const denom = basis === 'qty' ? lineQty.reduce((a, b) => a + b, 0) : lineVal.reduce((a, b) => a + b, 0);
+
+    const partIds = [...new Set(lines.map((l) => l.partId).filter(Boolean))].sort();
+    const partRows = {};
+    for (const pid of partIds) {
+      const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      if (pr.rows.length) partRows[pid] = pr.rows[0].data;
+    }
+
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+    let allocated = 0;
+    lines.forEach((l, i) => {
+      if (!landedTotal || !denom) { l.landedShare = 0; return; }
+      // Last line absorbs the rounding remainder so the allocation always sums
+      // back to exactly the landed total.
+      const share = i === lines.length - 1
+        ? round2(landedTotal - allocated)
+        : round2(landedTotal * ((basis === 'qty' ? lineQty[i] : lineVal[i]) / denom));
+      allocated = round2(allocated + share);
+      l.landedShare = share;
+      const qty = Number(l.qty) || 0;
+      l.effectiveUnitCost = qty > 0 ? round2((Number(l.unitCost) || 0) + share / qty) : Number(l.unitCost) || 0;
+    });
+
+    // Re-cost the affected items at the landed unit cost. Without this the
+    // freight silently disappears and every margin report reads high.
+    for (const l of lines) {
+      const p = partRows[l.partId];
+      if (!p || !l.landedShare) continue;
+      const onHand = Number(p.stock) || 0;
+      const qty = Number(l.qty) || 0;
+      if (onHand <= 0 || qty <= 0) continue;
+      const cur = Number(p.costPrice) || 0;
+      // Spread this consignment's freight over the units still on hand.
+      const uplift = round2(l.landedShare / Math.max(onHand, qty));
+      partRows[l.partId] = { ...p, costPrice: round2(cur + uplift) };
+    }
+    for (const pid of Object.keys(partRows)) {
+      await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
+    }
+
+    const merged = sanitizeDoc('purchaseInvoices', {
+      ...pi, items: lines, landedTotal, status: 'unpaid',
+      amountPaid: Number(pi.amountPaid) || 0, payments: Array.isArray(pi.payments) ? pi.payments : [],
+      postedAt: now, postedBy: actor,
+    });
+    await client.query(`UPDATE purchase_invoices SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query('COMMIT');
+    audit(req, 'post-purchase-invoice', 'purchaseInvoices', req.params.id, `${piNo} ${merged.total}`);
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Pay a supplier invoice, atomically ----
+// Mirrors the customer-payment endpoint: row-locked, overpay rejected, and the
+// cash-book entry written in the same transaction as the payment record.
+app.post('/api/purchaseInvoices/:id/pay', asyncH(async (req, res) => {
+  const amount = round2(Number((req.body || {}).amount));
+  const method = String((req.body || {}).method || 'cash');
+  const date = String((req.body || {}).date || '').slice(0, 10) || tsToDs(Date.now());
+  if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Enter a payment amount.' });
+  if (periodLocked(date)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data, seq FROM purchase_invoices WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase invoice not found.' }); }
+    const pi = r.rows[0].data;
+    const piNo = docNo('purchaseInvoices', r.rows[0].seq);
+    if (pi.status === 'draft') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Post ' + piNo + ' before paying it.' }); }
+    if (pi.status === 'cancelled') { await client.query('ROLLBACK'); return res.status(400).json({ error: piNo + ' is cancelled.' }); }
+
+    const total = round2(Number(pi.total) || 0);
+    const paid = round2(Number(pi.amountPaid) || 0);
+    const due = round2(total - paid);
+    if (amount > due + 1e-9) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Only ${due.toFixed(2)} is outstanding on ${piNo}.` });
+    }
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+    const payment = { amount, method, date, at: now, by: actor, reference: String((req.body || {}).reference || '').trim() };
+    const newPaid = round2(paid + amount);
+    const merged = {
+      ...pi,
+      payments: (Array.isArray(pi.payments) ? pi.payments : []).concat([payment]),
+      amountPaid: newPaid,
+      status: newPaid >= total - 1e-9 ? 'paid' : 'partial',
+      paidAt: newPaid >= total - 1e-9 ? now : pi.paidAt,
+    };
+    await client.query(`UPDATE purchase_invoices SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+
+    // Cash leaves the business in the same transaction that records the payment.
+    await client.query(`INSERT INTO transactions (id, data, txn_date, created_at) VALUES ($1,$2,$3,$4)`,
+      [crypto.randomUUID(), JSON.stringify({
+        type: 'expense', date, amount, description: `Supplier payment – ${piNo}`,
+        category: 'Spare Parts', paymentMethod: method,
+        accountId: (req.body || {}).accountId || '', accountName: (req.body || {}).accountName || '',
+        partyType: 'vendor', partyName: pi.supplierName || '', supplierId: pi.supplierId || '',
+        reference: piNo, purchaseInvoiceId: req.params.id, createdAt: now, createdBy: actor,
+      }), date, now]);
+
+    await client.query('COMMIT');
+    audit(req, 'pay-purchase-invoice', 'purchaseInvoices', req.params.id, `${piNo} ${amount}`);
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// PURCHASE RETURN — goods going back to the supplier.
+// Stock comes out of the specific lots it went into, so a returned batch stops
+// being available for issue and the supplier link survives.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/purchaseReturns', asyncH(async (req, res) => {
+  const body = req.body || {};
+  const lines = Array.isArray(body.items) ? body.items : [];
+  if (!lines.length) return res.status(400).json({ error: 'Enter at least one item to return.' });
+  if (periodLocked(body.returnDate)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    let grn = null, grnSeq = null;
+    if (body.grnId) {
+      const g = await client.query(`SELECT data, seq FROM goods_receipts WHERE id = $1 FOR UPDATE`, [body.grnId]);
+      if (!g.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Goods receipt not found.' }); }
+      grn = g.rows[0].data; grnSeq = g.rows[0].seq;
+    }
+
+    const partIds = [...new Set(lines.map((l) => l.partId).filter(Boolean))].sort();
+    const partRows = {};
+    for (const pid of partIds) {
+      const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      if (!pr.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'An item on this return no longer exists.' }); }
+      partRows[pid] = pr.rows[0].data;
+    }
+
+    // Validate the whole return before any stock moves.
+    for (const l of lines) {
+      const qty = Number(l.qty) || 0;
+      if (qty <= 0) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Return quantities must be greater than zero.' }); }
+      const p = partRows[l.partId];
+      if (qty > (Number(p.stock) || 0) + 1e-9) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Cannot return ${qty} of "${p.name}" — only ${Number(p.stock) || 0} on hand.` });
+      }
+      if (l.lotId) {
+        const lr = await client.query(`SELECT data FROM stock_lots WHERE id = $1 FOR UPDATE`, [l.lotId]);
+        if (!lr.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'The selected batch no longer exists.' }); }
+        const rem = Number(lr.rows[0].data.remaining) || 0;
+        if (qty > rem + 1e-9) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: `Batch ${lr.rows[0].data.lotNo || lr.rows[0].data.serialNo || ''} has only ${rem} remaining.` });
+        }
+        l._lot = lr.rows[0].data;
+      }
+    }
+
+    const retId = crypto.randomUUID();
+    const seq = await allocSeq(client, 'purchaseReturns', 'purchase_returns', 1009, retId);
+    const retNo = docNo('purchaseReturns', seq);
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+
+    for (const l of lines) {
+      const p = partRows[l.partId];
+      const qty = Number(l.qty) || 0;
+      const from = Number(p.stock) || 0, to = round2(from - qty);
+      const mv = { type: 'out', qty, from, to, note: `Returned to supplier on ${retNo}`, at: now, by: actor, purchaseReturnId: retId };
+      partRows[l.partId] = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+      if (l.lotId && l._lot) {
+        const rem = round2((Number(l._lot.remaining) || 0) - qty);
+        await client.query(`UPDATE stock_lots SET data = $2 WHERE id = $1`,
+          [l.lotId, JSON.stringify({ ...l._lot, remaining: rem, status: rem <= 1e-9 ? 'returned' : 'available', returnedAt: now })]);
+      }
+    }
+    for (const pid of partIds) {
+      await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
+    }
+
+    const doc = sanitizeDoc('purchaseReturns', {
+      grnId: body.grnId || '', grnNo: grnSeq ? docNo('goodsReceipts', grnSeq) : '',
+      poId: (grn && grn.poId) || body.poId || '',
+      supplierId: (grn && grn.supplierId) || body.supplierId || '',
+      supplierName: (grn && grn.supplierName) || body.supplierName || '',
+      returnDate: body.returnDate || tsToDs(now),
+      reason: String(body.reason || '').trim(),
+      creditNoteNo: String(body.creditNoteNo || '').trim(),
+      items: lines.map((l) => ({ partId: l.partId, name: l.name || '', qty: Number(l.qty) || 0, unitCost: round2(Number(l.unitCost) || 0), lotId: l.lotId || '' })),
+      seq, status: 'posted', createdAt: now, createdBy: actor,
+    });
+    await client.query(`INSERT INTO purchase_returns (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [retId, JSON.stringify(doc), seq, now]);
+
+    await client.query('COMMIT');
+    audit(req, 'purchase-return', 'purchaseReturns', retId, retNo);
+    res.json({ id: retId, ...doc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Approve / cancel a purchase order ----
+// Approval is the control that separates "someone wants this" from "the garage
+// has committed to pay for it", and it is what receiving checks against.
+app.post('/api/purchaseOrders/:id/status', asyncH(async (req, res) => {
+  const next = String((req.body || {}).status || '');
+  const ALLOWED = { draft: ['submitted', 'cancelled'], submitted: ['approved', 'draft', 'cancelled'], approved: ['cancelled'], partial: ['closed', 'cancelled'], received: ['closed'], closed: [], cancelled: [] };
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data, seq FROM purchase_orders WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase order not found.' }); }
+    const po = r.rows[0].data;
+    const cur = po.status || 'draft';
+    if (!(ALLOWED[cur] || []).includes(next)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `A ${cur} order cannot move to ${next}.` });
+    }
+    // Cancelling after goods have arrived would strand the stock already booked.
+    if (next === 'cancelled' && (Array.isArray(po.items) ? po.items : []).some((l) => (Number(l.qtyReceived) || 0) > 0)) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Goods have already been received against this order — raise a purchase return instead.' });
+    }
+    const actor = (req.auth && req.auth.name) || '?';
+    const merged = { ...po, status: next };
+    if (next === 'submitted') { merged.submittedBy = actor; merged.submittedAt = Date.now(); }
+    if (next === 'approved') { merged.approvedBy = actor; merged.approvedAt = Date.now(); }
+    if (next === 'cancelled') { merged.cancelledBy = actor; merged.cancelledAt = Date.now(); merged.cancelReason = String((req.body || {}).reason || '').trim(); }
+    if (next === 'closed') { merged.closedBy = actor; merged.closedAt = Date.now(); }
+    await client.query(`UPDATE purchase_orders SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query('COMMIT');
+    audit(req, 'po-' + next, 'purchaseOrders', req.params.id, docNo('purchaseOrders', r.rows[0].seq));
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
 // ---- Adjust part stock, atomically ----
 // Row-locked read-modify-write so two devices can never erase each other's
 // movements; stock can never go negative.
@@ -909,6 +1446,11 @@ app.post('/api/jobCards/:id/parts/return', asyncH(async (req, res) => {
 app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
   if (!cfg) return next();
+  // Editing a posted receipt or return after the fact would silently desync the
+  // document from the stock movement it caused.
+  if (DEDICATED_WRITE.has(req.params.coll)) {
+    return res.status(400).json({ error: 'This record is created by a posting and cannot be edited. Raise a correcting document instead.' });
+  }
   const patch = sanitizeDoc(req.params.coll, { ...req.body });
   delete patch.id;
   patch.updatedBy = (req.auth && req.auth.name) || '?';
@@ -1033,7 +1575,29 @@ async function deleteBlocker(coll, id) {
       if (Array.isArray(rows[0].data.movements) && rows[0].data.movements.length) return 'this item has stock movement history — deactivate it instead of deleting';
     }
     if (await has(`SELECT 1 FROM job_cards jc WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(jc.data->'parts','[]'::jsonb)) p WHERE p->>'partId'=$1)`, [id])) return 'this item has been issued to job cards';
-    if (await has(`SELECT 1 FROM purchase_orders po WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(po.data->'lines','[]'::jsonb)) l WHERE l->>'partId'=$1)`, [id])) return 'this item appears on purchase orders';
+    if (await has(`SELECT 1 FROM purchase_orders po WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(po.data->'items','[]'::jsonb)) l WHERE l->>'partId'=$1)`, [id])) return 'this item appears on purchase orders';
+    if (await has(`SELECT 1 FROM stock_lots WHERE part_id=$1`, [id])) return 'this item has received batches on record';
+  } else if (coll === 'purchaseOrders') {
+    // An order goods have arrived against is the evidence behind those stock
+    // movements; deleting it would leave the movements pointing at nothing.
+    if (await has(`SELECT 1 FROM goods_receipts WHERE data->>'poId'=$1`, [id])) return 'goods have been received against this order';
+    if (await has(`SELECT 1 FROM purchase_invoices WHERE data->>'poId'=$1`, [id])) return 'a supplier invoice references this order';
+  } else if (coll === 'goodsReceipts') {
+    return 'a goods receipt records stock that has already moved — raise a purchase return instead';
+  } else if (coll === 'purchaseReturns') {
+    return 'a purchase return records stock that has already moved and cannot be deleted';
+  } else if (coll === 'purchaseInvoices') {
+    const { rows } = await pool.query(`SELECT data FROM purchase_invoices WHERE id=$1`, [id]);
+    if (rows.length) {
+      if (Number(rows[0].data.amountPaid || 0) > 0) return 'this invoice has recorded payments';
+      if (rows[0].data.status && rows[0].data.status !== 'draft') return 'this invoice has been posted — cancel it instead of deleting';
+    }
+  } else if (coll === 'suppliers') {
+    if (await has(`SELECT 1 FROM purchase_orders WHERE data->>'supplierId'=$1`, [id])) return 'this supplier has purchase orders';
+    if (await has(`SELECT 1 FROM purchase_invoices WHERE data->>'supplierId'=$1`, [id])) return 'this supplier has invoices';
+    if (await has(`SELECT 1 FROM parts WHERE data->>'supplierId'=$1`, [id])) return 'this supplier is the preferred supplier on items';
+  } else if (coll === 'stockLots') {
+    return 'stock lots are created by goods receipts and cannot be deleted directly';
   }
   return null;
 }

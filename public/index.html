@@ -1137,6 +1137,11 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-purchasing" onclick="toggleNavGroup('purchasing')" title="Purchasing"><span class="snav-label">Purchasing</span><span class="snav-chev" aria-hidden="true">▾</span></button>
         <div class="snav-gitems" id="ng-purchasing">
       <div class="snav-item" id="snav-purchases" onclick="navTo('purchases')" title="Purchase Orders"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="snav-label">Purchase Orders</span></div>
+      <div class="snav-item" id="snav-purchase-requests" onclick="navTo('purchase-requests')" title="Purchase Requests"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></span><span class="snav-label">Purchase Requests</span></div>
+      <div class="snav-item" id="snav-rfqs" onclick="navTo('rfqs')" title="Requests for Quotation"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9 10h6"/></svg></span><span class="snav-label">RFQs</span></div>
+      <div class="snav-item" id="snav-goods-receipts" onclick="navTo('goods-receipts')" title="Goods Receipts"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="snav-label">Goods Receipts</span></div>
+      <div class="snav-item" id="snav-purchase-invoices" onclick="navTo('purchase-invoices')" title="Purchase Invoices"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 17V11"/><path d="M9.5 12.5h3.5a1.5 1.5 0 0 1 0 3H10"/></svg></span><span class="snav-label">Purchase Invoices</span></div>
+      <div class="snav-item" id="snav-purchase-returns" onclick="navTo('purchase-returns')" title="Purchase Returns"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span><span class="snav-label">Purchase Returns</span></div>
       <div class="snav-item" id="snav-suppliers" onclick="navTo('suppliers')" title="Suppliers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h4v-3.34a2 2 0 0 0-.59-1.42L17 9h-3"/><path d="M2 5h11v11H2z"/><path d="M14 9h3"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="snav-label">Suppliers</span></div>
         </div>
       </div>
@@ -1544,6 +1549,14 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Location / Bin</label><input type="text" id="pt-location" placeholder="e.g. A-12, Shelf 3"></div>
         </div>
         <label class="chk-row" style="margin:2px 0 12px"><input type="checkbox" id="pt-active" checked> <span>Active — offered when issuing parts and raising purchase orders</span></label>
+        <div class="card" style="background:var(--bg);box-shadow:none;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Traceability</div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Goods receipts will demand this information for every unit received. Set it before you start buying the item.</div>
+          <label class="chk-row" style="margin-bottom:8px"><input type="checkbox" id="pt-track-batch" onchange="ptTrackChanged()"> <span>Track batch / lot numbers</span></label>
+          <label class="chk-row" style="margin-bottom:8px"><input type="checkbox" id="pt-track-serial" onchange="ptTrackChanged()"> <span>Track serial numbers <span style="font-weight:500;color:var(--t3)">— one serial per unit</span></span></label>
+          <label class="chk-row"><input type="checkbox" id="pt-track-expiry"> <span>Track expiry dates <span style="font-weight:500;color:var(--t3)">— oils, coolants, adhesives</span></span></label>
+          <div id="pt-track-note" style="font-size:12px;color:var(--amber-dk);margin-top:9px;display:none"></div>
+        </div>
         <div class="form-group" id="pt-stock-note" style="display:none;font-size:12px;color:var(--t3)">On-hand stock is locked while editing — use <b>Adjust Stock</b> on the part page so every change is logged in the movement history.</div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="pt-save-btn" onclick="savePart()">Save Part</button>
@@ -1675,6 +1688,168 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div id="estimate-detail"></div>
     </div>
 
+    <!-- ══ PURCHASE REQUESTS ══ -->
+    <div id="v-purchase-requests" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Purchase Requests</div><div class="page-sub">What the workshop needs, before anyone commits to buying it</div></div>
+        <button class="btn btn-primary" onclick="showAddPR()">+ New Request</button>
+      </div>
+      <div id="pr-kpis"></div>
+      <div class="search-wrap"><input type="text" id="pr-search" placeholder="Search request no., requester or item…" oninput="renderPRs()"></div>
+      <div id="pr-list"></div>
+    </div>
+    <div id="v-add-pr" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchase-requests')">← Purchase Requests</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-pr-title">New Purchase Request</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Requested By</label><input type="text" id="pr-by" placeholder="Name" autocomplete="off"></div>
+          <div class="form-group"><label>Needed By</label><input type="date" id="pr-needed"></div>
+        </div>
+        <div class="form-group"><label>Purpose / Notes</label><input type="text" id="pr-purpose" placeholder="e.g. Stock replenishment, JC-0042" autocomplete="off"></div>
+        <div class="form-group"><label>Requested Items</label><div id="pr-items"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="prAddItem()">+ Add Item</button></div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-pr-btn" onclick="savePR()">Save Request</button><button class="btn btn-secondary" onclick="navTo('purchase-requests')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-pr" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchase-requests')">← Purchase Requests</button><div class="btn-group" id="pr-actions"></div></div>
+      <div id="pr-detail"></div>
+    </div>
+
+    <!-- ══ RFQ ══ -->
+    <div id="v-rfqs" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Requests for Quotation</div><div class="page-sub">Ask several suppliers, compare, then award</div></div>
+        <button class="btn btn-primary" onclick="showAddRFQ()">+ New RFQ</button>
+      </div>
+      <div id="rfq-kpis"></div>
+      <div class="search-wrap"><input type="text" id="rfq-search" placeholder="Search RFQ no. or item…" oninput="renderRFQs()"></div>
+      <div id="rfq-list"></div>
+    </div>
+    <div id="v-add-rfq" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('rfqs')">← RFQs</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-rfq-title">New RFQ</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Response Due</label><input type="date" id="rfq-due"></div>
+          <div class="form-group"><label>Notes</label><input type="text" id="rfq-notes" placeholder="Delivery terms, warranty…" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Items to Quote</label><div id="rfq-items"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="rfqAddItem()">+ Add Item</button></div>
+        <div class="form-group"><label>Invite Suppliers</label><div id="rfq-suppliers"></div></div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-rfq-btn" onclick="saveRFQ()">Save RFQ</button><button class="btn btn-secondary" onclick="navTo('rfqs')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-rfq" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('rfqs')">← RFQs</button><div class="btn-group" id="rfq-actions"></div></div>
+      <div id="rfq-detail"></div>
+    </div>
+
+    <!-- ══ GOODS RECEIPT ══ -->
+    <div id="v-goods-receipts" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Goods Receipts</div><div class="page-sub">What actually arrived, and which batches it came in</div></div>
+      </div>
+      <div id="grn-kpis"></div>
+      <div class="search-wrap"><input type="text" id="grn-search" placeholder="Search GRN no., PO no. or supplier…" oninput="renderGRNs()"></div>
+      <div id="grn-list"></div>
+    </div>
+    <div id="v-receive-po" class="view">
+      <div class="page-header"><button class="back-btn" onclick="showPO(curPO)">← Purchase Order</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">Receive Goods</div><div class="page-sub" id="receive-sub"></div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Received Date *</label><input type="date" id="rc-date"></div>
+          <div class="form-group"><label>Supplier Delivery Note</label><input type="text" id="rc-dn" placeholder="Their DN / invoice no." autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Quantities Received</label><div id="rc-lines"></div></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="rc-notes" placeholder="Condition on arrival, shortages…" autocomplete="off"></div>
+        <div class="btn-group"><button class="btn btn-primary" id="rc-post-btn" onclick="postGoodsReceipt()">Post Goods Receipt</button><button class="btn btn-secondary" onclick="showPO(curPO)">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-grn" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('goods-receipts')">← Goods Receipts</button><div class="btn-group" id="grn-actions"></div></div>
+      <div id="grn-detail"></div>
+    </div>
+
+    <!-- ══ PURCHASE INVOICES ══ -->
+    <div id="v-purchase-invoices" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Purchase Invoices</div><div class="page-sub">What suppliers billed, and what you still owe them</div></div>
+        <button class="btn btn-primary" onclick="showAddPINV()">+ New Invoice</button>
+      </div>
+      <div id="pinv-kpis"></div>
+      <div class="search-wrap"><input type="text" id="pinv-search" placeholder="Search invoice no. or supplier…" oninput="renderPINVs()"></div>
+      <div id="pinv-filters" style="margin-bottom:12px"></div>
+      <div id="pinv-list"></div>
+    </div>
+    <div id="v-add-pinv" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchase-invoices')">← Purchase Invoices</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-pinv-title">New Purchase Invoice</div><div class="page-sub">Bill the goods you have received. Landed costs are added onto item cost when you post.</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Supplier *</label><select id="pinv-supplier" onchange="pinvSupplierChanged()"></select></div>
+          <div class="form-group"><label>Against Purchase Order</label><select id="pinv-po" onchange="pinvPOChanged()"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Supplier Invoice No. *</label><input type="text" id="pinv-no" placeholder="Their invoice number" autocomplete="off"></div>
+          <div class="form-group"><label>Invoice Date *</label><input type="date" id="pinv-date"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Due</label><input type="date" id="pinv-due"></div>
+          <div class="form-group"><label>Notes</label><input type="text" id="pinv-notes" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Invoice Lines</label><div id="pinv-items"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="pinvAddItem()">+ Add Line</button></div>
+        <div class="form-group">
+          <label>Landed Costs <span style="font-size:11px;color:var(--t3)">freight, customs, clearing — added to item cost</span></label>
+          <div id="pinv-landed"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="pinvAddLanded()">+ Add Charge</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Allocate Landed Cost By</label>
+            <select id="pinv-alloc" onchange="pinvSyncTotal()"><option value="value">Line value (default)</option><option value="qty">Quantity</option></select></div>
+          <div class="form-group"><label>Header Discount</label>
+            <div style="display:flex;gap:7px"><select id="pinv-disc-type" onchange="pinvSyncTotal()" style="width:110px"><option value="">None</option><option value="amount">Amount</option><option value="pct">Percent</option></select>
+            <input type="number" id="pinv-disc-val" min="0" step="0.01" placeholder="0" oninput="pinvSyncTotal()" style="flex:1"></div></div>
+        </div>
+        <div id="pinv-totals" style="text-align:right;margin:6px 0 14px"></div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-pinv-btn" onclick="savePINV()">Save Draft</button><button class="btn btn-secondary" onclick="navTo('purchase-invoices')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-pinv" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchase-invoices')">← Purchase Invoices</button><div class="btn-group" id="pinv-actions"></div></div>
+      <div id="pinv-detail"></div>
+    </div>
+
+    <!-- ══ PURCHASE RETURNS ══ -->
+    <div id="v-purchase-returns" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Purchase Returns</div><div class="page-sub">Goods sent back to the supplier</div></div>
+      </div>
+      <div id="pret-kpis"></div>
+      <div class="search-wrap"><input type="text" id="pret-search" placeholder="Search return no. or supplier…" oninput="renderPRETs()"></div>
+      <div id="pret-list"></div>
+    </div>
+    <div id="v-add-pret" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('goods-receipts')">← Goods Receipts</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">Return to Supplier</div><div class="page-sub" id="pret-sub"></div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Return Date *</label><input type="date" id="pret-date"></div>
+          <div class="form-group"><label>Supplier Credit Note No.</label><input type="text" id="pret-cn" placeholder="If already issued" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><input type="text" id="pret-reason" placeholder="e.g. Wrong part supplied, damaged on arrival" autocomplete="off"></div>
+        <div class="form-group"><label>Quantities to Return</label><div id="pret-lines"></div></div>
+        <div class="btn-group"><button class="btn btn-red" id="pret-post-btn" onclick="postPurchaseReturn()">Post Return</button><button class="btn btn-secondary" onclick="navTo('goods-receipts')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-pret" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('purchase-returns')">← Purchase Returns</button></div>
+      <div id="pret-detail"></div>
+    </div>
+
     <!-- ══ MASTER DATA: SETUP LISTS HUB ══ -->
     <div id="v-masters" class="view premium-view">
       <div class="page-header">
@@ -1791,7 +1966,15 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="card">
         <div class="form-row">
           <div class="form-group"><label>Supplier *</label><select id="po-supplier"></select></div>
-          <div class="form-group"><label>Reference / Notes</label><input type="text" id="po-ref" placeholder="Supplier invoice no, etc."></div>
+          <div class="form-group"><label>Reference / Notes</label><input type="text" id="po-ref" placeholder="Supplier quote no, etc." autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Order Date</label><input type="date" id="po-date"></div>
+          <div class="form-group"><label>Expected Delivery</label><input type="date" id="po-expected"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Tax Rate (%)</label><input type="number" id="po-tax" min="0" max="100" step="0.01" placeholder="0" oninput="poSyncTotal()"></div>
+          <div class="form-group"><label>Over-receipt Tolerance (%) <span style="font-size:11px;color:var(--t3)">0 = exact only</span></label><input type="number" id="po-tol" min="0" max="100" step="1" placeholder="0"></div>
         </div>
         <div class="form-group"><label>Order Lines</label><div id="po-items"></div><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="poAddItem()">+ Add Part</button></div>
         <div style="text-align:right;font-size:15px;font-weight:800;margin:4px 0 14px">Total: <span id="po-total">QAR 0.00</span></div>
@@ -2696,9 +2879,13 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
+// Today in LOCAL time. toISOString() is UTC, which in Doha (+03) reports
+// yesterday for the first three hours of every day — long enough to date a
+// goods receipt into the wrong period.
+function todayStr(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,10)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtRemaining(dateOut){
   if(!dateOut)return null;
@@ -2719,7 +2906,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2854,6 +3041,11 @@ function navTo(tab){
   else if(tab==='estimates')renderEstimates();
   else if(tab==='suppliers')renderSuppliers();
   else if(tab==='purchases')renderPurchases();
+  else if(tab==='purchase-requests')renderPRs();
+  else if(tab==='rfqs')renderRFQs();
+  else if(tab==='goods-receipts')renderGRNs();
+  else if(tab==='purchase-invoices')renderPINVs();
+  else if(tab==='purchase-returns')renderPRETs();
   else if(tab==='fin-accounts')renderFinAccounts();
   else if(tab==='acc-statement')renderAccStatement();
   else if(tab==='cust-accs')renderCustAccounts();
@@ -2910,7 +3102,12 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'jc-reports':['Job Cards','Reports'],'cust-reports':['Customers','Reports'],'tech-reports':['Technicians','Reports'],'veh-history':['Vehicles','Service History'],
   'add-appointment':['Appointments','New Appointment'],
   'add-part':['Inventory','Part'],'part':['Inventory','Part Detail'],
-  'masters':['Master Data','Setup Lists'],'master-list':['Master Data','Setup Lists'],'services':['Master Data','Service Master'],'add-service':['Master Data','Service']
+  'masters':['Master Data','Setup Lists'],'master-list':['Master Data','Setup Lists'],'services':['Master Data','Service Master'],'add-service':['Master Data','Service'],
+  'purchase-requests':['Purchasing','Purchase Requests'],'add-pr':['Purchasing','Purchase Request'],'pr':['Purchasing','Purchase Request'],
+  'rfqs':['Purchasing','RFQs'],'add-rfq':['Purchasing','RFQ'],'rfq':['Purchasing','RFQ'],
+  'goods-receipts':['Purchasing','Goods Receipts'],'receive-po':['Purchasing','Receive Goods'],'grn':['Purchasing','Goods Receipt'],
+  'purchase-invoices':['Purchasing','Purchase Invoices'],'add-pinv':['Purchasing','Purchase Invoice'],'pinv':['Purchasing','Purchase Invoice'],
+  'purchase-returns':['Purchasing','Purchase Returns'],'add-pret':['Purchasing','Return to Supplier'],'pret':['Purchasing','Purchase Return']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -3466,6 +3663,37 @@ function initFirestore(){
     if(activeNav==='services')renderServices();
     if(activeNav==='masters')renderMastersHub();
   },snapErr('services','services'));
+  db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.purchaseRequests=true;
+    purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='purchase-requests')renderPRs();
+  },snapErr('purchase requests','purchaseRequests'));
+  db.collection('rfqs').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.rfqs=true;
+    rfqs=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='rfqs')renderRFQs();
+  },snapErr('RFQs','rfqs'));
+  db.collection('goodsReceipts').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.goodsReceipts=true;
+    goodsReceipts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='goods-receipts')renderGRNs();
+    if(activeNav==='po'&&curPO)renderPODetail();
+  },snapErr('goods receipts','goodsReceipts'));
+  db.collection('purchaseInvoices').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.purchaseInvoices=true;
+    purchaseInvoices=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='purchase-invoices')renderPINVs();
+    if(activeNav==='aged-payables')renderAgedPayables();
+  },snapErr('purchase invoices','purchaseInvoices'));
+  db.collection('purchaseReturns').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.purchaseReturns=true;
+    purchaseReturns=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='purchase-returns')renderPRETs();
+  },snapErr('purchase returns','purchaseReturns'));
+  db.collection('stockLots').onSnapshot(function(snap){
+    _fired.stockLots=true;
+    stockLots=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+  },snapErr('stock lots','stockLots'));
   db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.purchaseOrders=true;
     purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -4530,8 +4758,33 @@ function showAddPart(editing){
   f('pt-min',p&&p.minStock);f('pt-max',p&&p.maxStock);
   f('pt-cost',p&&p.costPrice);f('pt-price',p&&p.sellingPrice);f('pt-location',p&&p.location);
   document.getElementById('pt-active').checked=!p||p.active!==false;
+  document.getElementById('pt-track-batch').checked=!!(p&&p.trackBatch);
+  document.getElementById('pt-track-serial').checked=!!(p&&p.trackSerial);
+  document.getElementById('pt-track-expiry').checked=!!(p&&p.trackExpiry);
+  // Changing how an item is traced after stock exists would leave the existing
+  // units without the identity the new setting demands.
+  var hasStock=!!(p&&(Number(p.stock)||0)>0);
+  ['pt-track-batch','pt-track-serial','pt-track-expiry'].forEach(function(id){document.getElementById(id).disabled=hasStock;});
+  var tn=document.getElementById('pt-track-note');
+  if(hasStock){tn.style.display='';tn.textContent='Traceability is locked while stock is on hand — the units already received carry no batch or serial. Adjust stock to zero first.';}
+  else{tn.style.display='none';}
+  ptTrackChanged();
   ptMarginHint();
   show('v-add-part');
+}
+// Batch and serial are alternative identities for the same unit, so choosing one
+// rules out the other. Reflect that in the UI rather than only at save time.
+function ptTrackChanged(){
+  var b=document.getElementById('pt-track-batch'),sr=document.getElementById('pt-track-serial');
+  if(!b||!sr)return;
+  var locked=b.disabled;
+  if(!locked){b.disabled=sr.checked;sr.disabled=b.checked;}
+  var tn=document.getElementById('pt-track-note');
+  if(tn&&!locked){
+    if(b.checked||sr.checked){tn.style.display='';tn.style.color='var(--t3)';
+      tn.textContent=sr.checked?'Every unit received will need its own serial number.':'Every receipt will need a batch number.';}
+    else tn.style.display='none';
+  }
 }
 // Live margin feedback: pricing an item below cost is the kind of mistake that
 // only surfaces at month-end, so surface it at the point of entry.
@@ -4585,8 +4838,12 @@ function savePart(){
     minStock:minS,maxStock:maxS,costPrice:cost,sellingPrice:sell,
     supplierId:supSel.value,supplier:supSel.value&&supOpt?supOpt.text:'',
     location:document.getElementById('pt-location').value.trim(),
-    active:!!document.getElementById('pt-active').checked
+    active:!!document.getElementById('pt-active').checked,
+    trackBatch:!!document.getElementById('pt-track-batch').checked,
+    trackSerial:!!document.getElementById('pt-track-serial').checked,
+    trackExpiry:!!document.getElementById('pt-track-expiry').checked
   };
+  if(data.trackBatch&&data.trackSerial){return invalidField('pt-track-batch','Track by batch or by serial number, not both.');}
   // Stock is set only at creation; afterwards it moves exclusively through
   // Adjust Stock so the movement history always reconciles with on-hand.
   if(!editingPartId)data.stock=Number(document.getElementById('pt-stock').value||0);
@@ -6707,7 +6964,19 @@ function deleteSupplier(){
 }
 
 // ── PURCHASE ORDERS ──
-var PO_STATUS={draft:{label:'DRAFT',badge:'badge-gray'},received:{label:'RECEIVED',badge:'badge-green'}};
+var PO_STATUS={
+  draft:    {label:'DRAFT',            badge:'badge-gray'},
+  submitted:{label:'AWAITING APPROVAL',badge:'badge-amber'},
+  approved: {label:'APPROVED',         badge:'badge-blue'},
+  partial:  {label:'PART RECEIVED',    badge:'badge-orange'},
+  received: {label:'RECEIVED',         badge:'badge-green'},
+  closed:   {label:'CLOSED',           badge:'badge-gray'},
+  cancelled:{label:'CANCELLED',        badge:'badge-red'}
+};
+// Ordered qty vs received qty, the numbers every purchasing question comes back to.
+function poOrdered(po){return (po.items||[]).reduce(function(s,l){return s+(Number(l.qty)||0);},0);}
+function poReceived(po){return (po.items||[]).reduce(function(s,l){return s+(Number(l.qtyReceived)||0);},0);}
+function poOutstanding(po){return Math.max(0,poOrdered(po)-poReceived(po));}
 function poNum(po){return 'PO-'+String(po.seq||0).padStart(4,'0');}
 var editingPOId=null, curPO=null, poItems=[];
 function renderPurchases(){
@@ -6737,34 +7006,62 @@ function showAddPO(id){
   var ssel=document.getElementById('po-supplier');
   ssel.innerHTML='<option value="">— Select supplier —</option>'+suppliers.map(function(s){return'<option value="'+esc(s.id)+'"'+(po&&po.supplierId===s.id?' selected':'')+'>'+esc(s.name)+'</option>';}).join('');
   document.getElementById('po-ref').value=po?(po.reference||''):'';
-  poItems=po&&po.items?po.items.map(function(it){return{partId:it.partId||'',name:it.name||'',qty:it.qty||1,unitCost:it.unitCost||''};}):[{partId:'',name:'',qty:1,unitCost:''}];
+  document.getElementById('po-date').value=po?(po.orderDate||tsToDs(po.createdAt)||todayStr()):todayStr();
+  document.getElementById('po-expected').value=po?(po.expectedDate||''):'';
+  document.getElementById('po-tax').value=po&&po.taxRate?po.taxRate:'';
+  document.getElementById('po-tol').value=po&&po.overReceiptPct?po.overReceiptPct:'';
+  poItems=po&&po.items?po.items.map(function(it){return{id:it.id||uid(),partId:it.partId||'',name:it.name||'',qty:it.qty||1,unitCost:it.unitCost||'',qtyReceived:Number(it.qtyReceived)||0};}):[{id:uid(),partId:'',name:'',qty:1,unitCost:'',qtyReceived:0}];
   renderPOItems();
   show('v-add-po');
 }
-function poAddItem(){poItems.push({partId:'',name:'',qty:1,unitCost:''});renderPOItems();}
-function poRemoveItem(i){poItems.splice(i,1);if(!poItems.length)poItems.push({partId:'',name:'',qty:1,unitCost:''});renderPOItems();}
+function poAddItem(){poItems.push({id:uid(),partId:'',name:'',qty:1,unitCost:'',qtyReceived:0});renderPOItems();}
+function poRemoveItem(i){
+  // A line goods have already arrived against is the evidence behind a stock
+  // movement — it cannot simply be dropped from the order.
+  if(Number(poItems[i]&&poItems[i].qtyReceived)>0){toast('That line has already been received — raise a purchase return instead.','error');return;}
+  poItems.splice(i,1);if(!poItems.length)poItems.push({id:uid(),partId:'',name:'',qty:1,unitCost:'',qtyReceived:0});renderPOItems();
+}
 function poItemPart(i,partId){var p=parts.find(function(x){return x.id===partId;});poItems[i].partId=partId;poItems[i].name=p?p.name:'';if(p&&!poItems[i].unitCost)poItems[i].unitCost=p.costPrice||'';renderPOItems();}
 function renderPOItems(){
   var el=document.getElementById('po-items');if(!el)return;
   el.innerHTML=poItems.map(function(it,i){
     return'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
-      '<select onchange="poItemPart('+i+',this.value)" style="flex:1;min-width:160px"><option value="">— Select part —</option>'+parts.map(function(p){return'<option value="'+esc(p.id)+'"'+(it.partId===p.id?' selected':'')+'>'+esc(p.name)+' (stock '+Number(p.stock||0)+')</option>';}).join('')+'</select>'+
+      '<select onchange="poItemPart('+i+',this.value)" style="flex:1;min-width:160px"><option value="">— Select part —</option>'+parts.filter(function(p){return p.active!==false||it.partId===p.id;}).map(function(p){return'<option value="'+esc(p.id)+'"'+(it.partId===p.id?' selected':'')+'>'+esc(p.name)+' (stock '+Number(p.stock||0)+')</option>';}).join('')+'</select>'+
       '<input type="number" placeholder="Qty" min="1" step="1" value="'+esc(it.qty)+'" oninput="poItems['+i+'].qty=this.value;poSyncTotal()" style="width:80px">'+
       '<input type="number" placeholder="Unit cost" min="0" step="0.01" value="'+(it.unitCost===''?'':esc(it.unitCost))+'" oninput="poItems['+i+'].unitCost=this.value;poSyncTotal()" style="width:110px">'+
+      (Number(it.qtyReceived)>0?'<span style="align-self:center;font-size:11.5px;font-weight:700;color:var(--green);white-space:nowrap">'+Number(it.qtyReceived)+' recd</span>':'')+
       '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="poRemoveItem('+i+')">✕</button></div>';
   }).join('');
   poSyncTotal();
 }
-function poSyncTotal(){var t=poItems.reduce(function(s,it){return s+Number(it.qty||0)*Number(it.unitCost||0);},0);var el=document.getElementById('po-total');if(el)el.textContent=fmtMoney(t);}
+function poSyncTotal(){
+  var sub=poItems.reduce(function(s,it){return s+Number(it.qty||0)*Number(it.unitCost||0);},0);
+  var rate=Number((document.getElementById('po-tax')||{}).value||0);
+  var tax=rate>0?sub*rate/100:0;
+  var el=document.getElementById('po-total');
+  if(el)el.innerHTML=rate>0
+    ? fmtMoney(sub+tax)+'<span style="font-size:11.5px;font-weight:600;color:var(--t3);display:block">'+fmtMoney(sub)+' + '+fmtMoney(tax)+' tax</span>'
+    : fmtMoney(sub);
+}
 function savePO(){
   var sid=document.getElementById('po-supplier').value;
   if(!sid){toast('Please select a supplier.');return;}
-  var items=poItems.filter(function(it){return it.partId&&Number(it.qty||0)>0;}).map(function(it){return{partId:it.partId,name:it.name,qty:Number(it.qty),unitCost:Number(it.unitCost)||0};});
+  var rate=Number(document.getElementById('po-tax').value||0);
+  var items=poItems.filter(function(it){return it.partId&&Number(it.qty||0)>0;}).map(function(it){
+    return{id:it.id||uid(),partId:it.partId,name:it.name,qty:Number(it.qty),unitCost:Number(it.unitCost)||0,
+      qtyReceived:Number(it.qtyReceived)||0,taxRate:rate};});
   if(!items.length){toast('Add at least one part line.');return;}
+  // Ordering less than has already arrived would make the order describe
+  // something that never happened.
+  var shrunk=items.filter(function(it){return it.qtyReceived>it.qty;})[0];
+  if(shrunk){toast('“'+shrunk.name+'” already has '+shrunk.qtyReceived+' received — the ordered quantity cannot be lower.','error');return;}
   var sup=suppliers.find(function(s){return s.id===sid;})||{};
-  var total=Math.round(items.reduce(function(s,it){return s+it.qty*it.unitCost;},0)*100)/100;
   var btn=document.getElementById('save-po-btn');btn.disabled=true;btn.textContent='Saving…';
-  var data={supplierId:sid,supplierName:sup.name||'',reference:document.getElementById('po-ref').value.trim(),items:items,total:total};
+  var data={supplierId:sid,supplierName:sup.name||'',reference:document.getElementById('po-ref').value.trim(),
+    orderDate:document.getElementById('po-date').value||todayStr(),
+    expectedDate:document.getElementById('po-expected').value||'',
+    taxRate:rate,overReceiptPct:Number(document.getElementById('po-tol').value||0),
+    items:items};
   var fail=function(e){btn.disabled=false;btn.textContent=editingPOId?'Update Purchase Order':'Save Purchase Order';toast('Could not save PO: '+e.message,'error');};
   if(editingPOId){
     var ex=purchaseOrders.find(function(x){return x.id===editingPOId;})||{};data.status=ex.status||'draft';
@@ -6781,18 +7078,33 @@ function renderPODetail(){
   var st=PO_STATUS[po.status]||PO_STATUS.draft;
   var actions=document.getElementById('po-actions');
   var acts='';
-  if(po.status==='draft'){acts='<button class="btn btn-secondary btn-sm" onclick="showAddPO(\''+po.id+'\')">Edit</button><button class="btn btn-green btn-sm" onclick="receivePurchaseOrder()">Receive to Stock</button>';}
-  else{
-    acts='<span style="font-size:12px;color:var(--t3)">Received '+fmtTs(po.receivedAt)+'</span>';
-    if(!po.paid)acts+='<button class="btn btn-primary btn-sm" onclick="payPurchaseOrder()">Mark Paid</button>';
-    else acts+='<span class="badge badge-green" style="margin-left:8px">PAID</span>';
-  }
+  var stat=po.status||'draft';
+  if(stat==='draft')acts='<button class="btn btn-secondary btn-sm" onclick="showAddPO(\''+po.id+'\')">Edit</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="poSetStatus(\'submitted\')">Submit for Approval</button>'+
+    '<button class="btn btn-red btn-sm" onclick="poSetStatus(\'cancelled\')">Cancel</button>';
+  else if(stat==='submitted')acts='<button class="btn btn-secondary btn-sm" onclick="poSetStatus(\'draft\')">Return to Draft</button>'+
+    '<button class="btn btn-green btn-sm" onclick="poSetStatus(\'approved\')">Approve</button>'+
+    '<button class="btn btn-red btn-sm" onclick="poSetStatus(\'cancelled\')">Cancel</button>';
+  else if(stat==='approved'||stat==='partial')acts='<button class="btn btn-green btn-sm" onclick="showReceivePO()">Receive Goods</button>'+
+    (stat==='partial'?'<button class="btn btn-secondary btn-sm" onclick="poSetStatus(\'closed\')">Close Short</button>':
+      '<button class="btn btn-red btn-sm" onclick="poSetStatus(\'cancelled\')">Cancel</button>');
+  else if(stat==='received')acts='<button class="btn btn-primary btn-sm" onclick="poToInvoice()">Enter Supplier Invoice</button>'+
+    '<button class="btn btn-secondary btn-sm" onclick="poSetStatus(\'closed\')">Close</button>';
+  else acts='<span style="font-size:12px;color:var(--t3)">'+(PO_STATUS[stat]||{label:stat}).label+'</span>';
   actions.innerHTML=acts;
-  var rows=(po.items||[]).map(function(it){return'<tr><td style="font-weight:600">'+esc(it.name)+'</td><td class="num">'+Number(it.qty||0)+'</td><td class="num">'+fmtMoney(it.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(Number(it.qty||0)*Number(it.unitCost||0))+'</td></tr>';}).join('');
+  var rows=(po.items||[]).map(function(it){
+    var recd=Number(it.qtyReceived)||0,ord=Number(it.qty)||0;
+    var col=recd>=ord?'var(--green)':(recd>0?'var(--accent-text)':'var(--t3)');
+    return'<tr><td style="font-weight:600">'+esc(it.name)+'</td><td class="num">'+ord+'</td>'+
+      '<td class="num" style="font-weight:700;color:'+col+'">'+recd+'</td>'+
+      '<td class="num" style="color:'+(ord-recd>0?'var(--t1)':'var(--t3)')+'">'+Math.max(0,ord-recd)+'</td>'+
+      '<td class="num">'+fmtMoney(it.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(Number(it.lineTotal!=null?it.lineTotal:ord*(Number(it.unitCost)||0)))+'</td></tr>';}).join('');
   el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(poNum(po))+'</div><div class="so-created">Created '+fmtTs(po.createdAt)+'</div></div><div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
     '<div class="so-spec"><div class="so-spec-item"><div class="so-spec-k">'+ico('truck',13,'var(--t3)')+'Supplier</div><div class="so-spec-v">'+esc(po.supplierName||'—')+'</div></div>'+(po.reference?'<div class="so-spec-item"><div class="so-spec-k">Reference</div><div class="so-spec-v">'+esc(po.reference)+'</div></div>':'')+'</div></div>'+
-    '<div class="card"><div class="card-title">Order Lines</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Part</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Line Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3" style="text-align:right;font-weight:800">Total</td><td class="num" style="font-weight:900">'+fmtMoney(po.total||0)+'</td></tr></tfoot></table></div></div>'+
-    (po.status==='draft'?'<div style="font-size:12px;color:var(--t3);margin-top:12px">Receiving adds these quantities to stock (weighted-average cost) and marks the order received.</div>':'')+'</div>';
+    '<div class="card"><div class="card-title">Order Lines</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Part</th><th class="num">Ordered</th><th class="num">Received</th><th class="num">Outstanding</th><th class="num">Unit Cost</th><th class="num">Line Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="5" style="text-align:right;font-weight:800">Total</td><td class="num" style="font-weight:900">'+fmtMoney(po.total||0)+'</td></tr></tfoot></table></div></div>'+
+    (po.status==='draft'?'<div style="font-size:12px;color:var(--t3);margin-top:12px">Submit this order for approval. Goods can only be received against an approved order.</div>':'')+
+    (po.status==='approved'||po.status==='partial'?'<div style="font-size:12px;color:var(--t3);margin-top:12px">Receive Goods records what actually arrived — part deliveries are fine, and each one creates its own GRN.</div>':'')+'</div>'+
+    grnsForPO(po);
 }
 function receivePurchaseOrder(){
   var po=curPO;if(po.status==='received'){toast('Already received.');return;}
@@ -6814,6 +7126,861 @@ function payPurchaseOrder(){
     }).then(function(){curPO.paid=true;curPO.paidAt=Date.now();toast('Supplier payment recorded','success');renderPODetail();})
     .catch(function(e){toast('Could not record payment: '+e.message,'error');});
   }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROCURE-TO-PAY  (Phase 2)
+//   Purchase Request → RFQ → Purchase Order → Goods Receipt → Purchase Invoice
+//   with Purchase Returns hanging off the receipt.
+// Each stage is its own document because "what we asked for", "what arrived"
+// and "what we were billed" routinely disagree, and a garage needs to see where.
+// ═══════════════════════════════════════════════════════════════════════════
+var purchaseRequests=[], rfqs=[], goodsReceipts=[], purchaseInvoices=[], purchaseReturns=[], stockLots=[];
+var curPR=null, curRFQ=null, curGRN=null, curPINV=null, curPRET=null;
+var prItems=[], rfqItems=[], rfqSups=[], pinvItems=[], pinvLanded=[], rcLines=[], pretLines=[];
+var editingPRId=null, editingRFQId=null, editingPINVId=null, pinvFilter='all';
+
+function prNum(d){return 'PR-'+String(d.seq||0).padStart(4,'0');}
+function rfqNum(d){return 'RFQ-'+String(d.seq||0).padStart(4,'0');}
+function grnNum(d){return 'GRN-'+String(d.seq||0).padStart(4,'0');}
+function pinvNum(d){return 'PINV-'+String(d.seq||0).padStart(4,'0');}
+function pretNum(d){return 'PRTN-'+String(d.seq||0).padStart(4,'0');}
+function partById(id){for(var i=0;i<parts.length;i++){if(parts[i].id===id)return parts[i];}return null;}
+function supName(id){for(var i=0;i<suppliers.length;i++){if(suppliers[i].id===id)return suppliers[i].name;}return '';}
+function docBack(msg){return '<div class="empty">'+msg+'</div>';}
+
+var PR_STATUS={draft:{label:'DRAFT',badge:'badge-gray'},submitted:{label:'SUBMITTED',badge:'badge-amber'},
+  approved:{label:'APPROVED',badge:'badge-blue'},rejected:{label:'REJECTED',badge:'badge-red'},
+  converted:{label:'ORDERED',badge:'badge-green'}};
+var RFQ_STATUS={draft:{label:'DRAFT',badge:'badge-gray'},sent:{label:'SENT',badge:'badge-amber'},
+  quoted:{label:'QUOTED',badge:'badge-blue'},awarded:{label:'AWARDED',badge:'badge-green'},cancelled:{label:'CANCELLED',badge:'badge-red'}};
+var PINV_STATUS={draft:{label:'DRAFT',badge:'badge-gray'},unpaid:{label:'UNPAID',badge:'badge-red'},
+  partial:{label:'PARTIAL',badge:'badge-orange'},paid:{label:'PAID',badge:'badge-green'},cancelled:{label:'CANCELLED',badge:'badge-gray'}};
+
+// ── Shared line editor for simple qty-only documents (PR, RFQ) ──
+function simpleLineRows(arr,name){
+  return arr.map(function(it,i){
+    return '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+      '<select onchange="'+name+'ItemPart('+i+',this.value)" style="flex:1;min-width:170px"><option value="">— Select item —</option>'+
+        parts.filter(function(p){return p.active!==false||it.partId===p.id;}).map(function(p){
+          return '<option value="'+esc(p.id)+'"'+(it.partId===p.id?' selected':'')+'>'+esc(p.name)+' (stock '+Number(p.stock||0)+')</option>';}).join('')+
+      '</select>'+
+      '<input type="number" placeholder="Qty" min="1" step="1" value="'+esc(it.qty)+'" oninput="'+name+'Items['+i+'].qty=this.value" style="width:90px">'+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="'+name+'RemoveItem('+i+')">✕</button></div>';
+  }).join('');
+}
+
+// ══ PURCHASE REQUESTS ══
+function renderPRs(){
+  var el=document.getElementById('pr-list'),kp=document.getElementById('pr-kpis');if(!el)return;
+  if(!_fired.purchaseRequests){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(4)+'</div>';el.innerHTML=skelTable(5);return;}
+  var pend=purchaseRequests.filter(function(d){return d.status==='submitted';}).length;
+  var appr=purchaseRequests.filter(function(d){return d.status==='approved';}).length;
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(purchaseRequests.length,'Requests','')+
+    erpKpi(pend,'Awaiting Approval',pend?'kpi-accent':'')+erpKpi(appr,'Approved, Not Ordered',appr?'kpi-green':'')+
+    erpKpi(purchaseRequests.filter(function(d){return d.status==='converted';}).length,'Ordered','')+'</div>';
+  var q=(document.getElementById('pr-search').value||'').trim().toLowerCase();
+  var list=purchaseRequests.filter(function(d){
+    if(!q)return true;
+    return prNum(d).toLowerCase().indexOf(q)>-1||String(d.requestedBy||'').toLowerCase().indexOf(q)>-1||
+      (d.items||[]).some(function(l){return String(l.name||'').toLowerCase().indexOf(q)>-1;});
+  });
+  if(!list.length){el.innerHTML=docBack(purchaseRequests.length?'No requests match your search.':'No purchase requests yet. Raise one when the workshop runs short of something.');return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Request</th><th>Requested By</th><th>Needed By</th><th class="num">Items</th><th>Status</th></tr></thead><tbody>'+
+    list.map(function(d){var st=PR_STATUS[d.status]||PR_STATUS.draft;
+      return '<tr class="dt-row" onclick="showPRById(\''+esc(d.id)+'\')"><td style="font-weight:700">'+esc(prNum(d))+'</td><td>'+esc(d.requestedBy||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(d.neededBy?fmtDate(d.neededBy):'—')+'</td>'+
+        '<td class="num">'+(d.items||[]).length+'</td><td><span class="badge '+st.badge+'">'+st.label+'</span></td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function showAddPR(id){
+  editingPRId=id||null;
+  var d=id?purchaseRequests.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-pr-title').textContent=d?'Edit Purchase Request':'New Purchase Request';
+  document.getElementById('pr-by').value=d?(d.requestedBy||''):(sessionUser()||'');
+  document.getElementById('pr-needed').value=d?(d.neededBy||''):'';
+  document.getElementById('pr-purpose').value=d?(d.purpose||''):'';
+  prItems=d&&d.items?d.items.map(function(l){return{partId:l.partId||'',name:l.name||'',qty:l.qty||1};}):[{partId:'',name:'',qty:1}];
+  renderPRItems();show('v-add-pr');
+}
+function prAddItem(){prItems.push({partId:'',name:'',qty:1});renderPRItems();}
+function prRemoveItem(i){prItems.splice(i,1);if(!prItems.length)prItems.push({partId:'',name:'',qty:1});renderPRItems();}
+function prItemPart(i,pid){var p=partById(pid);prItems[i].partId=pid;prItems[i].name=p?p.name:'';renderPRItems();}
+function renderPRItems(){var el=document.getElementById('pr-items');if(el)el.innerHTML=simpleLineRows(prItems,'pr');}
+function savePR(){
+  var items=prItems.filter(function(l){return l.partId&&Number(l.qty||0)>0;}).map(function(l){return{partId:l.partId,name:l.name,qty:Number(l.qty)};});
+  if(!items.length){toast('Add at least one item.');return;}
+  var data={requestedBy:document.getElementById('pr-by').value.trim(),neededBy:document.getElementById('pr-needed').value,
+    purpose:document.getElementById('pr-purpose').value.trim(),items:items};
+  var btn=document.getElementById('save-pr-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save Request';toast(e.message||'Could not save.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save Request';toast('Purchase request saved','success');navTo('purchase-requests');};
+  if(editingPRId)db.collection('purchaseRequests').doc(editingPRId).update(data).then(done).catch(fail);
+  else{data.status='draft';data.createdAt=Date.now();db.collection('purchaseRequests').add(data).then(done).catch(fail);}
+}
+function showPRById(id){var d=purchaseRequests.filter(function(x){return x.id===id;})[0];if(d){curPR=d;renderPRDetail();show('v-pr');}}
+function renderPRDetail(){
+  var d=curPR,el=document.getElementById('pr-detail');if(!el||!d)return;
+  var st=PR_STATUS[d.status]||PR_STATUS.draft,acts='';
+  if(d.status==='draft')acts='<button class="btn btn-secondary btn-sm" onclick="showAddPR(\''+esc(d.id)+'\')">Edit</button><button class="btn btn-primary btn-sm" onclick="prSetStatus(\'submitted\')">Submit for Approval</button>';
+  else if(d.status==='submitted')acts='<button class="btn btn-green btn-sm" onclick="prSetStatus(\'approved\')">Approve</button><button class="btn btn-red btn-sm" onclick="prSetStatus(\'rejected\')">Reject</button>';
+  else if(d.status==='approved')acts='<button class="btn btn-primary btn-sm" onclick="prToRFQ()">→ Raise RFQ</button><button class="btn btn-secondary btn-sm" onclick="prToPO()">→ Raise Purchase Order</button>';
+  document.getElementById('pr-actions').innerHTML=acts;
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(prNum(d))+'</div>'+
+      '<div class="so-created">Raised '+fmtTs(d.createdAt)+(d.requestedBy?' by '+esc(d.requestedBy):'')+'</div></div>'+
+      '<div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Needed By</div><div class="so-spec-v">'+esc(d.neededBy?fmtDate(d.neededBy):'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Purpose</div><div class="so-spec-v">'+esc(d.purpose||'—')+'</div></div>'+
+      (d.approvedBy?'<div class="so-spec-item"><div class="so-spec-k">Approved By</div><div class="so-spec-v">'+esc(d.approvedBy)+'</div></div>':'')+
+      (d.poId?'<div class="so-spec-item"><div class="so-spec-k">Ordered On</div><div class="so-spec-v">'+esc(d.poNo||'—')+'</div></div>':'')+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Requested Items</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">In Stock</th></tr></thead><tbody>'+
+    (d.items||[]).map(function(l){var p=partById(l.partId);
+      return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.qty||0)+'</td>'+
+        '<td class="num" style="color:'+(p&&Number(p.stock||0)>0?'var(--t2)':'var(--red)')+'">'+(p?Number(p.stock||0):'—')+'</td></tr>';}).join('')+
+    '</tbody></table></div></div></div>';
+}
+function prSetStatus(next){
+  var d=curPR,patch={status:next};
+  if(next==='approved'){patch.approvedBy=sessionUser();patch.approvedAt=Date.now();}
+  db.collection('purchaseRequests').doc(d.id).update(patch).then(function(){
+    Object.assign(curPR,patch);toast('Request '+next,'success');renderPRDetail();
+  }).catch(function(e){toast(e.message||'Could not update.','error');});
+}
+function prToPO(){
+  // Carry the request straight into an order so nobody retypes the list.
+  poItems=(curPR.items||[]).map(function(l){var p=partById(l.partId);
+    return{id:uid(),partId:l.partId,name:l.name,qty:l.qty,unitCost:p?(p.costPrice||''):'',qtyReceived:0};});
+  showAddPO();
+  setTimeout(function(){renderPOItems();document.getElementById('po-ref').value=prNum(curPR);},0);
+  poFromPRId=curPR.id;
+}
+function prToRFQ(){
+  rfqItems=(curPR.items||[]).map(function(l){return{partId:l.partId,name:l.name,qty:l.qty};});
+  rfqFromPRId=curPR.id;
+  showAddRFQ();
+  setTimeout(function(){renderRFQItems();},0);
+}
+var poFromPRId=null, rfqFromPRId=null;
+
+// ══ RFQ ══
+function renderRFQs(){
+  var el=document.getElementById('rfq-list'),kp=document.getElementById('rfq-kpis');if(!el)return;
+  if(!_fired.rfqs){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(3)+'</div>';el.innerHTML=skelTable(5);return;}
+  var open=rfqs.filter(function(d){return d.status==='sent'||d.status==='quoted';}).length;
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(rfqs.length,'RFQs','')+
+    erpKpi(open,'Awaiting Quotes',open?'kpi-accent':'')+
+    erpKpi(rfqs.filter(function(d){return d.status==='awarded';}).length,'Awarded','kpi-green')+'</div>';
+  var q=(document.getElementById('rfq-search').value||'').trim().toLowerCase();
+  var list=rfqs.filter(function(d){return !q||rfqNum(d).toLowerCase().indexOf(q)>-1||(d.items||[]).some(function(l){return String(l.name||'').toLowerCase().indexOf(q)>-1;});});
+  if(!list.length){el.innerHTML=docBack(rfqs.length?'No RFQs match your search.':'No RFQs yet. Raise one to compare prices before committing to a supplier.');return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>RFQ</th><th>Due</th><th class="num">Items</th><th class="num">Suppliers</th><th class="num">Quoted</th><th>Status</th></tr></thead><tbody>'+
+    list.map(function(d){var st=RFQ_STATUS[d.status]||RFQ_STATUS.draft;
+      var quoted=(d.suppliers||[]).filter(function(x){return x.quotedAt;}).length;
+      return '<tr class="dt-row" onclick="showRFQById(\''+esc(d.id)+'\')"><td style="font-weight:700">'+esc(rfqNum(d))+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(d.dueDate?fmtDate(d.dueDate):'—')+'</td>'+
+        '<td class="num">'+(d.items||[]).length+'</td><td class="num">'+(d.suppliers||[]).length+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+(quoted?'var(--green)':'var(--t3)')+'">'+quoted+'</td>'+
+        '<td><span class="badge '+st.badge+'">'+st.label+'</span></td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function showAddRFQ(id){
+  editingRFQId=id||null;
+  var d=id?rfqs.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-rfq-title').textContent=d?'Edit RFQ':'New RFQ';
+  document.getElementById('rfq-due').value=d?(d.dueDate||''):'';
+  document.getElementById('rfq-notes').value=d?(d.notes||''):'';
+  if(!rfqFromPRId||d)rfqItems=d&&d.items?d.items.map(function(l){return{partId:l.partId||'',name:l.name||'',qty:l.qty||1};}):[{partId:'',name:'',qty:1}];
+  rfqSups=d&&d.suppliers?d.suppliers.map(function(x){return x.supplierId;}):[];
+  renderRFQItems();renderRFQSuppliers();show('v-add-rfq');
+}
+function rfqAddItem(){rfqItems.push({partId:'',name:'',qty:1});renderRFQItems();}
+function rfqRemoveItem(i){rfqItems.splice(i,1);if(!rfqItems.length)rfqItems.push({partId:'',name:'',qty:1});renderRFQItems();}
+function rfqItemPart(i,pid){var p=partById(pid);rfqItems[i].partId=pid;rfqItems[i].name=p?p.name:'';renderRFQItems();}
+function renderRFQItems(){var el=document.getElementById('rfq-items');if(el)el.innerHTML=simpleLineRows(rfqItems,'rfq');}
+function renderRFQSuppliers(){
+  var el=document.getElementById('rfq-suppliers');if(!el)return;
+  if(!suppliers.length){el.innerHTML='<div style="font-size:12.5px;color:var(--t3)">No suppliers on file yet — add one first.</div>';return;}
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">'+
+    suppliers.map(function(s){
+      return '<label class="chk-row" style="border:1.5px solid var(--b1);border-radius:var(--r-sm);padding:9px 11px">'+
+        '<input type="checkbox" value="'+esc(s.id)+'"'+(rfqSups.indexOf(s.id)>-1?' checked':'')+' onchange="rfqToggleSup(this.value,this.checked)"> <span>'+esc(s.name)+'</span></label>';
+    }).join('')+'</div>';
+}
+function rfqToggleSup(id,on){var i=rfqSups.indexOf(id);if(on&&i<0)rfqSups.push(id);if(!on&&i>-1)rfqSups.splice(i,1);}
+function saveRFQ(){
+  var items=rfqItems.filter(function(l){return l.partId&&Number(l.qty||0)>0;}).map(function(l){return{partId:l.partId,name:l.name,qty:Number(l.qty)};});
+  if(!items.length){toast('Add at least one item to quote.');return;}
+  if(!rfqSups.length){toast('Select at least one supplier to ask.');return;}
+  var existing=editingRFQId?(rfqs.filter(function(x){return x.id===editingRFQId;})[0]||{}):{};
+  var prev={};(existing.suppliers||[]).forEach(function(x){prev[x.supplierId]=x;});
+  var data={dueDate:document.getElementById('rfq-due').value,notes:document.getElementById('rfq-notes').value.trim(),
+    items:items,
+    // Keep any quote already captured for a supplier that is still invited.
+    suppliers:rfqSups.map(function(id){return prev[id]||{supplierId:id,supplierName:supName(id),lines:[],total:0,quotedAt:0,notes:''};})};
+  if(rfqFromPRId)data.prId=rfqFromPRId;
+  var btn=document.getElementById('save-rfq-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save RFQ';toast(e.message||'Could not save.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save RFQ';rfqFromPRId=null;toast('RFQ saved','success');navTo('rfqs');};
+  if(editingRFQId)db.collection('rfqs').doc(editingRFQId).update(data).then(done).catch(fail);
+  else{data.status='draft';data.createdAt=Date.now();db.collection('rfqs').add(data).then(done).catch(fail);}
+}
+function showRFQById(id){var d=rfqs.filter(function(x){return x.id===id;})[0];if(d){curRFQ=d;renderRFQDetail();show('v-rfq');}}
+function renderRFQDetail(){
+  var d=curRFQ,el=document.getElementById('rfq-detail');if(!el||!d)return;
+  var st=RFQ_STATUS[d.status]||RFQ_STATUS.draft,acts='';
+  if(d.status==='draft')acts='<button class="btn btn-secondary btn-sm" onclick="showAddRFQ(\''+esc(d.id)+'\')">Edit</button><button class="btn btn-primary btn-sm" onclick="rfqSetStatus(\'sent\')">Mark Sent</button>';
+  else if(d.status==='sent'||d.status==='quoted')acts='<button class="btn btn-red btn-sm" onclick="rfqSetStatus(\'cancelled\')">Cancel RFQ</button>';
+  document.getElementById('rfq-actions').innerHTML=acts;
+  var items=d.items||[],sups=d.suppliers||[];
+  // Comparison grid: one row per item, one column per supplier, cheapest marked.
+  var head='<tr><th>Item</th><th class="num">Qty</th>'+sups.map(function(s){return '<th class="num">'+esc(s.supplierName||supName(s.supplierId))+'</th>';}).join('')+'</tr>';
+  var body=items.map(function(l,li){
+    var costs=sups.map(function(s){var q=(s.lines||[]).filter(function(x){return x.partId===l.partId;})[0];return q&&Number(q.unitCost)>0?Number(q.unitCost):null;});
+    var valid=costs.filter(function(c){return c!=null;});
+    var best=valid.length?Math.min.apply(null,valid):null;
+    return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.qty||0)+'</td>'+
+      costs.map(function(c){
+        if(c==null)return '<td class="num" style="color:var(--t3)">—</td>';
+        var win=best!=null&&Math.abs(c-best)<1e-9;
+        return '<td class="num" style="font-weight:'+(win?'800':'600')+';color:'+(win?'var(--green)':'var(--t1)')+'">'+fmtMoney(c)+(win?' ✓':'')+'</td>';
+      }).join('')+'</tr>';
+  }).join('');
+  var totals='<tr><td colspan="2" style="font-weight:800;text-align:right">Quoted Total</td>'+
+    sups.map(function(s){
+      var t=items.reduce(function(sum,l){var q=(s.lines||[]).filter(function(x){return x.partId===l.partId;})[0];return sum+(q?Number(q.unitCost||0)*Number(l.qty||0):0);},0);
+      return '<td class="num" style="font-weight:800">'+(t?fmtMoney(t):'—')+'</td>';}).join('')+'</tr>';
+  var actionsRow='<tr><td colspan="2"></td>'+sups.map(function(s){
+      var quoted=!!s.quotedAt;
+      return '<td class="num" style="white-space:nowrap">'+
+        '<button class="btn btn-secondary btn-sm" style="padding:4px 9px;font-size:11.5px" onclick="openRFQQuote(\''+esc(s.supplierId)+'\')">'+(quoted?'Edit quote':'Enter quote')+'</button>'+
+        (quoted&&d.status!=='awarded'?'<button class="btn btn-primary btn-sm" style="padding:4px 9px;font-size:11.5px;margin-left:5px" onclick="awardRFQ(\''+esc(s.supplierId)+'\')">Award</button>':'')+
+        (d.awardedSupplierId===s.supplierId?'<span class="badge badge-green" style="margin-left:5px">AWARDED</span>':'')+
+      '</td>';}).join('')+'</tr>';
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(rfqNum(d))+'</div>'+
+      '<div class="so-created">Raised '+fmtTs(d.createdAt)+(d.dueDate?' · responses due '+esc(fmtDate(d.dueDate)):'')+'</div></div>'+
+      '<div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
+      (d.notes?'<div class="so-spec"><div class="so-spec-item"><div class="so-spec-k">Notes</div><div class="so-spec-v">'+esc(d.notes)+'</div></div></div>':'')+'</div>'+
+    '<div class="card"><div class="card-title">Quote Comparison</div>'+
+      (sups.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead>'+head+'</thead><tbody>'+body+'</tbody>'+
+        '<tfoot>'+totals+actionsRow+'</tfoot></table></div></div>':docBack('No suppliers invited.'))+
+      '<div style="font-size:12px;color:var(--t3);margin-top:10px">The cheapest quote for each line is ticked. Awarding raises a purchase order for that supplier.</div></div>';
+}
+function rfqSetStatus(next){
+  db.collection('rfqs').doc(curRFQ.id).update({status:next}).then(function(){
+    curRFQ.status=next;toast('RFQ '+next,'success');renderRFQDetail();
+  }).catch(function(e){toast(e.message||'Could not update.','error');});
+}
+function openRFQQuote(supplierId){
+  var d=curRFQ,s=(d.suppliers||[]).filter(function(x){return x.supplierId===supplierId;})[0];if(!s)return;
+  var ov=document.getElementById('rfq-quote-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='rfq-quote-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:520px" role="dialog" aria-modal="true" aria-label="Enter quote">'+
+    '<div class="dlg-title">Quote from '+esc(s.supplierName||supName(supplierId))+'</div>'+
+    '<div style="font-size:12.5px;color:var(--t2);margin:-4px 0 14px">Enter the unit price this supplier quoted for each line.</div>'+
+    (d.items||[]).map(function(l,i){
+      var q=(s.lines||[]).filter(function(x){return x.partId===l.partId;})[0];
+      return '<div class="form-group"><label>'+esc(l.name)+' <span style="font-weight:500;color:var(--t3)">× '+Number(l.qty||0)+'</span></label>'+
+        '<input type="number" min="0" step="0.01" id="rq-'+i+'" data-part="'+esc(l.partId)+'" value="'+(q&&q.unitCost?q.unitCost:'')+'" placeholder="0.00" autocomplete="off"></div>';
+    }).join('')+
+    '<div class="form-group"><label>Notes</label><input type="text" id="rq-notes" value="'+esc(s.notes||'')+'" placeholder="Lead time, warranty…" autocomplete="off"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'rfq-quote-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-primary" onclick="saveRFQQuote(\''+esc(supplierId)+'\')">Save Quote</button></div></div>';
+  ov.classList.add('open');
+}
+function saveRFQQuote(supplierId){
+  var d=curRFQ,lines=[];
+  (d.items||[]).forEach(function(l,i){
+    var v=Number((document.getElementById('rq-'+i)||{}).value||0);
+    if(v>0)lines.push({partId:l.partId,unitCost:v});
+  });
+  var sups=(d.suppliers||[]).map(function(s){
+    if(s.supplierId!==supplierId)return s;
+    var total=(d.items||[]).reduce(function(sum,l){var q=lines.filter(function(x){return x.partId===l.partId;})[0];return sum+(q?q.unitCost*Number(l.qty||0):0);},0);
+    return Object.assign({},s,{lines:lines,total:Math.round(total*100)/100,quotedAt:Date.now(),notes:(document.getElementById('rq-notes').value||'').trim()});
+  });
+  var anyQuote=sups.some(function(s){return s.quotedAt;});
+  db.collection('rfqs').doc(d.id).update({suppliers:sups,status:d.status==='awarded'?'awarded':(anyQuote?'quoted':d.status)}).then(function(){
+    curRFQ.suppliers=sups;if(anyQuote&&curRFQ.status!=='awarded')curRFQ.status='quoted';
+    document.getElementById('rfq-quote-dlg').classList.remove('open');
+    toast('Quote saved','success');renderRFQDetail();
+  }).catch(function(e){toast(e.message||'Could not save quote.','error');});
+}
+function awardRFQ(supplierId){
+  var d=curRFQ,s=(d.suppliers||[]).filter(function(x){return x.supplierId===supplierId;})[0];if(!s)return;
+  confirmDialog({title:'Award to '+(s.supplierName||supName(supplierId))+'?',
+    message:'This raises a draft purchase order for their quoted prices. You can still edit it before approving.',
+    confirmText:'Award & Raise PO',danger:false,onConfirm:function(){
+      poItems=(d.items||[]).map(function(l){
+        var q=(s.lines||[]).filter(function(x){return x.partId===l.partId;})[0];
+        return{id:uid(),partId:l.partId,name:l.name,qty:l.qty,unitCost:q?q.unitCost:'',qtyReceived:0};});
+      db.collection('rfqs').doc(d.id).update({status:'awarded',awardedSupplierId:supplierId,awardedAt:Date.now()}).then(function(){
+        curRFQ.status='awarded';curRFQ.awardedSupplierId=supplierId;
+        showAddPO();
+        setTimeout(function(){
+          document.getElementById('po-supplier').value=supplierId;
+          document.getElementById('po-ref').value=rfqNum(d);
+          renderPOItems();
+        },0);
+        toast('Awarded — complete the purchase order','success');
+      }).catch(function(e){toast(e.message||'Could not award.','error');});
+    }});
+}
+
+// ══ GOODS RECEIPT ══
+function renderGRNs(){
+  var el=document.getElementById('grn-list'),kp=document.getElementById('grn-kpis');if(!el)return;
+  if(!_fired.goodsReceipts){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(3)+'</div>';el.innerHTML=skelTable(5);return;}
+  var val=goodsReceipts.reduce(function(s,g){return s+Number(g.total||0);},0);
+  var today=todayStr();
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(goodsReceipts.length,'Receipts','')+
+    erpKpi(goodsReceipts.filter(function(g){return g.receivedDate===today;}).length,'Received Today','kpi-accent')+
+    erpKpi(fmtMoney(val),'Goods Value','kpi-green')+'</div>';
+  var q=(document.getElementById('grn-search').value||'').trim().toLowerCase();
+  var list=goodsReceipts.filter(function(g){return !q||grnNum(g).toLowerCase().indexOf(q)>-1||
+    String(g.poNo||'').toLowerCase().indexOf(q)>-1||String(g.supplierName||'').toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML=docBack(goodsReceipts.length?'No goods receipts match your search.':'Nothing received yet. Approve a purchase order, then receive against it.');return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>GRN</th><th>Against</th><th>Supplier</th><th>Date</th><th class="num">Lines</th><th class="num">Value</th></tr></thead><tbody>'+
+    list.map(function(g){
+      return '<tr class="dt-row" onclick="showGRNById(\''+esc(g.id)+'\')"><td style="font-weight:700">'+esc(grnNum(g))+'</td>'+
+        '<td>'+esc(g.poNo||'—')+'</td><td>'+esc(g.supplierName||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(g.receivedDate?fmtDate(g.receivedDate):'—')+'</td>'+
+        '<td class="num">'+(g.items||[]).length+'</td><td class="num" style="font-weight:700">'+fmtMoney(g.total||0)+'</td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+// The receiving screen: per-line outstanding quantity, plus batch/serial/expiry
+// capture for any item the Item Master says is traced.
+function showReceivePO(){
+  var po=curPO;if(!po)return;
+  document.getElementById('receive-sub').textContent=poNum(po)+' · '+(po.supplierName||'')+' — enter what actually arrived.';
+  document.getElementById('rc-date').value=todayStr();
+  document.getElementById('rc-dn').value='';
+  document.getElementById('rc-notes').value='';
+  rcLines=(po.items||[]).map(function(l){
+    var outstanding=Math.max(0,(Number(l.qty)||0)-(Number(l.qtyReceived)||0));
+    return{poLineId:l.id,partId:l.partId,name:l.name,ordered:Number(l.qty)||0,already:Number(l.qtyReceived)||0,
+      outstanding:outstanding,qty:outstanding,unitCost:Number(l.unitCost)||0,lots:[]};
+  });
+  renderReceiveLines();show('v-receive-po');
+}
+function renderReceiveLines(){
+  var el=document.getElementById('rc-lines');if(!el)return;
+  el.innerHTML=rcLines.map(function(l,i){
+    var p=partById(l.partId)||{};
+    var traced=p.trackBatch||p.trackSerial||p.trackExpiry;
+    var done=l.outstanding<=0;
+    return '<div class="card" style="box-shadow:none;background:'+(done?'var(--bg)':'#fff')+';padding:13px 15px;margin-bottom:9px">'+
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:150px"><div style="font-weight:700;font-size:13.5px">'+esc(l.name)+'</div>'+
+          '<div style="font-size:11.5px;color:var(--t3)">'+l.ordered+' ordered · '+l.already+' already received · <b style="color:'+(done?'var(--green)':'var(--accent-text)')+'">'+l.outstanding+' outstanding</b></div></div>'+
+        '<div style="width:110px"><label style="font-size:11px">Receiving</label>'+
+          '<input type="number" min="0" step="1" value="'+(done?0:l.qty)+'"'+(done?' disabled':'')+' oninput="rcQty('+i+',this.value)" style="text-align:right"></div>'+
+        '<div style="width:120px"><label style="font-size:11px">Unit Cost</label>'+
+          '<input type="number" min="0" step="0.01" value="'+l.unitCost+'" oninput="rcLines['+i+'].unitCost=Number(this.value)||0" style="text-align:right"></div>'+
+      '</div>'+
+      (traced&&!done?'<div style="margin-top:10px;border-top:1px dashed var(--b1);padding-top:10px">'+
+        '<div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:7px">'+
+          (p.trackSerial?'Serial numbers':'Batch details')+' <span style="font-weight:500;color:var(--t3)">— must total '+l.qty+'</span></div>'+
+        '<div id="rc-lots-'+i+'">'+rcLotRows(i,p)+'</div>'+
+        '<button class="btn btn-secondary btn-sm" style="margin-top:6px;padding:5px 11px;font-size:12px" onclick="rcAddLot('+i+')">+ Add '+(p.trackSerial?'serial':'batch')+'</button>'+
+      '</div>':'')+
+    '</div>';
+  }).join('');
+}
+function rcLotRows(i,p){
+  var l=rcLines[i];
+  if(!l.lots.length)return '<div style="font-size:12px;color:var(--t3)">None entered yet.</div>';
+  return l.lots.map(function(lot,j){
+    return '<div style="display:flex;gap:7px;margin-bottom:6px;flex-wrap:wrap">'+
+      (p.trackSerial
+        ? '<input type="text" placeholder="Serial number" value="'+esc(lot.serialNo||'')+'" oninput="rcLines['+i+'].lots['+j+'].serialNo=this.value" style="flex:1;min-width:150px" autocomplete="off">'
+        : '<input type="text" placeholder="Batch / lot no." value="'+esc(lot.lotNo||'')+'" oninput="rcLines['+i+'].lots['+j+'].lotNo=this.value" style="flex:1;min-width:130px" autocomplete="off">')+
+      (p.trackExpiry?'<input type="date" value="'+esc(lot.expiryDate||'')+'" onchange="rcLines['+i+'].lots['+j+'].expiryDate=this.value" style="width:150px">':'')+
+      (p.trackSerial?'':'<input type="number" min="0" step="1" placeholder="Qty" value="'+esc(lot.qty)+'" oninput="rcLines['+i+'].lots['+j+'].qty=Number(this.value)||0;rcLotHint('+i+')" style="width:85px">')+
+      '<button class="btn btn-danger btn-sm" style="padding:5px 9px" onclick="rcRemoveLot('+i+','+j+')">✕</button></div>';
+  }).join('')+'<div id="rc-hint-'+i+'" style="font-size:11.5px;margin-top:3px"></div>';
+}
+function rcQty(i,v){
+  rcLines[i].qty=Math.max(0,Number(v)||0);
+  var p=partById(rcLines[i].partId)||{};
+  if(p.trackSerial){
+    // One serial per unit: keep the serial rows in step with the quantity.
+    var want=rcLines[i].qty,lots=rcLines[i].lots;
+    while(lots.length<want)lots.push({serialNo:'',lotNo:'',expiryDate:'',qty:1});
+    while(lots.length>want)lots.pop();
+  }
+  renderReceiveLines();
+}
+function rcAddLot(i){
+  var p=partById(rcLines[i].partId)||{};
+  rcLines[i].lots.push({lotNo:'',serialNo:'',expiryDate:'',qty:p.trackSerial?1:rcLines[i].qty});
+  renderReceiveLines();
+}
+function rcRemoveLot(i,j){rcLines[i].lots.splice(j,1);renderReceiveLines();}
+function rcLotHint(i){
+  var el=document.getElementById('rc-hint-'+i);if(!el)return;
+  var sum=rcLines[i].lots.reduce(function(s,l){return s+(Number(l.qty)||0);},0);
+  var want=rcLines[i].qty;
+  el.style.color=Math.abs(sum-want)<1e-9?'var(--green)':'var(--red)';
+  el.textContent=Math.abs(sum-want)<1e-9?'Batches add up to '+want+'.':'Batches total '+sum+' — must be '+want+'.';
+}
+function postGoodsReceipt(){
+  var po=curPO;if(!po)return;
+  var date=document.getElementById('rc-date').value;
+  if(!date){return invalidField('rc-date','Please enter the date the goods arrived.');}
+  var items=rcLines.filter(function(l){return Number(l.qty)>0;}).map(function(l){
+    return{poLineId:l.poLineId,partId:l.partId,qty:Number(l.qty),unitCost:Number(l.unitCost)||0,
+      lots:(l.lots||[]).filter(function(x){return Number(x.qty)>0;})};});
+  if(!items.length){toast('Enter at least one received quantity.');return;}
+  var btn=document.getElementById('rc-post-btn');btn.disabled=true;btn.textContent='Posting…';
+  gmsApi.goodsReceipt({poId:po.id,receivedDate:date,deliveryNote:document.getElementById('rc-dn').value.trim(),
+    notes:document.getElementById('rc-notes').value.trim(),items:items})
+  .then(function(grn){
+    btn.disabled=false;btn.textContent='Post Goods Receipt';
+    if(grn.purchaseOrder)curPO=grn.purchaseOrder;
+    toast(grnNum(grn)+' posted — stock updated','success');
+    curGRN=grn;renderGRNDetail();show('v-grn');
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='Post Goods Receipt';
+    toast(e.message||'Could not post the goods receipt.','error');
+  });
+}
+function showGRNById(id){var g=goodsReceipts.filter(function(x){return x.id===id;})[0];if(g){curGRN=g;renderGRNDetail();show('v-grn');}}
+function renderGRNDetail(){
+  var g=curGRN,el=document.getElementById('grn-detail');if(!el||!g)return;
+  document.getElementById('grn-actions').innerHTML=
+    '<button class="btn btn-secondary btn-sm" onclick="showReturnFromGRN(\''+esc(g.id)+'\')">Return to Supplier</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="pinvFromGRN(\''+esc(g.id)+'\')">Enter Supplier Invoice</button>';
+  var rows=(g.items||[]).map(function(l){
+    var lotTxt=(l.lots||[]).filter(function(x){return x.lotNo||x.serialNo||x.expiryDate;}).map(function(x){
+      return esc([x.serialNo||x.lotNo,x.expiryDate?'exp '+fmtDate(x.expiryDate):''].filter(Boolean).join(' · '));}).join('<br>');
+    return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.qty||0)+'</td>'+
+      '<td class="num">'+fmtMoney(l.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(l.lineTotal||0)+'</td>'+
+      '<td style="font-size:12px;color:var(--t2)">'+(lotTxt||'—')+'</td></tr>';}).join('');
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(grnNum(g))+'</div>'+
+      '<div class="so-created">Received '+esc(g.receivedDate?fmtDate(g.receivedDate):'—')+(g.createdBy?' by '+esc(g.createdBy):'')+'</div></div>'+
+      '<div><span class="badge badge-green">POSTED</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Supplier</div><div class="so-spec-v">'+esc(g.supplierName||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Against</div><div class="so-spec-v">'+esc(g.poNo||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Delivery Note</div><div class="so-spec-v">'+esc(g.deliveryNote||'—')+'</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Received Items</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Value</th><th>Batch / Serial</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody><tfoot><tr><td colspan="3" style="text-align:right;font-weight:800">Total</td>'+
+    '<td class="num" style="font-weight:900">'+fmtMoney(g.total||0)+'</td><td></td></tr></tfoot></table></div></div>'+
+    (g.notes?'<div style="font-size:12.5px;color:var(--t2);margin-top:12px">'+esc(g.notes)+'</div>':'')+'</div>';
+}
+
+// ══ PURCHASE INVOICES (accounts payable) ══
+function pinvDue(pi){return Math.max(0,Math.round(((Number(pi.total)||0)-(Number(pi.amountPaid)||0))*100)/100);}
+function renderPINVs(){
+  var el=document.getElementById('pinv-list'),kp=document.getElementById('pinv-kpis');if(!el)return;
+  if(!_fired.purchaseInvoices){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(4)+'</div>';el.innerHTML=skelTable(5);return;}
+  var live=purchaseInvoices.filter(function(p){return p.status&&p.status!=='draft'&&p.status!=='cancelled';});
+  var owed=live.reduce(function(s,p){return s+pinvDue(p);},0);
+  var overdue=live.filter(function(p){return pinvDue(p)>0.005&&p.dueDate&&p.dueDate<todayStr();});
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+
+    erpKpi(purchaseInvoices.length,'Invoices','')+
+    erpKpi(purchaseInvoices.filter(function(p){return !p.status||p.status==='draft';}).length,'Drafts','')+
+    erpKpi(fmtMoney(owed),'Outstanding',owed>0.005?'kpi-red':'kpi-green')+
+    erpKpi(overdue.length,'Overdue',overdue.length?'kpi-red':'')+'</div>';
+  var fl=document.getElementById('pinv-filters');
+  if(fl)fl.innerHTML=['all','draft','unpaid','partial','paid'].map(function(k){
+    var lbl={all:'All',draft:'Drafts',unpaid:'Unpaid',partial:'Partly Paid',paid:'Paid'}[k];
+    return '<button type="button" class="jc-fpill'+(pinvFilter===k?' active':'')+'" onclick="setPinvFilter(\''+k+'\')">'+lbl+'</button>';}).join('');
+  var q=(document.getElementById('pinv-search').value||'').trim().toLowerCase();
+  var list=purchaseInvoices.filter(function(p){
+    var st=p.status||'draft';
+    if(pinvFilter!=='all'&&st!==pinvFilter)return false;
+    if(!q)return true;
+    return pinvNum(p).toLowerCase().indexOf(q)>-1||String(p.invoiceNo||'').toLowerCase().indexOf(q)>-1||
+      String(p.supplierName||'').toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML=docBack(purchaseInvoices.length?'No invoices match this view.':'No supplier invoices yet. Enter one against a goods receipt to record what you owe.');return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Invoice</th><th>Supplier Ref</th><th>Supplier</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Outstanding</th><th>Status</th></tr></thead><tbody>'+
+    list.map(function(p){
+      var st=PINV_STATUS[p.status||'draft']||PINV_STATUS.draft,due=pinvDue(p);
+      var late=due>0.005&&p.dueDate&&p.dueDate<todayStr();
+      return '<tr class="dt-row" onclick="showPINVById(\''+esc(p.id)+'\')"><td style="font-weight:700">'+esc(pinvNum(p))+'</td>'+
+        '<td>'+esc(p.invoiceNo||'—')+'</td><td>'+esc(p.supplierName||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(p.invoiceDate?fmtDate(p.invoiceDate):'—')+'</td>'+
+        '<td style="white-space:nowrap;color:'+(late?'var(--red)':'var(--t2)')+';font-weight:'+(late?'700':'400')+'">'+esc(p.dueDate?fmtDate(p.dueDate):'—')+(late?' ⚠':'')+'</td>'+
+        '<td class="num" style="font-weight:700">'+fmtMoney(p.total||0)+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+(due>0.005?'var(--red)':'var(--green)')+'">'+(due>0.005?fmtMoney(due):'—')+'</td>'+
+        '<td><span class="badge '+st.badge+'">'+st.label+'</span></td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function setPinvFilter(k){pinvFilter=k;renderPINVs();}
+function showAddPINV(id){
+  editingPINVId=id||null;
+  var pi=id?purchaseInvoices.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-pinv-title').textContent=pi?'Edit Purchase Invoice':'New Purchase Invoice';
+  var ss=document.getElementById('pinv-supplier');
+  ss.innerHTML='<option value="">— Select supplier —</option>'+suppliers.map(function(s){
+    return '<option value="'+esc(s.id)+'"'+(pi&&pi.supplierId===s.id?' selected':'')+'>'+esc(s.name)+'</option>';}).join('');
+  document.getElementById('pinv-no').value=pi?(pi.invoiceNo||''):'';
+  document.getElementById('pinv-date').value=pi?(pi.invoiceDate||todayStr()):todayStr();
+  document.getElementById('pinv-due').value=pi?(pi.dueDate||''):'';
+  document.getElementById('pinv-notes').value=pi?(pi.notes||''):'';
+  document.getElementById('pinv-alloc').value=pi?(pi.landedAllocation||'value'):'value';
+  document.getElementById('pinv-disc-type').value=pi?(pi.discountType||''):'';
+  document.getElementById('pinv-disc-val').value=pi&&pi.discountValue?pi.discountValue:'';
+  if(!pinvItems.length||pi){
+    pinvItems=pi&&pi.items?pi.items.map(function(l){return{partId:l.partId||'',name:l.name||'',qty:l.qty||1,unitCost:l.unitCost||'',taxRate:l.taxRate||0};}):[{partId:'',name:'',qty:1,unitCost:'',taxRate:0}];
+    pinvLanded=pi&&pi.landedCosts?pi.landedCosts.slice():[];
+  }
+  pinvSupplierChanged();
+  if(pi&&pi.poId)setTimeout(function(){document.getElementById('pinv-po').value=pi.poId;},0);
+  renderPINVItems();renderPINVLanded();show('v-add-pinv');
+}
+// Only orders belonging to the chosen supplier that actually have goods on them.
+function pinvSupplierChanged(){
+  var sid=document.getElementById('pinv-supplier').value;
+  var sel=document.getElementById('pinv-po');
+  var eligible=purchaseOrders.filter(function(p){
+    return p.supplierId===sid&&['partial','received','closed'].indexOf(p.status)>-1;});
+  sel.innerHTML='<option value="">— Not against an order —</option>'+eligible.map(function(p){
+    return '<option value="'+esc(p.id)+'">'+esc(poNum(p))+' · '+fmtMoney(p.total||0)+'</option>';}).join('');
+}
+// Pull the received quantities through, which is what the supplier should bill.
+function pinvPOChanged(){
+  var poId=document.getElementById('pinv-po').value;if(!poId)return;
+  var po=purchaseOrders.filter(function(p){return p.id===poId;})[0];if(!po)return;
+  pinvItems=(po.items||[]).filter(function(l){return Number(l.qtyReceived)>0;}).map(function(l){
+    return{partId:l.partId,name:l.name,qty:Number(l.qtyReceived)||0,unitCost:Number(l.unitCost)||0,taxRate:Number(l.taxRate)||0};});
+  if(!pinvItems.length)pinvItems=[{partId:'',name:'',qty:1,unitCost:'',taxRate:0}];
+  renderPINVItems();
+  toast('Lines filled from the quantities actually received','info');
+}
+function pinvAddItem(){pinvItems.push({partId:'',name:'',qty:1,unitCost:'',taxRate:0});renderPINVItems();}
+function pinvRemoveItem(i){pinvItems.splice(i,1);if(!pinvItems.length)pinvItems.push({partId:'',name:'',qty:1,unitCost:'',taxRate:0});renderPINVItems();}
+function pinvItemPart(i,pid){var p=partById(pid);pinvItems[i].partId=pid;pinvItems[i].name=p?p.name:'';if(p&&!pinvItems[i].unitCost)pinvItems[i].unitCost=p.costPrice||'';renderPINVItems();}
+function renderPINVItems(){
+  var el=document.getElementById('pinv-items');if(!el)return;
+  el.innerHTML=pinvItems.map(function(it,i){
+    return '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+      '<select onchange="pinvItemPart('+i+',this.value)" style="flex:1;min-width:160px"><option value="">— Select item —</option>'+
+        parts.map(function(p){return '<option value="'+esc(p.id)+'"'+(it.partId===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
+      '<input type="number" placeholder="Qty" min="0" step="1" value="'+esc(it.qty)+'" oninput="pinvItems['+i+'].qty=this.value;pinvSyncTotal()" style="width:80px">'+
+      '<input type="number" placeholder="Unit cost" min="0" step="0.01" value="'+(it.unitCost===''?'':esc(it.unitCost))+'" oninput="pinvItems['+i+'].unitCost=this.value;pinvSyncTotal()" style="width:110px">'+
+      '<input type="number" placeholder="Tax %" min="0" max="100" step="0.01" value="'+(it.taxRate?esc(it.taxRate):'')+'" oninput="pinvItems['+i+'].taxRate=this.value;pinvSyncTotal()" style="width:85px">'+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="pinvRemoveItem('+i+')">✕</button></div>';
+  }).join('');
+  pinvSyncTotal();
+}
+function pinvAddLanded(){pinvLanded.push({type:'Freight',amount:''});renderPINVLanded();}
+function pinvRemoveLanded(i){pinvLanded.splice(i,1);renderPINVLanded();}
+function renderPINVLanded(){
+  var el=document.getElementById('pinv-landed');if(!el)return;
+  if(!pinvLanded.length){el.innerHTML='<div style="font-size:12.5px;color:var(--t3)">No additional charges. Add freight or customs here so they reach item cost.</div>';pinvSyncTotal();return;}
+  el.innerHTML=pinvLanded.map(function(c,i){
+    return '<div style="display:flex;gap:8px;margin-bottom:8px">'+
+      '<select onchange="pinvLanded['+i+'].type=this.value" style="flex:1;min-width:140px">'+
+        ['Freight','Customs Duty','Clearing','Insurance','Handling','Other'].map(function(t){
+          return '<option value="'+t+'"'+(c.type===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'+
+      '<input type="number" min="0" step="0.01" placeholder="Amount" value="'+(c.amount===''?'':esc(c.amount))+'" oninput="pinvLanded['+i+'].amount=this.value;pinvSyncTotal()" style="width:130px">'+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="pinvRemoveLanded('+i+')">✕</button></div>';
+  }).join('');
+  pinvSyncTotal();
+}
+// Mirrors the server's arithmetic exactly, so the figure on screen is the figure
+// that will be stored.
+function pinvSyncTotal(){
+  var el=document.getElementById('pinv-totals');if(!el)return;
+  var sub=0,tax=0;
+  pinvItems.forEach(function(l){
+    var net=(Number(l.qty)||0)*(Number(l.unitCost)||0);
+    sub+=net;tax+=net*(Number(l.taxRate)||0)/100;
+  });
+  sub=Math.round(sub*100)/100;
+  var dt=document.getElementById('pinv-disc-type').value,dv=Number(document.getElementById('pinv-disc-val').value||0);
+  var disc=dt==='pct'?sub*dv/100:(dt==='amount'?dv:0);
+  disc=Math.max(0,Math.min(Math.round(disc*100)/100,sub));
+  var taxable=sub-disc;
+  var taxAmt=sub>0?Math.round(tax*(taxable/sub)*100)/100:0;
+  var landed=pinvLanded.reduce(function(s,c){return s+(Number(c.amount)||0);},0);
+  landed=Math.round(landed*100)/100;
+  var total=Math.round((taxable+taxAmt+landed)*100)/100;
+  var row=function(k,v,strong){return '<div style="display:flex;justify-content:flex-end;gap:20px;font-size:'+(strong?'16px':'13px')+';font-weight:'+(strong?'800':'600')+';color:'+(strong?'var(--t1)':'var(--t2)')+';margin-bottom:'+(strong?'0':'3px')+'"><span>'+k+'</span><span style="min-width:110px;text-align:right">'+v+'</span></div>';};
+  el.innerHTML=row('Subtotal',fmtMoney(sub))+
+    (disc?row('Discount','− '+fmtMoney(disc)):'')+
+    (taxAmt?row('Tax',fmtMoney(taxAmt)):'')+
+    (landed?row('Landed costs',fmtMoney(landed)):'')+
+    row('Total',fmtMoney(total),true);
+}
+function savePINV(){
+  var sid=document.getElementById('pinv-supplier').value;
+  if(!sid){return invalidField('pinv-supplier','Please choose the supplier.');}
+  var invNo=document.getElementById('pinv-no').value.trim();
+  if(!invNo){return invalidField('pinv-no','Enter the supplier’s invoice number.');}
+  // Paying the same bill twice is the classic purchasing loss — catch it here as
+  // well as at the unique index.
+  var dup=purchaseInvoices.filter(function(p){
+    return p.id!==editingPINVId&&p.supplierId===sid&&p.status!=='cancelled'&&
+      String(p.invoiceNo||'').toLowerCase()===invNo.toLowerCase();})[0];
+  if(dup){return invalidField('pinv-no','This supplier’s invoice '+invNo+' is already recorded as '+pinvNum(dup)+'.');}
+  var date=document.getElementById('pinv-date').value;
+  if(!date){return invalidField('pinv-date','Enter the invoice date.');}
+  var items=pinvItems.filter(function(l){return l.partId&&Number(l.qty||0)>0;}).map(function(l){
+    return{partId:l.partId,name:l.name,qty:Number(l.qty),unitCost:Number(l.unitCost)||0,taxRate:Number(l.taxRate)||0};});
+  if(!items.length){toast('Add at least one invoice line.');return;}
+  var landed=pinvLanded.filter(function(c){return Number(c.amount)>0;}).map(function(c){return{type:c.type||'Other',amount:Number(c.amount)};});
+  var sup=suppliers.filter(function(s){return s.id===sid;})[0]||{};
+  var data={supplierId:sid,supplierName:sup.name||'',poId:document.getElementById('pinv-po').value||'',
+    invoiceNo:invNo,invoiceDate:date,dueDate:document.getElementById('pinv-due').value||'',
+    notes:document.getElementById('pinv-notes').value.trim(),items:items,landedCosts:landed,
+    landedAllocation:document.getElementById('pinv-alloc').value||'value',
+    discountType:document.getElementById('pinv-disc-type').value||'',
+    discountValue:Number(document.getElementById('pinv-disc-val').value||0)};
+  var btn=document.getElementById('save-pinv-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save Draft';toast(e.message||'Could not save.','error');};
+  var done=function(saved){btn.disabled=false;btn.textContent='Save Draft';pinvItems=[];pinvLanded=[];
+    toast('Purchase invoice saved','success');
+    if(saved&&saved.id){curPINV=saved;renderPINVDetail();show('v-pinv');}else navTo('purchase-invoices');};
+  if(editingPINVId)db.collection('purchaseInvoices').doc(editingPINVId).update(data).then(function(){
+    var m=Object.assign({},purchaseInvoices.filter(function(x){return x.id===editingPINVId;})[0]||{},data,{id:editingPINVId});done(m);}).catch(fail);
+  else{data.status='draft';data.amountPaid=0;data.payments=[];data.createdAt=Date.now();
+    db.collection('purchaseInvoices').add(data).then(function(ref){done(Object.assign({id:ref.id},data,ref.serverDoc||{}));}).catch(fail);}
+}
+function pinvFromGRN(grnId){
+  var g=goodsReceipts.filter(function(x){return x.id===grnId;})[0];if(!g)return;
+  pinvItems=(g.items||[]).map(function(l){return{partId:l.partId,name:l.name,qty:Number(l.qty)||0,unitCost:Number(l.unitCost)||0,taxRate:0};});
+  pinvLanded=[];
+  showAddPINV();
+  setTimeout(function(){
+    document.getElementById('pinv-supplier').value=g.supplierId||'';
+    pinvSupplierChanged();
+    document.getElementById('pinv-po').value=g.poId||'';
+    document.getElementById('pinv-no').value=g.deliveryNote||'';
+    renderPINVItems();
+  },0);
+}
+function showPINVById(id){var p=purchaseInvoices.filter(function(x){return x.id===id;})[0];if(p){curPINV=p;renderPINVDetail();show('v-pinv');}}
+function renderPINVDetail(){
+  var pi=curPINV,el=document.getElementById('pinv-detail');if(!el||!pi)return;
+  var st=PINV_STATUS[pi.status||'draft']||PINV_STATUS.draft,due=pinvDue(pi),acts='';
+  if(!pi.status||pi.status==='draft'){
+    acts='<button class="btn btn-secondary btn-sm" onclick="showAddPINV(\''+esc(pi.id)+'\')">Edit</button>'+
+      '<button class="btn btn-primary btn-sm" onclick="postPINV()">Post Invoice</button>';
+  } else if(pi.status!=='cancelled'&&due>0.005){
+    acts='<button class="btn btn-primary btn-sm" onclick="openPINVPay()">Record Payment</button>';
+  } else if(pi.status==='paid'){acts='<span class="badge badge-green">SETTLED</span>';}
+  document.getElementById('pinv-actions').innerHTML=acts;
+  var rows=(pi.items||[]).map(function(l){
+    return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.qty||0)+'</td>'+
+      '<td class="num">'+fmtMoney(l.unitCost||0)+'</td>'+
+      (pi.landedTotal?'<td class="num" style="color:var(--t2)">'+(l.landedShare?fmtMoney(l.landedShare):'—')+'</td>'+
+        '<td class="num" style="color:var(--t2)">'+(l.effectiveUnitCost?fmtMoney(l.effectiveUnitCost):'—')+'</td>':'')+
+      '<td class="num" style="font-weight:700">'+fmtMoney(l.lineTotal!=null?l.lineTotal:(Number(l.qty||0)*Number(l.unitCost||0)))+'</td></tr>';}).join('');
+  var payRows=(pi.payments||[]).map(function(p){
+    return '<tr><td style="white-space:nowrap;color:var(--t2)">'+esc(p.date?fmtDate(p.date):'—')+'</td>'+
+      '<td>'+esc((p.method||'cash').replace(/_/g,' '))+'</td><td>'+esc(p.reference||'—')+'</td>'+
+      '<td class="num" style="font-weight:700">'+fmtMoney(p.amount||0)+'</td></tr>';}).join('');
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(pinvNum(pi))+'</div>'+
+      '<div class="so-created">Supplier ref '+esc(pi.invoiceNo||'—')+' · '+esc(pi.invoiceDate?fmtDate(pi.invoiceDate):'—')+'</div></div>'+
+      '<div><span class="badge '+st.badge+'">'+st.label+'</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Supplier</div><div class="so-spec-v">'+esc(pi.supplierName||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Payment Due</div><div class="so-spec-v">'+esc(pi.dueDate?fmtDate(pi.dueDate):'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Outstanding</div><div class="so-spec-v" style="color:'+(due>0.005?'var(--red)':'var(--green)')+'">'+fmtMoney(due)+'</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Invoice Lines</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit Cost</th>'+
+      (pi.landedTotal?'<th class="num">Landed Share</th><th class="num">Landed Unit Cost</th>':'')+
+      '<th class="num">Line Total</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div style="margin-top:14px;text-align:right;font-size:13px;color:var(--t2)">'+
+        'Subtotal '+fmtMoney(pi.subtotal||0)+
+        (pi.discountAmount?' · Discount − '+fmtMoney(pi.discountAmount):'')+
+        (pi.taxAmount?' · Tax '+fmtMoney(pi.taxAmount):'')+
+        (pi.landedTotal?' · Landed '+fmtMoney(pi.landedTotal):'')+
+        '<div style="font-size:19px;font-weight:900;color:var(--t1);margin-top:5px">Total '+fmtMoney(pi.total||0)+'</div>'+
+        (Number(pi.amountPaid)?'<div style="font-size:13px;color:var(--green);font-weight:700">Paid '+fmtMoney(pi.amountPaid)+'</div>':'')+
+      '</div>'+
+      (pi.landedTotal?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Landed costs were allocated by '+esc(pi.landedAllocation||'value')+' and added onto item cost when this invoice was posted.</div>':'')+
+    '</div>'+
+    (payRows?'<div class="card"><div class="card-title">Payments</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+      '<thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead><tbody>'+payRows+'</tbody></table></div></div></div>':'');
+}
+function postPINV(){
+  var pi=curPINV;
+  confirmDialog({title:'Post '+pinvNum(pi)+'?',
+    message:'This records what you owe '+(pi.supplierName||'the supplier')+' and adds any landed costs onto item cost. The invoice can no longer be edited.',
+    confirmText:'Post Invoice',danger:false,onConfirm:function(){
+      gmsApi.postPurchaseInvoice(pi.id).then(function(saved){
+        curPINV=saved;toast(pinvNum(saved)+' posted','success');renderPINVDetail();
+      }).catch(function(e){toast(e.message||'Could not post the invoice.','error');});
+    }});
+}
+function openPINVPay(){
+  var pi=curPINV,due=pinvDue(pi);
+  var ov=document.getElementById('pinv-pay-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='pinv-pay-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:430px" role="dialog" aria-modal="true" aria-label="Record supplier payment">'+
+    '<div class="dlg-title">Pay '+esc(pinvNum(pi))+'</div>'+
+    '<div style="font-size:13px;color:var(--t2);margin:-4px 0 15px">'+esc(pi.supplierName||'')+' — <b>'+fmtMoney(due)+'</b> outstanding.</div>'+
+    '<div class="form-group"><label>Amount *</label><input type="number" id="pp-amt" min="0.01" step="0.01" value="'+due+'" autocomplete="off"></div>'+
+    '<div class="form-group"><label>Method</label><select id="pp-method"><option value="cash">Cash</option><option value="bank_transfer">Bank Transfer</option><option value="cheque">Cheque</option><option value="card">Card</option></select></div>'+
+    '<div class="form-group"><label>Date</label><input type="date" id="pp-date" value="'+todayStr()+'"></div>'+
+    '<div class="form-group" style="margin-bottom:0"><label>Reference</label><input type="text" id="pp-ref" placeholder="Cheque no., transfer ref…" autocomplete="off"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'pinv-pay-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-primary" id="pp-save" onclick="savePINVPayment()">Record Payment</button></div></div>';
+  ov.classList.add('open');
+  setTimeout(function(){var a=document.getElementById('pp-amt');if(a)a.focus();},50);
+}
+function savePINVPayment(){
+  var amt=Number(document.getElementById('pp-amt').value||0);
+  if(!(amt>0)){return invalidField('pp-amt','Enter a payment amount.');}
+  var acc=findDefaultAccount(document.getElementById('pp-method').value);
+  var btn=document.getElementById('pp-save');btn.disabled=true;btn.textContent='Saving…';
+  gmsApi.payPurchaseInvoice(curPINV.id,{amount:amt,method:document.getElementById('pp-method').value,
+    date:document.getElementById('pp-date').value,reference:document.getElementById('pp-ref').value.trim(),
+    accountId:acc?acc.id:'',accountName:acc?acc.name:''})
+  .then(function(saved){
+    curPINV=saved;document.getElementById('pinv-pay-dlg').classList.remove('open');
+    toast('Payment recorded','success');renderPINVDetail();
+  }).catch(function(e){btn.disabled=false;btn.textContent='Record Payment';toast(e.message||'Could not record the payment.','error');});
+}
+
+// ══ PURCHASE RETURNS ══
+function renderPRETs(){
+  var el=document.getElementById('pret-list'),kp=document.getElementById('pret-kpis');if(!el)return;
+  if(!_fired.purchaseReturns){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(3)+'</div>';el.innerHTML=skelTable(4);return;}
+  var val=purchaseReturns.reduce(function(s,r){return s+Number(r.total||0);},0);
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(purchaseReturns.length,'Returns','')+
+    erpKpi(purchaseReturns.filter(function(r){return !r.creditNoteNo;}).length,'Awaiting Credit Note','kpi-accent')+
+    erpKpi(fmtMoney(val),'Returned Value','')+'</div>';
+  var q=(document.getElementById('pret-search').value||'').trim().toLowerCase();
+  var list=purchaseReturns.filter(function(r){return !q||pretNum(r).toLowerCase().indexOf(q)>-1||String(r.supplierName||'').toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML=docBack(purchaseReturns.length?'No returns match your search.':'No purchase returns. Raise one from a goods receipt when something has to go back.');return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Return</th><th>Against</th><th>Supplier</th><th>Date</th><th>Reason</th><th class="num">Value</th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr class="dt-row" onclick="showPRETById(\''+esc(r.id)+'\')"><td style="font-weight:700">'+esc(pretNum(r))+'</td>'+
+        '<td>'+esc(r.grnNo||'—')+'</td><td>'+esc(r.supplierName||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(r.returnDate?fmtDate(r.returnDate):'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(r.reason||'—')+'</td>'+
+        '<td class="num" style="font-weight:700">'+fmtMoney(r.total||0)+'</td></tr>';}).join('')+
+    '</tbody></table></div></div>';
+}
+function showReturnFromGRN(grnId){
+  var g=goodsReceipts.filter(function(x){return x.id===grnId;})[0];if(!g)return;
+  curGRN=g;
+  document.getElementById('pret-sub').textContent='Against '+grnNum(g)+' · '+(g.supplierName||'');
+  document.getElementById('pret-date').value=todayStr();
+  document.getElementById('pret-cn').value='';
+  document.getElementById('pret-reason').value='';
+  // Only what this receipt actually brought in, capped by what is still on hand.
+  pretLines=(g.items||[]).map(function(l){
+    var p=partById(l.partId)||{};
+    return{partId:l.partId,name:l.name,received:Number(l.qty)||0,onHand:Number(p.stock)||0,
+      qty:0,unitCost:Number(l.unitCost)||0,lotId:''};});
+  renderPRETLines();show('v-add-pret');
+}
+function renderPRETLines(){
+  var el=document.getElementById('pret-lines');if(!el)return;
+  el.innerHTML=pretLines.map(function(l,i){
+    var lots=stockLots.filter(function(x){return x.partId===l.partId&&x.grnId===(curGRN||{}).id&&Number(x.remaining)>0;});
+    var max=Math.min(l.received,l.onHand);
+    return '<div class="card" style="box-shadow:none;background:#fff;padding:12px 15px;margin-bottom:8px">'+
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:150px"><div style="font-weight:700;font-size:13.5px">'+esc(l.name)+'</div>'+
+          '<div style="font-size:11.5px;color:var(--t3)">'+l.received+' received · '+l.onHand+' on hand · max returnable '+max+'</div></div>'+
+        '<div style="width:110px"><label style="font-size:11px">Return Qty</label>'+
+          '<input type="number" min="0" max="'+max+'" step="1" value="'+l.qty+'" oninput="pretLines['+i+'].qty=Math.max(0,Math.min('+max+',Number(this.value)||0));this.value=pretLines['+i+'].qty" style="text-align:right"></div>'+
+      '</div>'+
+      (lots.length?'<div style="margin-top:9px"><label style="font-size:11px">From batch / serial</label>'+
+        '<select onchange="pretLines['+i+'].lotId=this.value" style="width:100%">'+
+        '<option value="">Any available</option>'+lots.map(function(x){
+          return '<option value="'+esc(x.id)+'">'+esc(x.serialNo||x.lotNo||'Batch')+
+            (x.expiryDate?' · exp '+esc(fmtDate(x.expiryDate)):'')+' · '+Number(x.remaining)+' left</option>';}).join('')+
+        '</select></div>':'')+
+    '</div>';
+  }).join('');
+}
+function postPurchaseReturn(){
+  var date=document.getElementById('pret-date').value;
+  if(!date){return invalidField('pret-date','Enter the return date.');}
+  var reason=document.getElementById('pret-reason').value.trim();
+  if(!reason){return invalidField('pret-reason','Say why the goods are going back — the supplier will ask.');}
+  var items=pretLines.filter(function(l){return Number(l.qty)>0;}).map(function(l){
+    return{partId:l.partId,name:l.name,qty:Number(l.qty),unitCost:Number(l.unitCost)||0,lotId:l.lotId||''};});
+  if(!items.length){toast('Enter at least one quantity to return.');return;}
+  var btn=document.getElementById('pret-post-btn');btn.disabled=true;btn.textContent='Posting…';
+  gmsApi.purchaseReturn({grnId:(curGRN||{}).id||'',returnDate:date,reason:reason,
+    creditNoteNo:document.getElementById('pret-cn').value.trim(),items:items})
+  .then(function(saved){
+    btn.disabled=false;btn.textContent='Post Return';
+    curPRET=saved;toast(pretNum(saved)+' posted — stock reduced','success');
+    renderPRETDetail();show('v-pret');
+  }).catch(function(e){btn.disabled=false;btn.textContent='Post Return';toast(e.message||'Could not post the return.','error');});
+}
+function showPRETById(id){var r=purchaseReturns.filter(function(x){return x.id===id;})[0];if(r){curPRET=r;renderPRETDetail();show('v-pret');}}
+function renderPRETDetail(){
+  var r=curPRET,el=document.getElementById('pret-detail');if(!el||!r)return;
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(pretNum(r))+'</div>'+
+      '<div class="so-created">Returned '+esc(r.returnDate?fmtDate(r.returnDate):'—')+(r.createdBy?' by '+esc(r.createdBy):'')+'</div></div>'+
+      '<div><span class="badge badge-green">POSTED</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Supplier</div><div class="so-spec-v">'+esc(r.supplierName||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Against</div><div class="so-spec-v">'+esc(r.grnNo||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Credit Note</div><div class="so-spec-v">'+esc(r.creditNoteNo||'Awaited')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Reason</div><div class="so-spec-v">'+esc(r.reason||'—')+'</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Returned Items</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Value</th></tr></thead><tbody>'+
+    (r.items||[]).map(function(l){return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.qty||0)+'</td>'+
+      '<td class="num">'+fmtMoney(l.unitCost||0)+'</td><td class="num" style="font-weight:700">'+fmtMoney(Number(l.qty||0)*Number(l.unitCost||0))+'</td></tr>';}).join('')+
+    '</tbody><tfoot><tr><td colspan="3" style="text-align:right;font-weight:800">Total</td>'+
+    '<td class="num" style="font-weight:900">'+fmtMoney(r.total||0)+'</td></tr></tfoot></table></div></div></div>';
+}
+function sessionUser(){try{return (document.getElementById('user-display')||{}).textContent||'';}catch(e){return '';}}
+
+// Move an order through its lifecycle. The server owns which transitions are
+// legal; this just asks, and reports back what it said.
+function poSetStatus(next){
+  var po=curPO;
+  var ask={submitted:['Submit for approval?','The order will wait for someone to approve it before goods can be received.'],
+    approved:['Approve '+poNum(po)+'?','This commits the garage to the order and allows goods to be received against it.'],
+    cancelled:['Cancel '+poNum(po)+'?','The order will be closed with nothing received.'],
+    closed:['Close '+poNum(po)+'?','Any outstanding quantity will no longer be expected.'],
+    draft:['Return to draft?','The order becomes editable again.']}[next];
+  var go=function(){
+    gmsApi.poStatus(po.id,next).then(function(saved){
+      curPO=saved;toast('Order '+(PO_STATUS[next]||{label:next}).label.toLowerCase(),'success');renderPODetail();
+    }).catch(function(e){toast(e.message||'Could not update the order.','error');});
+  };
+  if(ask)confirmDialog({title:ask[0],message:ask[1],confirmText:'Confirm',danger:next==='cancelled',onConfirm:go});
+  else go();
+}
+// Every delivery made against this order, so the paper trail is one click away.
+function grnsForPO(po){
+  var list=goodsReceipts.filter(function(g){return g.poId===po.id;});
+  if(!list.length)return '';
+  return '<div class="card"><div class="card-title">Deliveries Received</div><div class="dt-wrap"><div class="dt-scroll">'+
+    '<table class="data-table"><thead><tr><th>GRN</th><th>Date</th><th>Delivery Note</th><th class="num">Lines</th><th class="num">Value</th></tr></thead><tbody>'+
+    list.map(function(g){return '<tr class="dt-row" onclick="showGRNById(\''+esc(g.id)+'\')"><td style="font-weight:700">'+esc(grnNum(g))+'</td>'+
+      '<td style="color:var(--t2);white-space:nowrap">'+esc(g.receivedDate?fmtDate(g.receivedDate):'—')+'</td>'+
+      '<td>'+esc(g.deliveryNote||'—')+'</td><td class="num">'+(g.items||[]).length+'</td>'+
+      '<td class="num" style="font-weight:700">'+fmtMoney(g.total||0)+'</td></tr>';}).join('')+
+    '</tbody></table></div></div></div>';
+}
+// Bill a fully received order without retyping its lines.
+function poToInvoice(){
+  var po=curPO;
+  pinvItems=(po.items||[]).filter(function(l){return Number(l.qtyReceived)>0;}).map(function(l){
+    return{partId:l.partId,name:l.name,qty:Number(l.qtyReceived)||0,unitCost:Number(l.unitCost)||0,taxRate:Number(l.taxRate)||0};});
+  pinvLanded=[];
+  showAddPINV();
+  setTimeout(function(){
+    document.getElementById('pinv-supplier').value=po.supplierId||'';
+    pinvSupplierChanged();
+    document.getElementById('pinv-po').value=po.id;
+    renderPINVItems();
+  },0);
 }
 
 var INV_STATUS={
@@ -7590,18 +8757,24 @@ function renderAgedPayables(){
   var el=document.getElementById('agedpay-content');if(!el)return;
   var now=Date.now();
   var bySup={};
-  purchaseOrders.forEach(function(po){
-    if(po.status!=='received'||po.paid)return;
-    var owed=Number(po.total||0);if(owed<=0.005)return;
-    var basis=Number(po.receivedAt||po.createdAt||now);
+  // Payables are the unpaid balance of POSTED supplier invoices — the real
+  // liability. Ageing runs from the invoice date, or the due date once one is
+  // set, which is what a supplier chases against.
+  purchaseInvoices.forEach(function(pi){
+    var st=pi.status||'draft';
+    if(st==='draft'||st==='cancelled')return;
+    var owed=Math.round(((Number(pi.total)||0)-(Number(pi.amountPaid)||0))*100)/100;
+    if(owed<=0.005)return;
+    var basisDs=pi.dueDate||pi.invoiceDate||tsToDs(pi.createdAt);
+    var basis=basisDs?new Date(basisDs+'T00:00').getTime():Number(pi.createdAt||now);
     var days=Math.max(0,Math.floor((now-basis)/86400000));
     var b=days<=30?0:days<=60?1:days<=90?2:3;
-    var key=po.supplierId||po.supplierName||'?';
-    if(!bySup[key])bySup[key]={name:po.supplierName||'Unknown supplier',b:[0,0,0,0],total:0};
+    var key=pi.supplierId||pi.supplierName||'?';
+    if(!bySup[key])bySup[key]={name:pi.supplierName||'Unknown supplier',b:[0,0,0,0],total:0};
     bySup[key].b[b]+=owed;bySup[key].total+=owed;
   });
   var list=Object.keys(bySup).map(function(k){return bySup[k];}).sort(function(a,b){return b.total-a.total;});
-  if(!list.length){el.innerHTML='<div class="card"><div class="empty">Nothing owed — every received purchase order is paid.</div></div>';return;}
+  if(!list.length){el.innerHTML='<div class="card"><div class="empty">Nothing owed — every posted supplier invoice is settled.</div></div>';return;}
   var tots=[0,0,0,0],grand=0;
   var rows=list.map(function(c){
     for(var i=0;i<4;i++)tots[i]+=c.b[i];grand+=c.total;
@@ -7613,7 +8786,7 @@ function renderAgedPayables(){
     '<tbody>'+rows+'</tbody>'+
     '<tfoot><tr><td style="font-weight:800">Total</td>'+tots.map(function(v){return'<td class="num" style="font-weight:800">'+(v?fmtMoney(v):'—')+'</td>';}).join('')+'<td class="num" style="font-weight:800;color:var(--red)">'+fmtMoney(grand)+'</td></tr></tfoot>'+
     '</table></div></div></div>'+
-    '<div style="font-size:12px;color:var(--t3);margin-top:10px">Received purchase orders not yet marked paid, aged from the received date. Mark a PO paid from its detail page.</div>';
+    '<div style="font-size:12px;color:var(--t3);margin-top:10px">Unpaid balances on posted supplier invoices, aged from the payment due date. Record a payment from the invoice.</div>';
 }
 
 // ── VAT SUMMARY (output tax by month) ──

@@ -45,6 +45,19 @@ CREATE TABLE IF NOT EXISTS masters      (id text PRIMARY KEY, data jsonb NOT NUL
 -- Service Master: the sellable labour catalogue (standard hours + rate),
 -- distinct from parts (sellable goods). Richer than a lookup, so its own table.
 CREATE TABLE IF NOT EXISTS services     (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
+-- ── Procure-to-pay chain (Phase 2) ──
+-- PR -> RFQ -> PO -> GRN -> Purchase Invoice, with returns hanging off the GRN.
+-- Each is a real document with its own number, because "who ordered it", "what
+-- actually arrived" and "what the supplier billed" are three different facts
+-- that routinely disagree.
+CREATE TABLE IF NOT EXISTS purchase_requests (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS rfqs              (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS goods_receipts    (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS purchase_invoices (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+CREATE TABLE IF NOT EXISTS purchase_returns  (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+-- Stock lots: the batch / expiry / serial ledger sitting behind parts.stock.
+-- One row per received batch; for serialised items, one row per serial (qty 1).
+CREATE TABLE IF NOT EXISTS stock_lots        (id text PRIMARY KEY, data jsonb NOT NULL, part_id text, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
@@ -88,6 +101,25 @@ CREATE INDEX IF NOT EXISTS idx_masters_kind      ON masters(kind, name);
 CREATE INDEX IF NOT EXISTS idx_masters_parent    ON masters ((data->>'parentId'));
 CREATE INDEX IF NOT EXISTS idx_services_created  ON services(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_services_cat      ON services ((data->>'categoryId'));
+-- Procure-to-pay: every list is drawn newest-first, and each document is looked
+-- up by the document upstream of it.
+CREATE INDEX IF NOT EXISTS idx_pr_created        ON purchase_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pr_seq            ON purchase_requests(seq);
+CREATE INDEX IF NOT EXISTS idx_rfq_created       ON rfqs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rfq_seq           ON rfqs(seq);
+CREATE INDEX IF NOT EXISTS idx_grn_created       ON goods_receipts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_grn_seq           ON goods_receipts(seq);
+CREATE INDEX IF NOT EXISTS idx_grn_po            ON goods_receipts ((data->>'poId'));
+CREATE INDEX IF NOT EXISTS idx_pinv_created      ON purchase_invoices(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pinv_seq          ON purchase_invoices(seq);
+CREATE INDEX IF NOT EXISTS idx_pinv_supplier     ON purchase_invoices ((data->>'supplierId'));
+CREATE INDEX IF NOT EXISTS idx_pinv_status       ON purchase_invoices ((data->>'status'));
+CREATE INDEX IF NOT EXISTS idx_pret_created      ON purchase_returns(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pret_seq          ON purchase_returns(seq);
+CREATE INDEX IF NOT EXISTS idx_pret_grn          ON purchase_returns ((data->>'grnId'));
+-- Lots are always read for one part, and picked oldest-first (FIFO / FEFO).
+CREATE INDEX IF NOT EXISTS idx_lots_part         ON stock_lots(part_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_lots_expiry       ON stock_lots ((data->>'expiryDate'));
 `;
 
 // Uniqueness constraints are created SEPARATELY and non-fatally: an existing
@@ -113,6 +145,20 @@ const UNIQUE_INDEXES = [
   [`CREATE UNIQUE INDEX IF NOT EXISTS uq_parts_barcode ON parts
       (lower(data->>'barcode')) WHERE COALESCE(data->>'barcode','') <> ''`,
    'parts (barcode)'],
+  // A serial number identifies one physical unit. Two units of the same item
+  // cannot carry the same serial while both are in stock — but a serial may
+  // legitimately reappear after the first was sold or returned, so the
+  // constraint applies only to lots still available.
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_lots_serial ON stock_lots
+      (part_id, lower(data->>'serialNo'))
+      WHERE COALESCE(data->>'serialNo','') <> '' AND COALESCE(data->>'status','available') = 'available'`,
+   'stock lots (serial number)'],
+  // Paying the same supplier bill twice is the classic purchasing loss. One
+  // invoice number per supplier makes the duplicate impossible to record.
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_pinv_supplier_no ON purchase_invoices
+      ((data->>'supplierId'), lower(data->>'invoiceNo'))
+      WHERE COALESCE(data->>'invoiceNo','') <> '' AND COALESCE(data->>'status','') <> 'cancelled'`,
+   'purchase invoices (supplier + invoice number)'],
 ];
 
 async function initSchema() {

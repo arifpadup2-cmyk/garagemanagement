@@ -284,9 +284,49 @@
       });
     },
     // Receive a purchase order (atomic: stocks in every line, updates cost).
+    // Superseded by goodsReceipt() — kept so an older cached client keeps working.
     receivePO: function (poId) {
       return req('POST', '/purchaseOrders/' + poId + '/receive', {}).then(function (r) {
         refreshColl('purchaseOrders'); refreshColl('parts');
+        return r;
+      });
+    },
+    // Post a goods receipt: partial quantities, batch/serial/expiry capture,
+    // stock in at weighted-average cost and the PO's own status, all atomic.
+    goodsReceipt: function (body) {
+      return req('POST', '/goodsReceipts', body).then(function (r) {
+        refreshColl('goodsReceipts'); refreshColl('purchaseOrders');
+        refreshColl('parts'); refreshColl('stockLots');
+        return r;
+      });
+    },
+    // Move a purchase order through its lifecycle (submit/approve/cancel/close).
+    poStatus: function (poId, status, reason) {
+      return req('POST', '/purchaseOrders/' + poId + '/status', { status: status, reason: reason || '' }).then(function (r) {
+        refreshColl('purchaseOrders');
+        return r;
+      });
+    },
+    // Post a supplier invoice: allocates landed cost onto item cost and turns
+    // the draft into a real payable.
+    postPurchaseInvoice: function (piId) {
+      return req('POST', '/purchaseInvoices/' + piId + '/post', {}).then(function (r) {
+        refreshColl('purchaseInvoices'); refreshColl('parts');
+        return r;
+      });
+    },
+    // Pay a supplier invoice (row-locked, overpay rejected, cash-book in the
+    // same transaction).
+    payPurchaseInvoice: function (piId, body) {
+      return req('POST', '/purchaseInvoices/' + piId + '/pay', body).then(function (r) {
+        refreshColl('purchaseInvoices'); refreshColl('transactions');
+        return r;
+      });
+    },
+    // Return goods to a supplier (atomic: stock out of the specific lots).
+    purchaseReturn: function (body) {
+      return req('POST', '/purchaseReturns', body).then(function (r) {
+        refreshColl('purchaseReturns'); refreshColl('parts'); refreshColl('stockLots');
         return r;
       });
     },
