@@ -133,6 +133,24 @@ CREATE INDEX IF NOT EXISTS idx_pret_grn          ON purchase_returns ((data->>'g
 -- Lots are always read for one part, and picked oldest-first (FIFO / FEFO).
 CREATE INDEX IF NOT EXISTS idx_lots_part         ON stock_lots(part_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_lots_expiry       ON stock_lots ((data->>'expiryDate'));
+CREATE INDEX IF NOT EXISTS idx_lots_wh           ON stock_lots ((data->>'warehouseId'));
+-- Movement ledger: read per item newest-first, and per source document.
+CREATE INDEX IF NOT EXISTS idx_mov_part          ON stock_movements(part_id, at DESC);
+CREATE INDEX IF NOT EXISTS idx_mov_at            ON stock_movements(at DESC);
+CREATE INDEX IF NOT EXISTS idx_mov_ref           ON stock_movements ((data->>'refId'));
+CREATE INDEX IF NOT EXISTS idx_mov_wh            ON stock_movements ((data->>'warehouseId'));
+CREATE INDEX IF NOT EXISTS idx_bins_wh           ON bins(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_wh_created        ON warehouses(created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_xfer_created      ON stock_transfers(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_xfer_seq          ON stock_transfers(seq);
+CREATE INDEX IF NOT EXISTS idx_count_created     ON stock_counts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_count_seq         ON stock_counts(seq);
+CREATE INDEX IF NOT EXISTS idx_resv_part         ON reservations(part_id);
+CREATE INDEX IF NOT EXISTS idx_resv_ref          ON reservations ((data->>'jobCardId'));
+CREATE INDEX IF NOT EXISTS idx_resv_status       ON reservations ((data->>'status'));
+CREATE INDEX IF NOT EXISTS idx_tools_created     ON tools(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_toolissue_tool    ON tool_issues(tool_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_toolissue_open    ON tool_issues ((data->>'status'));
 `;
 
 // Uniqueness constraints are created SEPARATELY and non-fatally: an existing
@@ -172,6 +190,16 @@ const UNIQUE_INDEXES = [
       ((data->>'supplierId'), lower(data->>'invoiceNo'))
       WHERE COALESCE(data->>'invoiceNo','') <> '' AND COALESCE(data->>'status','') <> 'cancelled'`,
    'purchase invoices (supplier + invoice number)'],
+  // A bin code identifies one physical location within a warehouse.
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_bins_code ON bins
+      (warehouse_id, lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'bins (warehouse + code)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_warehouse_code ON warehouses
+      (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'warehouses (code)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_code ON tools
+      (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'tools (code)'],
 ];
 
 async function initSchema() {

@@ -1137,6 +1137,12 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-purchasing" onclick="toggleNavGroup('purchasing')" title="Purchasing"><span class="snav-label">Purchasing</span><span class="snav-chev" aria-hidden="true">▾</span></button>
         <div class="snav-gitems" id="ng-purchasing">
       <div class="snav-item" id="snav-purchases" onclick="navTo('purchases')" title="Purchase Orders"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="snav-label">Purchase Orders</span></div>
+      <div class="snav-item" id="snav-warehouses" onclick="navTo('warehouses')" title="Warehouses"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><path d="M9 21v-8h6v8"/></svg></span><span class="snav-label">Warehouses</span></div>
+      <div class="snav-item" id="snav-stock-movements" onclick="navTo('stock-movements')" title="Stock Movements"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg></span><span class="snav-label">Stock Movements</span></div>
+      <div class="snav-item" id="snav-stock-transfers" onclick="navTo('stock-transfers')" title="Stock Transfers"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M21 3 13 11"/><path d="M8 21H3v-5"/><path d="M3 21l8-8"/></svg></span><span class="snav-label">Stock Transfers</span></div>
+      <div class="snav-item" id="snav-stock-counts" onclick="navTo('stock-counts')" title="Physical Stock Count"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h4"/></svg></span><span class="snav-label">Stock Count</span></div>
+      <div class="snav-item" id="snav-reorder" onclick="navTo('reorder')" title="Reorder Report"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 14 21 8"/></svg></span><span class="snav-label">Reorder Report</span></div>
+      <div class="snav-item" id="snav-tools" onclick="navTo('tools')" title="Tool Inventory"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="snav-label">Tool Inventory</span></div>
       <div class="snav-item" id="snav-purchase-requests" onclick="navTo('purchase-requests')" title="Purchase Requests"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></span><span class="snav-label">Purchase Requests</span></div>
       <div class="snav-item" id="snav-rfqs" onclick="navTo('rfqs')" title="Requests for Quotation"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9 10h6"/></svg></span><span class="snav-label">RFQs</span></div>
       <div class="snav-item" id="snav-goods-receipts" onclick="navTo('goods-receipts')" title="Goods Receipts"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="snav-label">Goods Receipts</span></div>
@@ -1686,6 +1692,139 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="btn-group" id="est-actions"></div>
       </div>
       <div id="estimate-detail"></div>
+    </div>
+
+    <!-- ══ INVENTORY & WAREHOUSE (Phase 3) ══ -->
+    <div id="v-warehouses" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Warehouses</div><div class="page-sub">Where stock physically sits</div></div>
+        <button class="btn btn-primary" onclick="showAddWarehouse()">+ New Warehouse</button>
+      </div>
+      <div id="wh-list"></div>
+    </div>
+    <div id="v-add-warehouse" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('warehouses')">← Warehouses</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-wh-title">New Warehouse</div></div>
+      <div class="card" style="max-width:640px">
+        <div class="form-row">
+          <div class="form-group"><label>Name *</label><input type="text" id="wh-name" placeholder="e.g. Main Store" autocomplete="off"></div>
+          <div class="form-group"><label>Code</label><input type="text" id="wh-code" placeholder="e.g. MAIN" style="text-transform:uppercase" autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Type</label><select id="wh-type"><option>Store</option><option>Workshop Floor</option><option>Van / Mobile</option><option>Quarantine</option><option>Scrap</option></select></div>
+          <div class="form-group"><label>In Charge</label><input type="text" id="wh-incharge" placeholder="Storekeeper name" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Address / Location</label><input type="text" id="wh-address" autocomplete="off"></div>
+        <label class="chk-row" style="margin-bottom:12px"><input type="checkbox" id="wh-active" checked> <span>Active</span></label>
+        <div class="btn-group"><button class="btn btn-primary" id="save-wh-btn" onclick="saveWarehouse()">Save Warehouse</button>
+          <button class="btn btn-secondary" onclick="navTo('warehouses')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="v-warehouse" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('warehouses')">← Warehouses</button><div class="btn-group" id="wh-actions"></div></div>
+      <div id="wh-detail"></div>
+    </div>
+
+    <div id="v-stock-movements" class="view premium-view">
+      <div class="page-header"><div><div class="page-title">Stock Movements</div><div class="page-sub">Every change to stock, and what caused it</div></div></div>
+      <div id="mov-kpis"></div>
+      <div class="search-wrap"><input type="text" id="mov-search" placeholder="Search item, reference or note…" oninput="renderMovements()"></div>
+      <div id="mov-filters" style="margin-bottom:12px"></div>
+      <div id="mov-list"></div>
+    </div>
+
+    <div id="v-stock-transfers" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Stock Transfers</div><div class="page-sub">Moving stock between locations</div></div>
+        <button class="btn btn-primary" onclick="showAddTransfer()">+ New Transfer</button>
+      </div>
+      <div id="xfer-list"></div>
+    </div>
+    <div id="v-add-transfer" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('stock-transfers')">← Stock Transfers</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">New Stock Transfer</div><div class="page-sub">On-hand total does not change — only where it sits.</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>From *</label><select id="xf-from"></select></div>
+          <div class="form-group"><label>To *</label><select id="xf-to"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Date</label><input type="date" id="xf-date"></div>
+          <div class="form-group"><label>Reason</label><input type="text" id="xf-reason" placeholder="e.g. Restocking the van" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Items</label><div id="xf-lines"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="xfAddLine()">+ Add Item</button></div>
+        <div class="btn-group"><button class="btn btn-primary" id="xf-post-btn" onclick="postTransfer()">Post Transfer</button>
+          <button class="btn btn-secondary" onclick="navTo('stock-transfers')">Cancel</button></div>
+      </div>
+    </div>
+
+    <div id="v-stock-counts" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Physical Stock Count</div><div class="page-sub">Count the shelf, correct the system</div></div>
+        <button class="btn btn-primary" onclick="showAddCount()">+ New Count</button>
+      </div>
+      <div id="cnt-kpis"></div>
+      <div id="cnt-list"></div>
+    </div>
+    <div id="v-add-count" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('stock-counts')">← Stock Counts</button></div>
+      <div style="margin-bottom:14px"><div class="page-title">New Stock Count</div><div class="page-sub">Blind count — record what is on the shelf, not what the system expects.</div></div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Count Date *</label><input type="date" id="cn-date"></div>
+          <div class="form-group"><label>Location</label><select id="cn-warehouse"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Counted By</label><input type="text" id="cn-by" autocomplete="off"></div>
+          <div class="form-group"><label>Notes</label><input type="text" id="cn-notes" autocomplete="off"></div>
+        </div>
+        <div class="form-group"><label>Count Sheet</label><div id="cn-lines"></div></div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="cn-post-btn" onclick="postCount(true)">Post &amp; Correct Stock</button>
+          <button class="btn btn-secondary" id="cn-draft-btn" onclick="postCount(false)">Save for Review</button>
+          <button class="btn btn-secondary" onclick="navTo('stock-counts')">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div id="v-count" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('stock-counts')">← Stock Counts</button></div>
+      <div id="cnt-detail"></div>
+    </div>
+
+    <div id="v-reorder" class="view premium-view">
+      <div class="page-header"><div><div class="page-title">Reorder Report</div><div class="page-sub">What to buy, counting stock already on its way</div></div></div>
+      <div id="reorder-kpis"></div>
+      <div id="reorder-list"></div>
+    </div>
+
+    <div id="v-tools" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Tool Inventory</div><div class="page-sub">Equipment lent to technicians</div></div>
+        <button class="btn btn-primary" onclick="showAddTool()">+ New Tool</button>
+      </div>
+      <div id="tool-kpis"></div>
+      <div id="tool-list"></div>
+    </div>
+    <div id="v-add-tool" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('tools')">← Tools</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-tool-title">New Tool</div></div>
+      <div class="card" style="max-width:640px">
+        <div class="form-row">
+          <div class="form-group"><label>Tool Name *</label><input type="text" id="tl-name" placeholder="e.g. Torque wrench 1/2&quot;" autocomplete="off"></div>
+          <div class="form-group"><label>Code</label><input type="text" id="tl-code" placeholder="e.g. TW-01" style="text-transform:uppercase" autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Category</label><input type="text" id="tl-category" placeholder="e.g. Hand tools, Diagnostic" autocomplete="off"></div>
+          <div class="form-group"><label>Serial No.</label><input type="text" id="tl-serial" autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Cost (<span class="cur-lbl">QAR</span>)</label><input type="number" id="tl-cost" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="form-group"><label>Notes</label><input type="text" id="tl-notes" autocomplete="off"></div>
+        </div>
+        <div class="btn-group"><button class="btn btn-primary" id="save-tool-btn" onclick="saveTool()">Save Tool</button>
+          <button class="btn btn-secondary" onclick="navTo('tools')">Cancel</button></div>
+      </div>
     </div>
 
     <!-- ══ PURCHASE REQUESTS ══ -->
@@ -2887,7 +3026,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 // Today in LOCAL time. toISOString() is UTC, which in Doha (+03) reports
@@ -2914,7 +3053,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -3049,6 +3188,12 @@ function navTo(tab){
   else if(tab==='estimates')renderEstimates();
   else if(tab==='suppliers')renderSuppliers();
   else if(tab==='purchases')renderPurchases();
+  else if(tab==='warehouses')renderWarehouses();
+  else if(tab==='stock-movements')renderMovements();
+  else if(tab==='stock-transfers')renderTransfers();
+  else if(tab==='stock-counts')renderCounts();
+  else if(tab==='reorder')renderReorder();
+  else if(tab==='tools')renderTools();
   else if(tab==='purchase-requests')renderPRs();
   else if(tab==='rfqs')renderRFQs();
   else if(tab==='goods-receipts')renderGRNs();
@@ -3115,7 +3260,11 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'rfqs':['Purchasing','RFQs'],'add-rfq':['Purchasing','RFQ'],'rfq':['Purchasing','RFQ'],
   'goods-receipts':['Purchasing','Goods Receipts'],'receive-po':['Purchasing','Receive Goods'],'grn':['Purchasing','Goods Receipt'],
   'purchase-invoices':['Purchasing','Purchase Invoices'],'add-pinv':['Purchasing','Purchase Invoice'],'pinv':['Purchasing','Purchase Invoice'],
-  'purchase-returns':['Purchasing','Purchase Returns'],'add-pret':['Purchasing','Return to Supplier'],'pret':['Purchasing','Purchase Return']
+  'purchase-returns':['Purchasing','Purchase Returns'],'add-pret':['Purchasing','Return to Supplier'],'pret':['Purchasing','Purchase Return'],
+  'warehouses':['Inventory','Warehouses'],'add-warehouse':['Inventory','Warehouse'],'warehouse':['Inventory','Warehouse'],
+  'stock-movements':['Inventory','Stock Movements'],'stock-transfers':['Inventory','Stock Transfers'],'add-transfer':['Inventory','New Transfer'],
+  'stock-counts':['Inventory','Stock Count'],'add-count':['Inventory','New Count'],'count':['Inventory','Stock Count'],
+  'reorder':['Inventory','Reorder Report'],'tools':['Inventory','Tool Inventory'],'add-tool':['Inventory','Tool']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -3671,6 +3820,46 @@ function initFirestore(){
     if(activeNav==='services')renderServices();
     if(activeNav==='masters')renderMastersHub();
   },snapErr('services','services'));
+  db.collection('warehouses').onSnapshot(function(snap){
+    _fired.warehouses=true;
+    warehouses=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='warehouses')renderWarehouses();
+    if(activeNav==='warehouse')renderWarehouseDetail();
+  },snapErr('warehouses','warehouses'));
+  db.collection('bins').onSnapshot(function(snap){
+    _fired.bins=true;
+    bins=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='warehouse')renderWarehouseDetail();
+  },snapErr('bins','bins'));
+  db.collection('stockMovements').onSnapshot(function(snap){
+    _fired.stockMovements=true;
+    stockMovements=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='stock-movements')renderMovements();
+  },snapErr('stock movements','stockMovements'));
+  db.collection('stockTransfers').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.stockTransfers=true;
+    stockTransfers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='stock-transfers')renderTransfers();
+  },snapErr('stock transfers','stockTransfers'));
+  db.collection('stockCounts').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.stockCounts=true;
+    stockCounts=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='stock-counts')renderCounts();
+  },snapErr('stock counts','stockCounts'));
+  db.collection('reservations').onSnapshot(function(snap){
+    _fired.reservations=true;
+    reservations=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+  },snapErr('reservations','reservations'));
+  db.collection('tools').onSnapshot(function(snap){
+    _fired.tools=true;
+    tools=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='tools')renderTools();
+  },snapErr('tools','tools'));
+  db.collection('toolIssues').onSnapshot(function(snap){
+    _fired.toolIssues=true;
+    toolIssues=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='tools')renderTools();
+  },snapErr('tool issues','toolIssues'));
   db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.purchaseRequests=true;
     purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -4872,16 +5061,24 @@ function renderPartDetail(){
   var stockCol=partOut(p)?'var(--red)':(partLow(p)?'#B45309':'var(--green)');
   var margin=Number(p.sellingPrice||0)-Number(p.costPrice||0);
   function spec(icn,k,val){return '<div class="so-spec-item"><div class="so-spec-k">'+ico(icn,13,'var(--t3)')+k+'</div><div class="so-spec-v">'+val+'</div></div>';}
-  var movs=(p.movements||[]).slice().sort(function(a,b){return (b.at||0)-(a.at||0);});
+  // History comes from the movement ledger. Older records may still carry the
+  // embedded array, so fall back to it rather than showing an empty history.
+  var ledger=stockMovements.filter(function(m){return m.partId===p.id;});
+  var movs=(ledger.length?ledger:(p.movements||[])).slice().sort(function(a,b){return (b.at||0)-(a.at||0);});
+  var held=reservedFor(p.id);
   var movTable=movs.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr><th>Date</th><th>Type</th><th class="num">Qty</th><th class="num">Balance</th><th>Note</th></tr></thead><tbody>'+
     movs.map(function(m){var t=m.type==='in'?['Stock In','#15803D','+']:(m.type==='out'?['Stock Out','#DC2626','−']:['Set','#1D4ED8','']);
-      return '<tr><td style="color:var(--t2);white-space:nowrap">'+fmtTs(m.at)+'</td><td><span style="font-weight:700;color:'+t[1]+'">'+t[0]+'</span></td><td class="num" style="font-weight:700;color:'+t[1]+'">'+t[2]+m.qty+'</td><td class="num" style="font-weight:700">'+m.to+'</td><td style="color:var(--t2)">'+esc(m.note||'—')+'</td></tr>';
+      var src=(typeof MOV_TYPE!=='undefined'&&MOV_TYPE[m.refType])?MOV_TYPE[m.refType].label:'';
+      return '<tr><td style="color:var(--t2);white-space:nowrap">'+fmtTs(m.at)+'</td><td><span style="font-weight:700;color:'+t[1]+'">'+t[0]+'</span>'+
+        (src?'<div style="font-size:11px;color:var(--t3)">'+esc(src)+(m.refNo?' · '+esc(m.refNo):'')+'</div>':'')+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+t[1]+'">'+t[2]+m.qty+'</td><td class="num" style="font-weight:700">'+m.to+'</td><td style="color:var(--t2)">'+esc(m.note||'—')+'</td></tr>';
     }).join('')+'</tbody></table></div></div>':'<div class="empty" style="padding:20px 0">No stock movements recorded yet. Use Adjust Stock to log receipts and issues.</div>';
   el.innerHTML=
     '<div class="card so-head"><div class="so-vehicle" style="border-bottom:none">'+
       '<span class="acc-fn-ic" style="width:48px;height:48px;border-radius:13px">'+ico('box',24,'var(--accent-text)')+'</span>'+
       '<div class="so-veh-txt"><div class="so-veh-model" style="font-size:18px">'+esc(p.name)+'</div><div class="so-veh-cust">'+esc([p.partNumber,p.brand].filter(Boolean).join(' · ')||'No part number')+'</div></div>'+
-      '<div class="ent-actions" style="margin-left:auto;text-align:right"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">On hand</div><div style="font-size:26px;font-weight:800;color:'+stockCol+';font-variant-numeric:tabular-nums">'+s+' <span style="font-size:14px;color:var(--t3)">'+esc(p.unit||'pcs')+'</span></div></div>'+
+      '<div class="ent-actions" style="margin-left:auto;text-align:right"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">On hand</div><div style="font-size:26px;font-weight:800;color:'+stockCol+';font-variant-numeric:tabular-nums">'+s+' <span style="font-size:14px;color:var(--t3)">'+esc(p.unit||'pcs')+'</span></div>'+
+      (held?'<div style="font-size:11.5px;font-weight:700;color:var(--amber-dk);margin-top:2px">'+held+' reserved · '+(s-held)+' free</div>':'')+'</div>'+
     '</div>'+
     '<div class="so-spec">'+
       spec('folder','Category',esc(p.category||'—'))+
@@ -7989,6 +8186,465 @@ function poToInvoice(){
     document.getElementById('pinv-po').value=po.id;
     renderPINVItems();
   },0);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INVENTORY & WAREHOUSE  (Phase 3)
+// Stock lives somewhere, is promised to jobs before it moves, and is counted
+// periodically. parts.stock is the running balance; stockMovements is the
+// ledger that explains it.
+// ═══════════════════════════════════════════════════════════════════════════
+var warehouses=[], bins=[], stockMovements=[], stockTransfers=[], stockCounts=[],
+    reservations=[], tools=[], toolIssues=[];
+var curWarehouse=null, curTransfer=null, curCount=null, curTool=null;
+var xferLines=[], countLines=[], editingWarehouseId=null, editingToolId=null;
+var movFilter='all', reorderRows=[];
+
+function whName(id){for(var i=0;i<warehouses.length;i++){if(warehouses[i].id===id)return warehouses[i].name;}return '';}
+function binName(id){for(var i=0;i<bins.length;i++){if(bins[i].id===id)return bins[i].code||bins[i].name;}return '';}
+function xferNum(d){return 'TRF-'+String(d.seq||0).padStart(4,'0');}
+function cntNum(d){return 'CNT-'+String(d.seq||0).padStart(4,'0');}
+// What is promised to open job cards but has not moved yet.
+function reservedFor(partId){
+  return reservations.filter(function(r){return r.partId===partId&&(r.status||'open')==='open';})
+    .reduce(function(s,r){return s+(Number(r.qty)||0);},0);
+}
+function freeStock(p){return Math.round(((Number(p.stock)||0)-reservedFor(p.id))*100)/100;}
+
+var MOV_TYPE={grn:{label:'Goods Receipt',c:'var(--green)'},return:{label:'Supplier Return',c:'var(--red)'},
+  adjust:{label:'Adjustment',c:'var(--accent-text)'},issue:{label:'Issued to Job',c:'var(--amber-dk)'},
+  transfer:{label:'Transfer',c:'var(--blue)'},count:{label:'Stock Count',c:'var(--purple)'},
+  invoice:{label:'Counter Sale',c:'var(--amber-dk)'}};
+
+// ══ WAREHOUSES & BINS ══
+function renderWarehouses(){
+  var el=document.getElementById('wh-list');if(!el)return;
+  if(!_fired.warehouses){el.innerHTML=skelTable(4);return;}
+  if(!warehouses.length){el.innerHTML='<div class="empty">No warehouses yet. Add one — most garages start with a single main store.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Warehouse</th><th>Code</th><th>Type</th><th class="num">Bins</th><th class="num">Items Held</th><th>Status</th></tr></thead><tbody>'+
+    warehouses.map(function(w){
+      var nb=bins.filter(function(b){return b.warehouseId===w.id;}).length;
+      var held=stockLots.filter(function(l){return l.warehouseId===w.id&&Number(l.remaining)>0;}).length;
+      return '<tr class="dt-row" onclick="showWarehouse(\''+esc(w.id)+'\')"><td style="font-weight:700">'+esc(w.name)+'</td>'+
+        '<td>'+(w.code?'<span class="badge-code">'+esc(w.code)+'</span>':'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(w.type||'Store')+'</td><td class="num">'+nb+'</td><td class="num">'+held+'</td>'+
+        '<td>'+(w.active===false?'<span class="badge-off">Inactive</span>':'<span style="font-size:12px;font-weight:700;color:var(--green)">Active</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+function showAddWarehouse(id){
+  editingWarehouseId=id||null;
+  var w=id?warehouses.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-wh-title').textContent=w?'Edit Warehouse':'New Warehouse';
+  var f=function(i,v){document.getElementById(i).value=v||'';};
+  f('wh-name',w&&w.name);f('wh-code',w&&w.code);f('wh-address',w&&w.address);f('wh-incharge',w&&w.inCharge);
+  document.getElementById('wh-type').value=w?(w.type||'Store'):'Store';
+  document.getElementById('wh-active').checked=!w||w.active!==false;
+  show('v-add-warehouse');
+}
+function saveWarehouse(){
+  var name=document.getElementById('wh-name').value.trim();
+  if(!name){return invalidField('wh-name','Please enter the warehouse name.');}
+  var code=document.getElementById('wh-code').value.trim().toUpperCase();
+  var dup=warehouses.filter(function(w){return w.id!==editingWarehouseId&&
+    (String(w.name||'').toLowerCase()===name.toLowerCase()||(code&&String(w.code||'').toUpperCase()===code));})[0];
+  if(dup){return invalidField('wh-name','A warehouse with this name or code already exists.');}
+  var data={name:name,code:code,type:document.getElementById('wh-type').value,
+    address:document.getElementById('wh-address').value.trim(),
+    inCharge:document.getElementById('wh-incharge').value.trim(),
+    active:!!document.getElementById('wh-active').checked};
+  var btn=document.getElementById('save-wh-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save Warehouse';toast(e.message||'Could not save.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save Warehouse';toast('Warehouse saved','success');navTo('warehouses');};
+  if(editingWarehouseId)db.collection('warehouses').doc(editingWarehouseId).update(data).then(done).catch(fail);
+  else{data.createdAt=Date.now();db.collection('warehouses').add(data).then(done).catch(fail);}
+}
+function showWarehouse(id){
+  curWarehouse=warehouses.filter(function(x){return x.id===id;})[0];if(!curWarehouse)return;
+  renderWarehouseDetail();show('v-warehouse');
+}
+function renderWarehouseDetail(){
+  var w=curWarehouse,el=document.getElementById('wh-detail');if(!el||!w)return;
+  document.getElementById('wh-actions').innerHTML=
+    '<button class="btn btn-secondary btn-sm" onclick="showAddWarehouse(\''+esc(w.id)+'\')">Edit</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="openAddBin()">+ Add Bin</button>';
+  var myBins=bins.filter(function(b){return b.warehouseId===w.id;});
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(w.name)+'</div>'+
+      '<div class="so-created">'+esc(w.type||'Store')+(w.code?' · '+esc(w.code):'')+'</div></div>'+
+      '<div><span class="badge '+(w.active===false?'badge-gray':'badge-green')+'">'+(w.active===false?'INACTIVE':'ACTIVE')+'</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Address</div><div class="so-spec-v">'+esc(w.address||'—')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">In Charge</div><div class="so-spec-v">'+esc(w.inCharge||'—')+'</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Bin Locations ('+myBins.length+')</div>'+
+      (myBins.length?'<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+        '<thead><tr><th>Code</th><th>Description</th><th class="num">Batches Held</th><th></th></tr></thead><tbody>'+
+        myBins.map(function(b){
+          var held=stockLots.filter(function(l){return l.binId===b.id&&Number(l.remaining)>0;}).length;
+          return '<tr><td style="font-weight:700">'+esc(b.code||'—')+'</td><td style="color:var(--t2)">'+esc(b.name||'—')+'</td>'+
+            '<td class="num">'+held+'</td><td class="num"><button class="btn btn-danger btn-sm" style="padding:4px 9px" onclick="deleteBin(\''+esc(b.id)+'\')">Remove</button></td></tr>';
+        }).join('')+'</tbody></table></div></div>':
+        '<div class="empty">No bins yet. Bins are the shelf positions inside this warehouse — add them if you want to find parts by location.</div>')+
+    '</div>';
+}
+function openAddBin(){
+  var ov=document.getElementById('bin-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='bin-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:420px" role="dialog" aria-modal="true" aria-label="Add bin">'+
+    '<div class="dlg-title">Add Bin to '+esc(curWarehouse.name)+'</div>'+
+    '<div class="form-group"><label>Bin Code *</label><input type="text" id="bin-code" placeholder="e.g. A-12" style="text-transform:uppercase" autocomplete="off"></div>'+
+    '<div class="form-group" style="margin-bottom:0"><label>Description</label><input type="text" id="bin-name" placeholder="e.g. Shelf 3, filters" autocomplete="off"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'bin-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-primary" onclick="saveBin()">Add Bin</button></div></div>';
+  ov.classList.add('open');
+  setTimeout(function(){var e=document.getElementById('bin-code');if(e)e.focus();},50);
+}
+function saveBin(){
+  var code=document.getElementById('bin-code').value.trim().toUpperCase();
+  if(!code){return invalidField('bin-code','Enter a bin code.');}
+  if(bins.some(function(b){return b.warehouseId===curWarehouse.id&&String(b.code||'').toUpperCase()===code;}))
+    return invalidField('bin-code','That bin code already exists in this warehouse.');
+  db.collection('bins').add({warehouseId:curWarehouse.id,code:code,
+    name:document.getElementById('bin-name').value.trim(),createdAt:Date.now()}).then(function(){
+    document.getElementById('bin-dlg').classList.remove('open');toast('Bin added','success');renderWarehouseDetail();
+  }).catch(function(e){toast(e.message||'Could not add the bin.','error');});
+}
+function deleteBin(id){
+  var held=stockLots.filter(function(l){return l.binId===id&&Number(l.remaining)>0;}).length;
+  if(held){toast('That bin still holds '+held+' batch(es) — move them first.','error');return;}
+  confirmDialog({title:'Remove this bin?',message:'The bin location will be deleted.',confirmText:'Remove',onConfirm:function(){
+    db.collection('bins').doc(id).delete().then(function(){toast('Bin removed','success');renderWarehouseDetail();})
+      .catch(function(e){toast(e.message||'Could not remove.','error');});
+  }});
+}
+
+// ══ STOCK MOVEMENT LEDGER ══
+function renderMovements(){
+  var el=document.getElementById('mov-list'),kp=document.getElementById('mov-kpis');if(!el)return;
+  if(!_fired.stockMovements){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(4)+'</div>';el.innerHTML=skelTable(8);return;}
+  var today=todayStr();
+  var todays=stockMovements.filter(function(m){return tsToDs(m.at)===today;});
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+
+    erpKpi(stockMovements.length,'Movements','')+
+    erpKpi(todays.length,'Today','kpi-accent')+
+    erpKpi(todays.filter(function(m){return m.type==='in';}).length,'Stock In','kpi-green')+
+    erpKpi(todays.filter(function(m){return m.type==='out';}).length,'Stock Out','kpi-red')+'</div>';
+  var fl=document.getElementById('mov-filters');
+  if(fl)fl.innerHTML=['all','grn','issue','adjust','transfer','count','return'].map(function(k){
+    var lbl=k==='all'?'All':(MOV_TYPE[k]||{label:k}).label;
+    return '<button type="button" class="jc-fpill'+(movFilter===k?' active':'')+'" onclick="setMovFilter(\''+k+'\')">'+lbl+'</button>';}).join('');
+  var q=(document.getElementById('mov-search').value||'').trim().toLowerCase();
+  var list=stockMovements.filter(function(m){
+    if(movFilter!=='all'&&(m.refType||'adjust')!==movFilter)return false;
+    if(!q)return true;
+    return String(m.partName||'').toLowerCase().indexOf(q)>-1||String(m.refNo||'').toLowerCase().indexOf(q)>-1||
+      String(m.note||'').toLowerCase().indexOf(q)>-1;
+  }).slice(0,400);
+  if(!list.length){el.innerHTML='<div class="empty">'+(stockMovements.length?'No movements match this view.':'No stock movements recorded yet.')+'</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>When</th><th>Item</th><th>Source</th><th>Reference</th><th class="num">Qty</th><th class="num">Balance</th><th>Note</th></tr></thead><tbody>'+
+    list.map(function(m){
+      var t=MOV_TYPE[m.refType||'adjust']||{label:m.refType||'—',c:'var(--t2)'};
+      var sign=m.type==='in'?'+':(m.type==='out'?'−':'');
+      var col=m.type==='in'?'var(--green)':(m.type==='out'?'var(--red)':'var(--blue)');
+      return '<tr><td style="color:var(--t2);white-space:nowrap">'+esc(fmtTs(m.at))+'</td>'+
+        '<td style="font-weight:600">'+esc(m.partName||'—')+'</td>'+
+        '<td><span style="font-weight:700;color:'+t.c+';font-size:12px">'+esc(t.label)+'</span></td>'+
+        '<td style="color:var(--t2)">'+esc(m.refNo||'—')+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+col+'">'+sign+Number(m.qty||0)+'</td>'+
+        '<td class="num" style="font-weight:600">'+Number(m.to||0)+'</td>'+
+        '<td style="color:var(--t2);font-size:12px">'+esc(m.note||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>'+
+    (stockMovements.length>400?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Showing the 400 most recent of '+stockMovements.length+' movements.</div>':'');
+}
+function setMovFilter(k){movFilter=k;renderMovements();}
+
+// ══ STOCK TRANSFERS ══
+function renderTransfers(){
+  var el=document.getElementById('xfer-list');if(!el)return;
+  if(!_fired.stockTransfers){el.innerHTML=skelTable(4);return;}
+  if(!stockTransfers.length){el.innerHTML='<div class="empty">No transfers yet. Move stock between warehouses or bins and each move is recorded here.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Transfer</th><th>Date</th><th>From</th><th>To</th><th class="num">Items</th><th>Reason</th></tr></thead><tbody>'+
+    stockTransfers.map(function(t){
+      return '<tr><td style="font-weight:700">'+esc(xferNum(t))+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(t.transferDate?fmtDate(t.transferDate):'—')+'</td>'+
+        '<td>'+esc(t.fromWarehouseName||whName(t.fromWarehouseId)||'—')+'</td>'+
+        '<td>'+esc(t.toWarehouseName||whName(t.toWarehouseId)||'—')+'</td>'+
+        '<td class="num">'+(t.items||[]).length+'</td><td style="color:var(--t2)">'+esc(t.reason||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+function showAddTransfer(){
+  if(warehouses.length<1){toast('Add a warehouse first.','error');navTo('warehouses');return;}
+  document.getElementById('xf-date').value=todayStr();
+  document.getElementById('xf-reason').value='';
+  ['xf-from','xf-to'].forEach(function(id){
+    document.getElementById(id).innerHTML='<option value="">— Select —</option>'+warehouses.filter(function(w){return w.active!==false;})
+      .map(function(w){return '<option value="'+esc(w.id)+'">'+esc(w.name)+'</option>';}).join('');
+  });
+  xferLines=[{partId:'',name:'',qty:1}];
+  renderXferLines();show('v-add-transfer');
+}
+function xfAddLine(){xferLines.push({partId:'',name:'',qty:1});renderXferLines();}
+function xfRemoveLine(i){xferLines.splice(i,1);if(!xferLines.length)xferLines.push({partId:'',name:'',qty:1});renderXferLines();}
+function xfLinePart(i,pid){var p=partById(pid);xferLines[i].partId=pid;xferLines[i].name=p?p.name:'';renderXferLines();}
+function renderXferLines(){
+  var el=document.getElementById('xf-lines');if(!el)return;
+  el.innerHTML=xferLines.map(function(l,i){
+    var p=partById(l.partId);
+    var free=p?freeStock(p):0;
+    return '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">'+
+      '<select onchange="xfLinePart('+i+',this.value)" style="flex:1;min-width:170px"><option value="">— Select item —</option>'+
+        parts.filter(function(x){return x.active!==false||l.partId===x.id;}).map(function(x){
+          return '<option value="'+esc(x.id)+'"'+(l.partId===x.id?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select>'+
+      '<input type="number" min="1" step="1" placeholder="Qty" value="'+esc(l.qty)+'" oninput="xferLines['+i+'].qty=this.value" style="width:95px">'+
+      (p?'<span style="font-size:11.5px;color:'+(free>0?'var(--t3)':'var(--red)')+';white-space:nowrap">'+free+' free</span>':'')+
+      '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="xfRemoveLine('+i+')">✕</button></div>';
+  }).join('');
+}
+function postTransfer(){
+  var from=document.getElementById('xf-from').value,to=document.getElementById('xf-to').value;
+  if(!from){return invalidField('xf-from','Choose where the stock is moving from.');}
+  if(!to){return invalidField('xf-to','Choose where it is moving to.');}
+  if(from===to){return invalidField('xf-to','Pick a different destination.');}
+  var items=xferLines.filter(function(l){return l.partId&&Number(l.qty)>0;}).map(function(l){
+    return{partId:l.partId,name:l.name,qty:Number(l.qty)};});
+  if(!items.length){toast('Add at least one item.');return;}
+  var btn=document.getElementById('xf-post-btn');btn.disabled=true;btn.textContent='Posting…';
+  gmsApi.stockTransfer({fromWarehouseId:from,fromWarehouseName:whName(from),toWarehouseId:to,toWarehouseName:whName(to),
+    transferDate:document.getElementById('xf-date').value,reason:document.getElementById('xf-reason').value.trim(),items:items})
+  .then(function(t){btn.disabled=false;btn.textContent='Post Transfer';toast(xferNum(t)+' posted','success');navTo('stock-transfers');})
+  .catch(function(e){btn.disabled=false;btn.textContent='Post Transfer';toast(e.message||'Could not post the transfer.','error');});
+}
+
+// ══ PHYSICAL STOCK COUNT ══
+function renderCounts(){
+  var el=document.getElementById('cnt-list'),kp=document.getElementById('cnt-kpis');if(!el)return;
+  if(!_fired.stockCounts){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(3)+'</div>';el.innerHTML=skelTable(4);return;}
+  var totVar=stockCounts.reduce(function(s,c){return s+Math.abs(Number(c.varianceValue||0));},0);
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(stockCounts.length,'Counts','')+
+    erpKpi(stockCounts.reduce(function(s,c){return s+(Number(c.itemsWithVariance)||0);},0),'Variances Found','kpi-accent')+
+    erpKpi(fmtMoney(totVar),'Variance Value',totVar>0.005?'kpi-red':'kpi-green')+'</div>';
+  if(!stockCounts.length){el.innerHTML='<div class="empty">No stock counts yet. Count the shelf, and anything that disagrees with the system is corrected in one posting.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Count</th><th>Date</th><th>Counted By</th><th class="num">Items</th><th class="num">Variances</th><th class="num">Variance Value</th><th>Status</th></tr></thead><tbody>'+
+    stockCounts.map(function(c){
+      var v=Number(c.varianceValue||0);
+      return '<tr class="dt-row" onclick="showCount(\''+esc(c.id)+'\')"><td style="font-weight:700">'+esc(cntNum(c))+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(c.countDate?fmtDate(c.countDate):'—')+'</td>'+
+        '<td>'+esc(c.countedBy||'—')+'</td><td class="num">'+Number(c.itemsCounted||0)+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+(c.itemsWithVariance?'var(--red)':'var(--green)')+'">'+Number(c.itemsWithVariance||0)+'</td>'+
+        '<td class="num" style="font-weight:700;color:'+(v<0?'var(--red)':(v>0?'var(--green)':'var(--t3)'))+'">'+(v?fmtMoney(v):'—')+'</td>'+
+        '<td><span class="badge '+(c.status==='posted'?'badge-green':'badge-gray')+'">'+String(c.status||'draft').toUpperCase()+'</span></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+function showAddCount(){
+  document.getElementById('cn-date').value=todayStr();
+  document.getElementById('cn-by').value=sessionUser()||'';
+  document.getElementById('cn-notes').value='';
+  var ws=document.getElementById('cn-warehouse');
+  ws.innerHTML='<option value="">All locations</option>'+warehouses.map(function(w){
+    return '<option value="'+esc(w.id)+'">'+esc(w.name)+'</option>';}).join('');
+  // A blind count: the system figure is deliberately NOT shown while counting,
+  // or the counter simply confirms what the screen already says.
+  countLines=parts.filter(function(p){return p.active!==false;}).map(function(p){
+    return{partId:p.id,name:p.name,countedQty:'',note:''};});
+  renderCountLines();show('v-add-count');
+}
+function renderCountLines(){
+  var el=document.getElementById('cn-lines');if(!el)return;
+  if(!countLines.length){el.innerHTML='<div class="empty">No active items to count.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Item</th><th>Part No.</th><th class="num" style="width:130px">Counted Qty</th><th style="width:200px">Note</th></tr></thead><tbody>'+
+    countLines.map(function(l,i){
+      var p=partById(l.partId)||{};
+      return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td style="color:var(--t2)">'+esc(p.partNumber||'—')+'</td>'+
+        '<td class="num"><input type="number" min="0" step="1" value="'+esc(l.countedQty)+'" oninput="countLines['+i+'].countedQty=this.value" style="text-align:right;width:110px" placeholder="—"></td>'+
+        '<td><input type="text" value="'+esc(l.note)+'" oninput="countLines['+i+'].note=this.value" placeholder="Optional" autocomplete="off"></td></tr>';
+    }).join('')+'</tbody></table></div></div>'+
+    '<div style="font-size:12px;color:var(--t3);margin-top:10px">This is a blind count — the system figure is hidden on purpose, so you record what is actually on the shelf. Leave an item empty to skip it.</div>';
+}
+function postCount(post){
+  var items=countLines.filter(function(l){return l.countedQty!==''&&l.countedQty!=null;}).map(function(l){
+    return{partId:l.partId,countedQty:Number(l.countedQty)||0,note:l.note||''};});
+  if(!items.length){toast('Enter at least one counted quantity.');return;}
+  var btn=document.getElementById(post?'cn-post-btn':'cn-draft-btn');
+  var lbl=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
+  var wid=document.getElementById('cn-warehouse').value;
+  gmsApi.stockCount({countDate:document.getElementById('cn-date').value,warehouseId:wid,warehouseName:whName(wid),
+    countedBy:document.getElementById('cn-by').value.trim(),notes:document.getElementById('cn-notes').value.trim(),
+    items:items,post:!!post})
+  .then(function(c){
+    btn.disabled=false;btn.textContent=lbl;
+    toast(cntNum(c)+(post?' posted — stock corrected':' saved as draft'),'success');
+    curCount=c;renderCountDetail();show('v-count');
+  }).catch(function(e){btn.disabled=false;btn.textContent=lbl;toast(e.message||'Could not save the count.','error');});
+}
+function showCount(id){curCount=stockCounts.filter(function(x){return x.id===id;})[0];if(curCount){renderCountDetail();show('v-count');}}
+function renderCountDetail(){
+  var c=curCount,el=document.getElementById('cnt-detail');if(!el||!c)return;
+  var rows=(c.items||[]).map(function(l){
+    var v=Number(l.variance||0);
+    return '<tr><td style="font-weight:600">'+esc(l.name)+'</td><td class="num">'+Number(l.systemQty||0)+'</td>'+
+      '<td class="num" style="font-weight:700">'+Number(l.countedQty||0)+'</td>'+
+      '<td class="num" style="font-weight:800;color:'+(v<0?'var(--red)':(v>0?'var(--green)':'var(--t3)'))+'">'+(v>0?'+':'')+v+'</td>'+
+      '<td class="num" style="color:var(--t2)">'+fmtMoney(v*(Number(l.unitCost)||0))+'</td>'+
+      '<td style="color:var(--t2);font-size:12px">'+esc(l.note||'—')+'</td></tr>';}).join('');
+  el.innerHTML='<div class="card so-head"><div class="so-head-top"><div><div class="so-num">'+esc(cntNum(c))+'</div>'+
+      '<div class="so-created">'+esc(c.countDate?fmtDate(c.countDate):'—')+(c.countedBy?' · counted by '+esc(c.countedBy):'')+'</div></div>'+
+      '<div><span class="badge '+(c.status==='posted'?'badge-green':'badge-gray')+'">'+String(c.status||'draft').toUpperCase()+'</span></div></div>'+
+    '<div class="so-spec">'+
+      '<div class="so-spec-item"><div class="so-spec-k">Location</div><div class="so-spec-v">'+esc(c.warehouseName||'All')+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Items Counted</div><div class="so-spec-v">'+Number(c.itemsCounted||0)+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Variances</div><div class="so-spec-v" style="color:'+(c.itemsWithVariance?'var(--red)':'var(--green)')+'">'+Number(c.itemsWithVariance||0)+'</div></div>'+
+      '<div class="so-spec-item"><div class="so-spec-k">Variance Value</div><div class="so-spec-v">'+fmtMoney(c.varianceValue||0)+'</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title">Count Sheet</div><div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
+    '<thead><tr><th>Item</th><th class="num">System</th><th class="num">Counted</th><th class="num">Variance</th><th class="num">Value</th><th>Note</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div></div>'+
+    (c.status==='posted'?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Stock was corrected to the counted figures when this count was posted, and each correction is in the movement ledger.</div>':'')+'</div>';
+}
+
+// ══ REORDER REPORT ══
+function renderReorder(){
+  var el=document.getElementById('reorder-list'),kp=document.getElementById('reorder-kpis');if(!el)return;
+  el.innerHTML=skelTable(6);
+  gmsApi.reorderReport().then(function(r){
+    reorderRows=r.items||[];
+    var outC=reorderRows.filter(function(x){return x.status==='out';}).length;
+    var val=reorderRows.reduce(function(s,x){return s+x.suggestedQty*x.unitCost;},0);
+    if(kp)kp.innerHTML='<div class="erp-kpis">'+
+      erpKpi(reorderRows.length,'To Reorder',reorderRows.length?'kpi-accent':'kpi-green')+
+      erpKpi(outC,'Out of Stock',outC?'kpi-red':'')+
+      erpKpi(fmtMoney(val),'Suggested Spend','')+'</div>';
+    if(!reorderRows.length){el.innerHTML='<div class="empty">Nothing needs reordering — every active item is above its reorder level once stock on order is counted.</div>';return;}
+    el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+      '<th>Item</th><th>Part No.</th><th>Supplier</th><th class="num">On Hand</th><th class="num">Reserved</th>'+
+      '<th class="num">On Order</th><th class="num">Reorder At</th><th class="num">Suggest</th><th>Status</th></tr></thead><tbody>'+
+      reorderRows.map(function(x){
+        var col=x.status==='out'?'var(--red)':(x.status==='committed'?'var(--amber-dk)':'var(--t1)');
+        return '<tr><td style="font-weight:600">'+esc(x.name)+'</td><td style="color:var(--t2)">'+esc(x.partNumber||'—')+'</td>'+
+          '<td style="color:var(--t2)">'+esc(x.supplier||'—')+'</td>'+
+          '<td class="num" style="font-weight:700;color:'+col+'">'+x.onHand+'</td>'+
+          '<td class="num" style="color:var(--t2)">'+(x.reserved||'—')+'</td>'+
+          '<td class="num" style="color:var(--t2)">'+(x.onOrder||'—')+'</td>'+
+          '<td class="num">'+x.reorderLevel+'</td>'+
+          '<td class="num" style="font-weight:800;color:var(--accent-text)">'+x.suggestedQty+'</td>'+
+          '<td><span class="badge '+(x.status==='out'?'badge-red':(x.status==='committed'?'badge-amber':'badge-orange'))+'">'+
+            (x.status==='out'?'OUT':(x.status==='committed'?'COMMITTED':'LOW'))+'</span></td></tr>';
+      }).join('')+'</tbody></table></div></div>'+
+      '<div style="margin-top:12px"><button class="btn btn-primary" onclick="reorderToPR()">Raise Purchase Request for all '+reorderRows.length+'</button></div>'+
+      '<div style="font-size:12px;color:var(--t3);margin-top:8px">Stock already on an approved order is counted, so you are not asked to buy what is already coming.</div>';
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the reorder report — '+esc(e.message||'')+'</div>';});
+}
+// Turn the whole reorder list into one purchase request.
+function reorderToPR(){
+  if(!reorderRows.length)return;
+  prItems=reorderRows.map(function(x){return{partId:x.id,name:x.name,qty:x.suggestedQty};});
+  showAddPR();
+  setTimeout(function(){
+    document.getElementById('pr-purpose').value='Stock replenishment — from reorder report';
+    renderPRItems();
+  },0);
+}
+
+// ══ TOOL INVENTORY ══
+function renderTools(){
+  var el=document.getElementById('tool-list'),kp=document.getElementById('tool-kpis');if(!el)return;
+  if(!_fired.tools){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(4)+'</div>';el.innerHTML=skelTable(5);return;}
+  var out=tools.filter(function(t){return t.status==='issued';}).length;
+  var dmg=tools.filter(function(t){return t.status==='damaged';}).length;
+  var overdue=toolIssues.filter(function(i){return (i.status||'open')==='open'&&i.dueBack&&i.dueBack<todayStr();}).length;
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(tools.length,'Tools','')+
+    erpKpi(out,'Issued Out',out?'kpi-accent':'')+erpKpi(overdue,'Overdue',overdue?'kpi-red':'')+
+    erpKpi(dmg,'Damaged',dmg?'kpi-red':'')+'</div>';
+  if(!tools.length){el.innerHTML='<div class="empty">No tools registered. Add the equipment you lend to technicians so you know where it is.</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Tool</th><th>Code</th><th>Category</th><th>Status</th><th>Held By</th><th>Due Back</th><th></th></tr></thead><tbody>'+
+    tools.map(function(t){
+      var iss=toolIssues.filter(function(i){return i.toolId===t.id&&(i.status||'open')==='open';})[0];
+      var late=iss&&iss.dueBack&&iss.dueBack<todayStr();
+      var st=t.status==='issued'?['ISSUED','badge-amber']:(t.status==='damaged'?['DAMAGED','badge-red']:['AVAILABLE','badge-green']);
+      return '<tr><td style="font-weight:700">'+esc(t.name)+'</td><td>'+(t.code?'<span class="badge-code">'+esc(t.code)+'</span>':'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(t.category||'—')+'</td>'+
+        '<td><span class="badge '+st[1]+'">'+st[0]+'</span></td>'+
+        '<td>'+esc(iss?(iss.technicianName||'—'):'—')+'</td>'+
+        '<td style="white-space:nowrap;color:'+(late?'var(--red)':'var(--t2)')+';font-weight:'+(late?'700':'400')+'">'+esc(iss&&iss.dueBack?fmtDate(iss.dueBack):'—')+(late?' ⚠':'')+'</td>'+
+        '<td class="num" style="white-space:nowrap">'+(iss
+          ? '<button class="btn btn-green btn-sm" style="padding:4px 10px" onclick="openToolReturn(\''+esc(iss.id)+'\')">Return</button>'
+          : '<button class="btn btn-secondary btn-sm" style="padding:4px 10px" onclick="openToolIssue(\''+esc(t.id)+'\')">Issue</button>')+
+        '<button class="btn btn-secondary btn-sm" style="padding:4px 10px;margin-left:5px" onclick="showAddTool(\''+esc(t.id)+'\')">Edit</button></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+function showAddTool(id){
+  editingToolId=id||null;
+  var t=id?tools.filter(function(x){return x.id===id;})[0]:null;
+  document.getElementById('add-tool-title').textContent=t?'Edit Tool':'New Tool';
+  var f=function(i,v){document.getElementById(i).value=v||'';};
+  f('tl-name',t&&t.name);f('tl-code',t&&t.code);f('tl-category',t&&t.category);
+  f('tl-serial',t&&t.serialNo);f('tl-cost',t&&t.cost);f('tl-notes',t&&t.notes);
+  show('v-add-tool');
+}
+function saveTool(){
+  var name=document.getElementById('tl-name').value.trim();
+  if(!name){return invalidField('tl-name','Please enter the tool name.');}
+  var code=document.getElementById('tl-code').value.trim().toUpperCase();
+  if(code&&tools.some(function(t){return t.id!==editingToolId&&String(t.code||'').toUpperCase()===code;}))
+    return invalidField('tl-code','That tool code is already in use.');
+  var data={name:name,code:code,category:document.getElementById('tl-category').value.trim(),
+    serialNo:document.getElementById('tl-serial').value.trim(),
+    cost:Number(document.getElementById('tl-cost').value||0),
+    notes:document.getElementById('tl-notes').value.trim()};
+  var btn=document.getElementById('save-tool-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent='Save Tool';toast(e.message||'Could not save.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save Tool';toast('Tool saved','success');navTo('tools');};
+  if(editingToolId)db.collection('tools').doc(editingToolId).update(data).then(done).catch(fail);
+  else{data.status='available';data.createdAt=Date.now();db.collection('tools').add(data).then(done).catch(fail);}
+}
+function openToolIssue(toolId){
+  var t=tools.filter(function(x){return x.id===toolId;})[0];if(!t)return;
+  var ov=document.getElementById('tool-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='tool-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:430px" role="dialog" aria-modal="true" aria-label="Issue tool">'+
+    '<div class="dlg-title">Issue “'+esc(t.name)+'”</div>'+
+    '<div class="form-group"><label>Technician *</label><select id="ti-tech">'+
+      '<option value="">— Select —</option>'+technicians.map(function(x){
+        return '<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Due Back</label><input type="date" id="ti-due"></div>'+
+    '<div class="form-group" style="margin-bottom:0"><label>Note</label><input type="text" id="ti-note" placeholder="Job, condition on issue…" autocomplete="off"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'tool-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-primary" onclick="issueTool(\''+esc(toolId)+'\')">Issue Tool</button></div></div>';
+  ov.classList.add('open');
+}
+function issueTool(toolId){
+  var sel=document.getElementById('ti-tech');
+  if(!sel.value){return invalidField('ti-tech','Choose who is taking the tool.');}
+  gmsApi.issueTool(toolId,{technicianId:sel.value,technicianName:sel.options[sel.selectedIndex].text,
+    dueBack:document.getElementById('ti-due').value,note:document.getElementById('ti-note').value.trim()})
+  .then(function(){document.getElementById('tool-dlg').classList.remove('open');toast('Tool issued','success');renderTools();})
+  .catch(function(e){toast(e.message||'Could not issue the tool.','error');});
+}
+function openToolReturn(issueId){
+  var iss=toolIssues.filter(function(x){return x.id===issueId;})[0];if(!iss)return;
+  var ov=document.getElementById('tool-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='tool-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:420px" role="dialog" aria-modal="true" aria-label="Return tool">'+
+    '<div class="dlg-title">Return “'+esc(iss.toolName||'')+'”</div>'+
+    '<div style="font-size:13px;color:var(--t2);margin:-4px 0 14px">Issued to '+esc(iss.technicianName||'—')+'.</div>'+
+    '<div class="form-group"><label>Condition</label><select id="tr-cond">'+
+      '<option value="ok">Good — back in service</option><option value="damaged">Damaged — take out of service</option></select></div>'+
+    '<div class="form-group" style="margin-bottom:0"><label>Note</label><input type="text" id="tr-note" placeholder="Optional" autocomplete="off"></div>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'tool-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-primary" onclick="returnTool(\''+esc(issueId)+'\')">Record Return</button></div></div>';
+  ov.classList.add('open');
+}
+function returnTool(issueId){
+  gmsApi.returnTool(issueId,{condition:document.getElementById('tr-cond').value,note:document.getElementById('tr-note').value.trim()})
+  .then(function(){document.getElementById('tool-dlg').classList.remove('open');toast('Tool returned','success');renderTools();})
+  .catch(function(e){toast(e.message||'Could not record the return.','error');});
 }
 
 var INV_STATUS={

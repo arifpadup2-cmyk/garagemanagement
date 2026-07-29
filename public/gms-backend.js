@@ -272,14 +272,14 @@
     // Atomic stock adjustment (blocks negative stock, appends movement safely).
     adjustStock: function (partId, body) {
       return req('POST', '/parts/' + partId + '/adjust', body).then(function (r) {
-        refreshColl('parts');
+        refreshColl('parts'); refreshColl('stockMovements');
         return r;
       });
     },
     // Counter-sale: create invoice + cash-book entry in one server transaction.
     quickInvoice: function (body) {
       return req('POST', '/invoices/quick', body).then(function (r) {
-        refreshColl('invoices'); refreshColl('transactions'); refreshColl('parts');
+        refreshColl('invoices'); refreshColl('transactions'); refreshColl('parts'); refreshColl('stockMovements');
         return r;
       });
     },
@@ -296,7 +296,7 @@
     goodsReceipt: function (body) {
       return req('POST', '/goodsReceipts', body).then(function (r) {
         refreshColl('goodsReceipts'); refreshColl('purchaseOrders');
-        refreshColl('parts'); refreshColl('stockLots');
+        refreshColl('parts'); refreshColl('stockLots'); refreshColl('stockMovements');
         return r;
       });
     },
@@ -326,21 +326,21 @@
     // Return goods to a supplier (atomic: stock out of the specific lots).
     purchaseReturn: function (body) {
       return req('POST', '/purchaseReturns', body).then(function (r) {
-        refreshColl('purchaseReturns'); refreshColl('parts'); refreshColl('stockLots');
+        refreshColl('purchaseReturns'); refreshColl('parts'); refreshColl('stockLots'); refreshColl('stockMovements');
         return r;
       });
     },
     // Issue a part from stock to a job card (atomic: deducts stock + adds line).
     issuePart: function (jcId, partId, qty, unitPrice) {
       return req('POST', '/jobCards/' + jcId + '/parts', { partId: partId, qty: qty, unitPrice: unitPrice }).then(function (r) {
-        refreshColl('jobCards'); refreshColl('parts');
+        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements');
         return r;
       });
     },
     // Return an issued part (atomic: restores stock + removes line).
     returnPart: function (jcId, lineId) {
       return req('POST', '/jobCards/' + jcId + '/parts/return', { lineId: lineId }).then(function (r) {
-        refreshColl('jobCards'); refreshColl('parts');
+        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements');
         return r;
       });
     },
@@ -351,6 +351,49 @@
         return r;
       });
     },
+    // ---- Inventory & warehouse (Phase 3) ----
+    // Move stock between locations; both legs land in the movement ledger.
+    stockTransfer: function (body) {
+      return req('POST', '/stockTransfers', body).then(function (r) {
+        refreshColl('stockTransfers'); refreshColl('stockMovements'); refreshColl('stockLots');
+        return r;
+      });
+    },
+    // Post (or draft) a physical count; posting corrects stock in one go.
+    stockCount: function (body) {
+      return req('POST', '/stockCounts', body).then(function (r) {
+        refreshColl('stockCounts'); refreshColl('parts'); refreshColl('stockMovements');
+        return r;
+      });
+    },
+    // Promise stock to a job card without moving it.
+    reserveStock: function (body) {
+      return req('POST', '/reservations/reserve', body).then(function (r) {
+        refreshColl('reservations');
+        return r;
+      });
+    },
+    releaseReservation: function (id, status) {
+      return req('POST', '/reservations/' + id + '/release', { status: status || 'released' }).then(function (r) {
+        refreshColl('reservations');
+        return r;
+      });
+    },
+    issueTool: function (toolId, body) {
+      return req('POST', '/tools/' + toolId + '/issue', body).then(function (r) {
+        refreshColl('tools'); refreshColl('toolIssues');
+        return r;
+      });
+    },
+    returnTool: function (issueId, body) {
+      return req('POST', '/toolIssues/' + issueId + '/return', body).then(function (r) {
+        refreshColl('tools'); refreshColl('toolIssues');
+        return r;
+      });
+    },
+    // What to buy: computed server-side so every device gets the same answer.
+    reorderReport: function () { return req('GET', '/reports/reorder'); },
+    availability: function (partId) { return req('GET', '/parts/' + partId + '/availability'); },
     // Revoke every outstanding token (sign out all devices).
     logoutAll: function () { return req('POST', '/logout-all', {}); },
     // Recent audit-log rows (admin only).

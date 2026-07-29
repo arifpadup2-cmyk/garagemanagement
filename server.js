@@ -96,6 +96,14 @@ const COLL = {
   purchaseInvoices: { table: 'purchase_invoices', order: 'created_at DESC NULLS LAST', seq: true, lock: 1008 },
   purchaseReturns:  { table: 'purchase_returns',  order: 'created_at DESC NULLS LAST', seq: true, lock: 1009 },
   stockLots:        { table: 'stock_lots',        order: 'created_at ASC NULLS LAST', extra: { part_id: 'partId' } },
+  stockMovements:   { table: 'stock_movements',   order: 'at DESC NULLS LAST', extra: { part_id: 'partId', at: 'at' }, noCreated: true },
+  warehouses:       { table: 'warehouses',        order: 'created_at ASC NULLS LAST' },
+  bins:             { table: 'bins',              order: 'created_at ASC NULLS LAST', extra: { warehouse_id: 'warehouseId' } },
+  stockTransfers:   { table: 'stock_transfers',   order: 'created_at DESC NULLS LAST', seq: true, lock: 1010 },
+  stockCounts:      { table: 'stock_counts',      order: 'created_at DESC NULLS LAST', seq: true, lock: 1011 },
+  reservations:     { table: 'reservations',      order: 'created_at DESC NULLS LAST', extra: { part_id: 'partId' } },
+  tools:            { table: 'tools',             order: 'created_at DESC NULLS LAST' },
+  toolIssues:       { table: 'tool_issues',       order: 'created_at DESC NULLS LAST', extra: { tool_id: 'toolId' } },
 };
 
 // Document number prefixes, so every module formats a reference identically.
@@ -500,7 +508,8 @@ app.use('/api', requireAuth);
 // the atomic money/stock endpoints, export, image mutations) is 403.
 // Master data is reference material the shop floor reads but never edits, so
 // technicians get GET on masters/services and nothing more.
-const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services']);
+const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services',
+  'warehouses', 'bins', 'stockLots', 'stockMovements', 'reservations', 'tools', 'toolIssues']);
 function authorize(req, res, next) {
   const role = req.auth && req.auth.role;
   if (role === 'admin') return next();
@@ -551,7 +560,11 @@ const FILTERABLE = {
   goodsReceipts: ['poId', 'supplierId'],
   purchaseInvoices: ['status', 'supplierId', 'poId'],
   purchaseReturns: ['grnId', 'supplierId'],
-  stockLots: ['partId', 'status'],
+  stockLots: ['partId', 'status', 'warehouseId'],
+  stockMovements: ['partId', 'refType', 'refId', 'warehouseId'],
+  bins: ['warehouseId'],
+  reservations: ['partId', 'jobCardId', 'status'],
+  toolIssues: ['toolId', 'status', 'technicianId'],
 };
 
 // ---- List ----
@@ -609,11 +622,95 @@ async function allocSeq(client, coll, table, lock, id) {
   return Number(r.rows[0].last);
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// STOCK MOVEMENT LEDGER
+// Every change to on-hand stock goes through here, inside the caller's
+// transaction. Movements used to live in an array on the item document, which
+// meant a part received 500 times rewrote 500 rows of history on every issue —
+// a write-amplification wall, and impossible to query across items ("what moved
+// yesterday?" had to load the whole catalogue). The ledger is the single source
+// of truth for stock history; parts.stock is the running balance.
+// ══════════════════════════════════════════════════════════════════════════
+async function postMovement(client, m) {
+  const id = crypto.randomUUID();
+  const at = m.at || Date.now();
+  const doc = {
+    partId: m.partId, partName: m.partName || '',
+    type: m.type,                     // in | out | set
+    qty: round2(m.qty), from: round2(m.from), to: round2(m.to),
+    warehouseId: m.warehouseId || '', binId: m.binId || '',
+    lotId: m.lotId || '',
+    refType: m.refType || '',         // grn | return | adjust | issue | transfer | count | invoice
+    refId: m.refId || '', refNo: m.refNo || '',
+    unitCost: m.unitCost != null ? round2(m.unitCost) : null,
+    note: (m.note || '').trim(), at, by: m.by || '',
+  };
+  await client.query(
+    `INSERT INTO stock_movements (id, data, part_id, at) VALUES ($1,$2,$3,$4)`,
+    [id, JSON.stringify(doc), m.partId, at]
+  );
+  return { id, ...doc };
+}
+
+// One-time migration: lift the embedded movement arrays into the ledger. Runs at
+// boot, is idempotent (skips any part already migrated), and leaves the original
+// arrays alone so an older cached client keeps rendering.
+async function migrateMovements() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, data FROM parts
+        WHERE jsonb_array_length(COALESCE(data->'movements','[]'::jsonb)) > 0
+          AND COALESCE((data->>'movementsMigrated')::boolean, false) = false`
+    );
+    if (!rows.length) return;
+    let moved = 0;
+    for (const r of rows) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const m of (Array.isArray(r.data.movements) ? r.data.movements : [])) {
+          await postMovement(client, {
+            partId: r.id, partName: r.data.name || '',
+            type: m.type || 'set', qty: Number(m.qty) || 0,
+            from: Number(m.from) || 0, to: Number(m.to) || 0,
+            refType: m.grnId ? 'grn' : (m.purchaseReturnId ? 'return' : 'adjust'),
+            refId: m.grnId || m.purchaseReturnId || '',
+            note: m.note || '', at: Number(m.at) || Date.now(), by: m.by || '',
+          });
+          moved++;
+        }
+        await client.query(`UPDATE parts SET data = data || '{"movementsMigrated":true}'::jsonb WHERE id = $1`, [r.id]);
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        console.warn('[gms] movement migration skipped for part', r.id, e.message);
+      } finally {
+        client.release();
+      }
+    }
+    console.log(`Movement ledger: migrated ${moved} movement(s) from ${rows.length} item(s).`);
+  } catch (e) {
+    console.warn('[gms] movement migration failed:', e.message);
+  }
+}
+
+// Stock physically present minus what is already promised to open job cards.
+// Issuing against promised stock is how two jobs end up fighting over one part.
+async function reservedQty(client, partId) {
+  const q = client || pool;
+  const { rows } = await q.query(
+    `SELECT COALESCE(SUM((data->>'qty')::numeric),0) n FROM reservations
+      WHERE part_id = $1 AND COALESCE(data->>'status','open') = 'open'`,
+    [partId]
+  );
+  return round2(Number(rows[0].n) || 0);
+}
+
 // Collections that may ONLY be written by their dedicated endpoint. A goods
 // receipt that did not move stock, or a return that did not come out of a lot,
 // would be a document describing something that never happened — so the generic
 // CRUD path hands these straight on to the engine that owns them.
-const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots']);
+const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots', 'stockMovements', 'stockTransfers', 'stockCounts']);
 
 // ---- Create (upsert by id) ----
 app.post('/api/:coll', asyncH(async (req, res, next) => {
@@ -989,6 +1086,9 @@ app.post('/api/goodsReceipts', asyncH(async (req, res) => {
       const wac = to > 0 ? round2((from * oldCost + w.qty * unitCost) / to) : unitCost;
       const mv = { type: 'in', qty: w.qty, from, to, note: `Received on ${grnNo} (${poNo})`, at: now, by: actor, grnId, poId };
       partRows[w.pl.partId] = { ...p, stock: to, costPrice: wac, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+      await postMovement(client, { partId: w.pl.partId, partName: p.name, type: 'in', qty: w.qty, from, to,
+        warehouseId: body.warehouseId || '', binId: body.binId || '', unitCost,
+        refType: 'grn', refId: grnId, refNo: grnNo, note: `Received on ${grnNo} (${poNo})`, at: now, by: actor });
 
       // One lot row per batch/serial; untracked items still get a lot so cost
       // layers and returns have something concrete to point at.
@@ -1323,6 +1423,9 @@ app.post('/api/purchaseReturns', asyncH(async (req, res) => {
       const from = Number(p.stock) || 0, to = round2(from - qty);
       const mv = { type: 'out', qty, from, to, note: `Returned to supplier on ${retNo}`, at: now, by: actor, purchaseReturnId: retId };
       partRows[l.partId] = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+      await postMovement(client, { partId: l.partId, partName: p.name, type: 'out', qty, from, to,
+        lotId: l.lotId || '', unitCost: l.unitCost,
+        refType: 'return', refId: retId, refNo: retNo, note: `Returned to supplier on ${retNo}`, at: now, by: actor });
       if (l.lotId && l._lot) {
         const rem = round2((Number(l._lot.remaining) || 0) - qty);
         await client.query(`UPDATE stock_lots SET data = $2 WHERE id = $1`,
@@ -1398,6 +1501,342 @@ app.post('/api/purchaseOrders/:id/status', asyncH(async (req, res) => {
   }
 }));
 
+// ══════════════════════════════════════════════════════════════════════════
+// STOCK TRANSFER — move stock between warehouses or bins.
+// On-hand total does not change; where it sits does. Both legs are written so
+// the ledger reconciles per location, not just per item.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/stockTransfers', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const lines = Array.isArray(b.items) ? b.items : [];
+  if (!b.fromWarehouseId || !b.toWarehouseId) return res.status(400).json({ error: 'Choose where the stock is moving from and to.' });
+  if (b.fromWarehouseId === b.toWarehouseId && (b.fromBinId || '') === (b.toBinId || '')) {
+    return res.status(400).json({ error: 'The source and destination are the same.' });
+  }
+  if (!lines.length) return res.status(400).json({ error: 'Add at least one item to transfer.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const partIds = [...new Set(lines.map((l) => l.partId).filter(Boolean))].sort();
+    const rows = {};
+    for (const pid of partIds) {
+      const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'An item on this transfer no longer exists.' }); }
+      rows[pid] = r.rows[0].data;
+    }
+    // Validate everything before moving anything.
+    for (const l of lines) {
+      const qty = Number(l.qty) || 0;
+      if (qty <= 0) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Transfer quantities must be greater than zero.' }); }
+      const onHand = Number(rows[l.partId].stock) || 0;
+      const held = await reservedQty(client, l.partId);
+      if (qty > round2(onHand - held) + 1e-9) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Cannot transfer ${qty} of "${rows[l.partId].name}" — ${onHand} on hand, ${held} reserved for job cards.` });
+      }
+    }
+
+    const id = crypto.randomUUID();
+    const seq = await allocSeq(client, 'stockTransfers', 'stock_transfers', 1010, id);
+    const no = 'TRF-' + String(seq).padStart(4, '0');
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+
+    for (const l of lines) {
+      const p = rows[l.partId];
+      const qty = Number(l.qty) || 0;
+      const bal = Number(p.stock) || 0;
+      // Out of the source, into the destination: the running balance is
+      // unchanged, but each location gets its own ledger entry.
+      await postMovement(client, { partId: l.partId, partName: p.name, type: 'out', qty, from: bal, to: bal,
+        warehouseId: b.fromWarehouseId, binId: b.fromBinId || '', refType: 'transfer', refId: id, refNo: no,
+        note: 'Transferred out on ' + no, at: now, by: actor });
+      await postMovement(client, { partId: l.partId, partName: p.name, type: 'in', qty, from: bal, to: bal,
+        warehouseId: b.toWarehouseId, binId: b.toBinId || '', refType: 'transfer', refId: id, refNo: no,
+        note: 'Transferred in on ' + no, at: now, by: actor });
+      // Follow the lots so batch traceability survives the move.
+      if (l.lotId) {
+        await client.query(
+          `UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
+          [l.lotId, JSON.stringify({ warehouseId: b.toWarehouseId, binId: b.toBinId || '' })]
+        );
+      }
+    }
+
+    const doc = {
+      fromWarehouseId: b.fromWarehouseId, fromWarehouseName: b.fromWarehouseName || '',
+      toWarehouseId: b.toWarehouseId, toWarehouseName: b.toWarehouseName || '',
+      fromBinId: b.fromBinId || '', toBinId: b.toBinId || '',
+      transferDate: b.transferDate || tsToDs(now), reason: String(b.reason || '').trim(),
+      items: lines.map((l) => ({ partId: l.partId, name: l.name || '', qty: Number(l.qty) || 0, lotId: l.lotId || '' })),
+      seq, status: 'posted', createdAt: now, createdBy: actor,
+    };
+    await client.query(`INSERT INTO stock_transfers (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(doc), seq, now]);
+    await client.query('COMMIT');
+    audit(req, 'stock-transfer', 'stockTransfers', id, no);
+    res.json({ id, ...doc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// PHYSICAL STOCK COUNT — a blind count, then a single posting of the variance.
+// Counting and adjusting are deliberately separate: the count is evidence, the
+// adjustment is the correction, and both stay on the record.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/stockCounts', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const lines = Array.isArray(b.items) ? b.items : [];
+  if (!lines.length) return res.status(400).json({ error: 'A count needs at least one item.' });
+  if (periodLocked(b.countDate)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const partIds = [...new Set(lines.map((l) => l.partId).filter(Boolean))].sort();
+    const rows = {};
+    for (const pid of partIds) {
+      const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+      if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'An item on this count no longer exists.' }); }
+      rows[pid] = r.rows[0].data;
+    }
+
+    const id = crypto.randomUUID();
+    const seq = await allocSeq(client, 'stockCounts', 'stock_counts', 1011, id);
+    const no = 'CNT-' + String(seq).padStart(4, '0');
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+    const post = b.post !== false;   // a count can be saved for review before posting
+    const counted = [];
+    let varianceValue = 0;
+
+    for (const l of lines) {
+      const p = rows[l.partId];
+      // The system figure is read HERE, under lock, not whatever the counter's
+      // screen showed when they started — otherwise a sale during the count is
+      // silently written off as shrinkage.
+      const systemQty = round2(Number(p.stock) || 0);
+      const countedQty = round2(Number(l.countedQty) || 0);
+      const diff = round2(countedQty - systemQty);
+      const cost = Number(p.costPrice) || 0;
+      varianceValue = round2(varianceValue + diff * cost);
+      counted.push({ partId: l.partId, name: p.name || '', systemQty, countedQty, variance: diff, unitCost: round2(cost), note: (l.note || '').trim() });
+
+      if (post && diff !== 0) {
+        await postMovement(client, {
+          partId: l.partId, partName: p.name, type: diff > 0 ? 'in' : 'out', qty: Math.abs(diff),
+          from: systemQty, to: countedQty, warehouseId: b.warehouseId || '',
+          refType: 'count', refId: id, refNo: no, unitCost: cost,
+          note: 'Stock count ' + no + (l.note ? ' — ' + l.note : ''), at: now, by: actor,
+        });
+        await client.query(`UPDATE parts SET data = data || $2::jsonb WHERE id = $1`,
+          [l.partId, JSON.stringify({ stock: countedQty })]);
+      }
+    }
+
+    const doc = {
+      countDate: b.countDate || tsToDs(now), warehouseId: b.warehouseId || '', warehouseName: b.warehouseName || '',
+      countedBy: String(b.countedBy || actor).trim(), notes: String(b.notes || '').trim(),
+      items: counted, varianceValue,
+      itemsCounted: counted.length, itemsWithVariance: counted.filter((c) => c.variance !== 0).length,
+      seq, status: post ? 'posted' : 'draft', postedAt: post ? now : null,
+      createdAt: now, createdBy: actor,
+    };
+    await client.query(`INSERT INTO stock_counts (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(doc), seq, now]);
+    await client.query('COMMIT');
+    audit(req, post ? 'stock-count-post' : 'stock-count-draft', 'stockCounts', id, `${no} variance ${varianceValue}`);
+    res.json({ id, ...doc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Reserve stock for a job card ----
+// A reservation promises stock without moving it, so two open jobs cannot both
+// plan to use the last alternator.
+app.post('/api/reservations/reserve', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const qty = round2(Number(b.qty));
+  if (!b.partId || !(qty > 0)) return res.status(400).json({ error: 'Choose an item and a quantity.' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [b.partId]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Item not found.' }); }
+    const p = r.rows[0].data;
+    const onHand = round2(Number(p.stock) || 0);
+    const held = await reservedQty(client, b.partId);
+    const free = round2(onHand - held);
+    if (qty > free + 1e-9) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: `Only ${free} of "${p.name}" is free — ${onHand} on hand, ${held} already reserved.` });
+    }
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    const doc = {
+      partId: b.partId, partName: p.name || '', qty,
+      jobCardId: b.jobCardId || '', jobCardNo: b.jobCardNo || '',
+      status: 'open', note: String(b.note || '').trim(),
+      createdAt: now, createdBy: (req.auth && req.auth.name) || '?',
+    };
+    await client.query(`INSERT INTO reservations (id, data, part_id, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(doc), b.partId, now]);
+    await client.query('COMMIT');
+    audit(req, 'reserve', 'reservations', id, `${p.name} ×${qty}`);
+    res.json({ id, ...doc, freeAfter: round2(free - qty) });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// Release a reservation (job cancelled, or the part was actually issued).
+app.post('/api/reservations/:id/release', asyncH(async (req, res) => {
+  const { rows } = await pool.query(`SELECT data FROM reservations WHERE id = $1`, [req.params.id]);
+  if (!rows.length) return res.status(404).json({ error: 'Reservation not found.' });
+  if (rows[0].data.status !== 'open') return res.status(400).json({ error: 'That reservation is already closed.' });
+  const merged = { ...rows[0].data, status: String((req.body || {}).status || 'released'), closedAt: Date.now(), closedBy: (req.auth && req.auth.name) || '?' };
+  await pool.query(`UPDATE reservations SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+  audit(req, 'release-reservation', 'reservations', req.params.id, merged.partName || '');
+  res.json({ id: req.params.id, ...merged });
+}));
+
+// ---- Tool issue / return ----
+// Workshop tools are assets that walk. Issuing one to a technician and getting
+// it back is the whole control.
+app.post('/api/tools/:id/issue', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data FROM tools WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Tool not found.' }); }
+    const t = r.rows[0].data;
+    const open = await client.query(
+      `SELECT 1 FROM tool_issues WHERE tool_id = $1 AND COALESCE(data->>'status','open') = 'open' LIMIT 1`, [req.params.id]);
+    if (open.rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ error: `"${t.name}" is already issued and not yet returned.` }); }
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    const doc = {
+      toolId: req.params.id, toolName: t.name || '',
+      technicianId: b.technicianId || '', technicianName: b.technicianName || '',
+      jobCardId: b.jobCardId || '', issuedAt: now, dueBack: b.dueBack || '',
+      status: 'open', note: String(b.note || '').trim(),
+      createdAt: now, createdBy: (req.auth && req.auth.name) || '?',
+    };
+    await client.query(`INSERT INTO tool_issues (id, data, tool_id, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(doc), req.params.id, now]);
+    await client.query(`UPDATE tools SET data = data || $2::jsonb WHERE id = $1`,
+      [req.params.id, JSON.stringify({ status: 'issued', issuedTo: doc.technicianName })]);
+    await client.query('COMMIT');
+    audit(req, 'issue-tool', 'tools', req.params.id, `${t.name} → ${doc.technicianName}`);
+    res.json({ id, ...doc });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+app.post('/api/toolIssues/:id/return', asyncH(async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data FROM tool_issues WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Issue record not found.' }); }
+    const iss = r.rows[0].data;
+    if (iss.status !== 'open') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'That tool has already been returned.' }); }
+    const now = Date.now();
+    const cond = String((req.body || {}).condition || 'ok');
+    const merged = { ...iss, status: 'returned', returnedAt: now, condition: cond, returnNote: String((req.body || {}).note || '').trim() };
+    await client.query(`UPDATE tool_issues SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query(`UPDATE tools SET data = data || $2::jsonb WHERE id = $1`,
+      [iss.toolId, JSON.stringify({ status: cond === 'damaged' ? 'damaged' : 'available', issuedTo: '' })]);
+    await client.query('COMMIT');
+    audit(req, 'return-tool', 'tools', iss.toolId, iss.toolName || '');
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Reorder report ----
+// What to buy, computed server-side so the answer is the same on every device
+// and doesn't require loading the whole catalogue into the browser.
+app.get('/api/reports/reorder', asyncH(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT p.id, p.data,
+            COALESCE((SELECT SUM((r.data->>'qty')::numeric) FROM reservations r
+                       WHERE r.part_id = p.id AND COALESCE(r.data->>'status','open') = 'open'), 0) AS reserved,
+            COALESCE((SELECT SUM(COALESCE((li->>'qty')::numeric,0) - COALESCE((li->>'qtyReceived')::numeric,0))
+                        FROM purchase_orders po,
+                             jsonb_array_elements(COALESCE(po.data->'items','[]'::jsonb)) AS t(li)
+                       WHERE li->>'partId' = p.id
+                         AND po.data->>'status' IN ('approved','partial')), 0) AS on_order
+       FROM parts p
+      WHERE COALESCE((p.data->>'active')::boolean, true) = true`
+  );
+  const out = [];
+  for (const r of rows) {
+    const d = r.data;
+    const onHand = round2(Number(d.stock) || 0);
+    const reserved = round2(Number(r.reserved) || 0);
+    const onOrder = round2(Math.max(0, Number(r.on_order || 0)));
+    const free = round2(onHand - reserved);
+    const reorderAt = Number(d.reorderLevel) || Number(d.minStock) || 0;
+    // Available INCLUDING what is already on its way — ordering again for stock
+    // that is already coming is the most common over-buy.
+    const projected = round2(free + onOrder);
+    if (reorderAt <= 0 || projected > reorderAt) continue;
+    const target = Number(d.maxStock) > 0 ? Number(d.maxStock) : reorderAt * 2;
+    out.push({
+      id: r.id, name: d.name || '', partNumber: d.partNumber || '',
+      category: d.category || '', supplierId: d.supplierId || '', supplier: d.supplier || '',
+      onHand, reserved, free, onOrder, projected, reorderLevel: reorderAt,
+      maxStock: Number(d.maxStock) || 0, suggestedQty: round2(Math.max(0, target - projected)),
+      unitCost: round2(Number(d.costPrice) || 0),
+      status: onHand <= 0 ? 'out' : (free <= 0 ? 'committed' : 'low'),
+    });
+  }
+  out.sort((a, b) => (a.projected - a.reorderLevel) - (b.projected - b.reorderLevel));
+  res.json({ generatedAt: Date.now(), count: out.length, items: out });
+}));
+
+// ---- Stock availability for one item ----
+app.get('/api/parts/:id/availability', asyncH(async (req, res) => {
+  const { rows } = await pool.query(`SELECT data FROM parts WHERE id = $1`, [req.params.id]);
+  if (!rows.length) return res.status(404).json({ error: 'Item not found.' });
+  const onHand = round2(Number(rows[0].data.stock) || 0);
+  const reserved = await reservedQty(null, req.params.id);
+  const lots = await pool.query(
+    `SELECT id, data FROM stock_lots
+      WHERE part_id = $1 AND (data->>'remaining')::numeric > 0
+      ORDER BY COALESCE(NULLIF(data->>'expiryDate',''), '9999-12-31') ASC, created_at ASC`,
+    [req.params.id]
+  );
+  res.json({
+    partId: req.params.id, onHand, reserved, available: round2(onHand - reserved),
+    // Ordered expiry-first then oldest-first: the sequence a FEFO issue follows.
+    lots: lots.rows.map((l) => ({ id: l.id, ...l.data })),
+  });
+}));
+
 // ---- Adjust part stock, atomically ----
 // Row-locked read-modify-write so two devices can never erase each other's
 // movements; stock can never go negative.
@@ -1422,6 +1861,8 @@ app.post('/api/parts/:id/adjust', asyncH(async (req, res) => {
     const movement = { type, qty, from, to, note: (note || '').trim(), at: Date.now(), by: (req.auth && req.auth.name) || '' };
     const merged = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([movement]) };
     await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await postMovement(client, { partId: req.params.id, partName: p.name, type, qty, from, to,
+      refType: 'adjust', unitCost: p.costPrice, note: (note || '').trim(), by: (req.auth && req.auth.name) || '' });
     await client.query('COMMIT');
     audit(req, 'stock-' + type, 'parts', req.params.id, (p.name || '') + ' ' + from + '→' + to);
     res.json({ id: req.params.id, ...merged });
@@ -1451,11 +1892,30 @@ app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
     if (!jr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Job card not found' }); }
     const p = pr.rows[0].data, jc = jr.rows[0].data;
     const from = Number(p.stock) || 0;
-    if (qty > from) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Insufficient stock — only ' + from + ' of ' + (p.name || 'this part') + ' on hand.' }); }
+    // Stock promised to ANOTHER job card is not available to this one. Without
+    // this, two open jobs both plan around the last alternator and the second
+    // discovers the problem with the car already stripped.
+    const heldElsewhere = round2(Number((await client.query(
+      `SELECT COALESCE(SUM((data->>'qty')::numeric),0) n FROM reservations
+        WHERE part_id = $1 AND COALESCE(data->>'status','open') = 'open'
+          AND COALESCE(data->>'jobCardId','') <> $2`,
+      [partId, req.params.id])).rows[0].n) || 0);
+    const available = round2(from - heldElsewhere);
+    if (qty > available) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: heldElsewhere
+          ? `Only ${available} of ${p.name || 'this part'} is free — ${from} on hand, ${heldElsewhere} reserved for other job cards.`
+          : 'Insufficient stock — only ' + from + ' of ' + (p.name || 'this part') + ' on hand.',
+      });
+    }
     const jcNo = 'JC-' + String(jr.rows[0].seq || 0).padStart(4, '0');
     const to = from - qty;
     const mv = { type: 'out', qty, from, to, note: 'Issued to ' + jcNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
     const pMerged = { ...p, stock: to, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
+    await postMovement(client, { partId, partName: p.name, type: 'out', qty, from, to,
+      unitCost: p.costPrice, refType: 'issue', refId: req.params.id, refNo: jcNo,
+      note: 'Issued to ' + jcNo, by: (req.auth && req.auth.name) || '' });
     await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [partId, JSON.stringify(pMerged)]);
     const line = {
       id: crypto.randomUUID(), partId, name: p.name || '', qty,
@@ -1763,5 +2223,6 @@ const PORT = process.env.PORT || 3000;
 initSchema()
   .then(loadAuthEpoch)
   .then(loadPeriodLock)
+  .then(migrateMovements)
   .then(() => app.listen(PORT, () => console.log(`GMS server on http://localhost:${PORT}`)))
   .catch((e) => { console.error('Startup failed:', e.message); process.exit(1); });
