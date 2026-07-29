@@ -333,14 +333,14 @@
     // Issue a part from stock to a job card (atomic: deducts stock + adds line).
     issuePart: function (jcId, partId, qty, unitPrice) {
       return req('POST', '/jobCards/' + jcId + '/parts', { partId: partId, qty: qty, unitPrice: unitPrice }).then(function (r) {
-        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements');
+        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements'); refreshColl('stockLots');
         return r;
       });
     },
     // Return an issued part (atomic: restores stock + removes line).
     returnPart: function (jcId, lineId) {
       return req('POST', '/jobCards/' + jcId + '/parts/return', { lineId: lineId }).then(function (r) {
-        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements');
+        refreshColl('jobCards'); refreshColl('parts'); refreshColl('stockMovements'); refreshColl('stockLots');
         return r;
       });
     },

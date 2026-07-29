@@ -1099,6 +1099,37 @@ async function postSalesJournal(client, invId, inv, invNo, actor) {
   });
 }
 
+// Consume stock from specific lots, expiry-first then oldest-first (FEFO, which
+// degrades to FIFO when nothing carries an expiry date). Until now the lot
+// ledger recorded what arrived but nothing decided what LEFT, so a batch could
+// sit "remaining" long after those units had been sold.
+async function consumeLots(client, partId, qty, ref) {
+  const { rows } = await client.query(
+    `SELECT id, data FROM stock_lots
+      WHERE part_id = $1 AND COALESCE((data->>'remaining')::numeric,0) > 0
+        AND COALESCE(data->>'status','available') = 'available'
+      ORDER BY COALESCE(NULLIF(data->>'expiryDate',''), '9999-12-31') ASC, created_at ASC
+      FOR UPDATE`,
+    [partId]
+  );
+  let left = round2(qty);
+  const used = [];
+  for (const r of rows) {
+    if (left <= 0) break;
+    const rem = round2(Number(r.data.remaining) || 0);
+    const take = Math.min(rem, left);
+    const after = round2(rem - take);
+    await client.query(`UPDATE stock_lots SET data = data || $2::jsonb WHERE id = $1`,
+      [r.id, JSON.stringify({ remaining: after, status: after <= 1e-9 ? 'consumed' : 'available' })]);
+    used.push({ lotId: r.id, lotNo: r.data.lotNo || '', serialNo: r.data.serialNo || '',
+                expiryDate: r.data.expiryDate || '', qty: take, unitCost: Number(r.data.unitCost) || 0 });
+    left = round2(left - take);
+  }
+  // Untracked stock predates the lot ledger, so a shortfall is expected and not
+  // an error — the quantity on hand remains the authority.
+  return { used, unallocated: left, ref };
+}
+
 // Collections that may ONLY be written by their dedicated endpoint. A goods
 // receipt that did not move stock, or a return that did not come out of a lot,
 // would be a document describing something that never happened — so the generic
@@ -2974,6 +3005,83 @@ app.get('/api/reports/workshop', asyncH(async (req, res) => {
   });
 }));
 
+// ══════════════════════════════════════════════════════════════════════════
+// OPENING BALANCES
+// A garage migrating in already has cash, debtors, creditors and stock on the
+// day it starts. Without a way to state them, every report begins from zero and
+// the first month's figures are fiction. The contra is Opening Balance Equity,
+// which is what makes the entry balance without inventing profit.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/opening-balances', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const date = String(b.date || '').slice(0, 10) || tsToDs(Date.now());
+  if (periodLocked(date)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Posting opening balances twice would double every figure.
+    const existing = await client.query(
+      `SELECT 1 FROM journal_entries WHERE data->>'refType' = 'opening' LIMIT 1`);
+    if (existing.rows.length && !b.replace) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Opening balances have already been posted. Reverse them first if they were wrong.' });
+    }
+
+    const lines = [];
+    const add = (role, amount, memo, party) => {
+      const v = round2(Number(amount) || 0);
+      if (v === 0) return;
+      // A positive figure debits an asset and credits a liability; the sign
+      // convention follows what the account IS, not what the user typed.
+      const isLiability = role === 'ap';
+      lines.push(isLiability ? { role, credit: v, memo, partyName: party } : { role, debit: v, memo, partyName: party });
+    };
+
+    add('cash', b.cash, 'Opening cash in hand');
+    add('bank', b.bank, 'Opening bank balance');
+    add('ap', b.payables, 'Opening supplier balances');
+
+    // Debtors, per customer, so the aged report has something to age.
+    for (const d of (Array.isArray(b.receivables) ? b.receivables : [])) {
+      add('ar', d.amount, 'Opening balance — ' + (d.name || 'customer'), d.name);
+    }
+
+    // Stock is valued from what is actually on the shelf right now, at cost.
+    let stockValue = 0;
+    if (b.includeStock !== false) {
+      const { rows } = await pool.query(
+        `SELECT COALESCE(SUM(COALESCE((data->>'stock')::numeric,0) * COALESCE((data->>'costPrice')::numeric,0)),0) v
+           FROM parts WHERE COALESCE((data->>'stock')::numeric,0) > 0`);
+      stockValue = round2(Number(rows[0].v) || 0);
+      add('inventory', stockValue, 'Opening stock at cost');
+    }
+
+    if (!lines.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Enter at least one opening balance.' }); }
+
+    // Whatever the balances come to, the contra is equity — the owner's stake on
+    // day one. Working it out this way means the entry always balances.
+    const dr = round2(lines.reduce((s, l) => s + (l.debit || 0), 0));
+    const cr = round2(lines.reduce((s, l) => s + (l.credit || 0), 0));
+    const diff = round2(dr - cr);
+    if (diff > 0) lines.push({ role: 'opening', credit: diff, memo: "Owner's opening stake" });
+    else if (diff < 0) lines.push({ role: 'opening', debit: -diff, memo: 'Opening deficit' });
+
+    const entry = await postJournal(client, {
+      date, refType: 'opening', refNo: 'OPENING', by: (req.auth && req.auth.name) || '?',
+      memo: 'Opening balances as at ' + date, lines,
+    });
+    await client.query('COMMIT');
+    audit(req, 'opening-balances', 'journalEntries', entry.id, date);
+    res.json({ ok: true, entry, stockValue, equity: Math.abs(diff) });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
 // ---- Reorder report ----
 // What to buy, computed server-side so the answer is the same on every device
 // and doesn't require loading the whole catalogue into the browser.
@@ -3114,6 +3222,7 @@ app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
     await postMovement(client, { partId, partName: p.name, type: 'out', qty, from, to,
       unitCost: p.costPrice, refType: 'issue', refId: req.params.id, refNo: jcNo,
       note: 'Issued to ' + jcNo, by: (req.auth && req.auth.name) || '' });
+    const lotUse = await consumeLots(client, partId, qty, jcNo);
     const issueCost = round2((Number(p.costPrice) || 0) * qty);
     if (issueCost > 0) {
       await postJournal(client, {
@@ -3132,6 +3241,9 @@ app.post('/api/jobCards/:id/parts', asyncH(async (req, res) => {
       costPrice: round2(Number(p.costPrice) || 0),
     };
     line.cost = round2(line.unitPrice * qty); // billed amount for this line
+    // Record which batches actually went out, so a recall can trace this unit
+    // back to the delivery it arrived on.
+    if (lotUse.used.length) line.lots = lotUse.used;
     const jcMerged = { ...jc, parts: (Array.isArray(jc.parts) ? jc.parts : []).concat([line]) };
     await client.query(`UPDATE job_cards SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(jcMerged)]);
     await client.query('COMMIT');
