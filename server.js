@@ -883,6 +883,16 @@ async function partStockTotal(client, partId) {
 const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services',
   'warehouses', 'bins', 'stockLots', 'stockMovements', 'reservations', 'tools', 'toolIssues', 'bays']);
 async function authorizeUser(req, res, next) {
+  // Read the role from the DATABASE, not from the token. A token carries the
+  // roleId it was minted with for 30 days, so demoting someone or deactivating
+  // their account had no effect until it expired.
+  if (req.auth.userId) {
+    const u = await pool.query(`SELECT data FROM users WHERE id = $1`, [req.auth.userId]);
+    if (!u.rows.length || u.rows[0].data.active === false) {
+      return res.status(401).json({ error: 'This account is no longer active. Please sign in again.' });
+    }
+    req.auth.roleId = u.rows[0].data.roleId || req.auth.roleId;
+  }
   // A permissioned user account. Everything is denied unless their role grants
   // it, which is the opposite of the old model.
   const parts = req.path.split('/').filter(Boolean);
@@ -890,10 +900,32 @@ async function authorizeUser(req, res, next) {
   const perms = await permsForRole(req.auth.roleId);
   const grant = (p) => perms.has(p);
 
-  // Reports and lookups everyone with a login can see.
-  if (coll === 'settings' || coll === 'image') return next();
-  if (coll === 'reports') return grant('reports.view') || grant('finance.view')
-    ? next() : res.status(403).json({ error: 'You do not have permission to view reports.' });
+  // Anyone signed in may READ company settings — the currency and VAT flag drive
+  // every screen. Changing them is an administrative act.
+  if (coll === 'settings') {
+    if (req.method === 'GET') return next();
+    return grant('admin.settings') ? next()
+      : res.status(403).json({ error: 'Your role does not allow this — it needs "Change system settings".' });
+  }
+  // Reading an image is harmless; uploading or replacing one is a write, and an
+  // overwrite-by-path is how a signed document image gets quietly swapped.
+  if (coll === 'image') {
+    if (req.method === 'GET') return next();
+    return (grant('jobcards.manage') || grant('inventory.manage') || grant('admin.settings')) ? next()
+      : res.status(403).json({ error: 'Your role does not allow uploading files.' });
+  }
+  // The financial statements are NOT general reports. reports.view covers
+  // operational reporting; the trial balance, P&L, balance sheet and general
+  // ledger are precisely what finance.view exists to protect.
+  if (coll === 'reports') {
+    const FINANCE_ONLY = ['trial-balance', 'pl', 'balance-sheet', 'ledger'];
+    if (FINANCE_ONLY.includes(parts[1] || '')) {
+      return grant('finance.view') ? next()
+        : res.status(403).json({ error: 'Your role does not allow this — it needs "View financial reports".' });
+    }
+    return (grant('reports.view') || grant('finance.view')) ? next()
+      : res.status(403).json({ error: 'You do not have permission to view reports.' });
+  }
   if (coll === 'audit-log') return grant('admin.audit') ? next() : res.status(403).json({ error: 'You do not have permission to view the audit log.' });
   if (coll === 'export') return grant('admin.backup') ? next() : res.status(403).json({ error: 'You do not have permission to export data.' });
   if (coll === 'logout-all') return grant('admin.users') ? next() : res.status(403).json({ error: 'Admin only.' });
@@ -1335,7 +1367,13 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
       await postSalesJournal(client, id, body, docNo('invoices', body.seq), (req.auth && req.auth.name) || '');
     }
     await client.query('COMMIT');
+    // The upsert path can change a role's permissions too — invalidating only on
+    // PUT meant removing a permission had no effect until the server restarted.
+    if (req.params.coll === 'roles') roleCache = null;
+    if (req.params.coll === 'finAccounts') sysAccountCache = null;
     audit(req, isNew ? 'create' : 'update', req.params.coll, id, body.seq ? '#' + body.seq : (body.name || ''));
+    if (req.params.coll === 'users') return res.json(redactUsers([{ id, ...body }])[0]);
+    if (req.params.coll === 'technicians') return res.json(redactTechs(req.auth, [{ id, ...body }])[0]);
     res.json({ id, ...body });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -3750,6 +3788,10 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     if (req.params.coll === 'finAccounts') sysAccountCache = null;
   if (req.params.coll === 'roles') roleCache = null;
   audit(req, 'update', req.params.coll, req.params.id, merged.seq ? '#' + merged.seq : (merged.name || ''));
+    // Redaction covered the GET paths but not the write responses, which handed
+    // the caller back the very hash the GETs were stripping.
+    if (req.params.coll === 'users') return res.json(redactUsers([{ id: req.params.id, ...merged }])[0]);
+    if (req.params.coll === 'technicians') return res.json(redactTechs(req.auth, [{ id: req.params.id, ...merged }])[0]);
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -3865,6 +3907,15 @@ async function deleteBlocker(coll, id) {
 app.delete('/api/:coll/:id', asyncH(async (req, res, next) => {
   const cfg = COLL[req.params.coll];
   if (!cfg) return next();
+  // A posting is evidence. DEDICATED_WRITE stopped these being created or
+  // edited through generic CRUD but said nothing about DELETE, so a journal
+  // entry, a stock movement or a goods receipt could simply be erased —
+  // silently unbalancing the books or orphaning a stock movement.
+  if (DEDICATED_WRITE.has(req.params.coll)) {
+    return res.status(400).json({
+      error: 'This record is a posting and cannot be deleted. Raise a correcting document instead.',
+    });
+  }
   const blocker = await deleteBlocker(req.params.coll, req.params.id);
   if (blocker) return res.status(409).json({ error: 'Cannot delete — ' + blocker + '. Remove or reassign those first.' });
   await pool.query(`DELETE FROM ${cfg.table} WHERE id = $1`, [req.params.id]);
