@@ -142,3 +142,71 @@ is the step where a mistake stops being visible.
 
 The inter-branch ledger question is genuinely the hardest part and is not solved
 by this document. It should be decided before step 5.
+
+---
+
+## 5. Step 2 cutover checklist — `part_branch_stock`
+
+Derived by reading `server.js`, not by inference. Line numbers are as at commit
+`eb78c81`.
+
+### 5.1 Why a mirror table must NOT be created first
+
+The obvious-looking safe increment — create `part_branch_stock`, backfill it, and
+change nothing else — is **worse than doing nothing**. Fifteen paths write
+`parts.stock` directly. A mirror that none of them update starts drifting on the
+first goods receipt and becomes stale data that looks authoritative. The table
+and the cutover have to land together.
+
+### 5.2 Every path that WRITES stock or cost
+
+| Line | Path | Writes |
+|---|---|---|
+| 1394–1397 | quick invoice — counter-sale deduction | `stock` |
+| 1494–1500 | legacy `POST /purchaseOrders/:id/receive` | `stock`, `costPrice` (WAC) |
+| 1617–1625 | goods receipt engine | `stock`, `costPrice` (WAC) |
+| ~1821 | purchase-invoice posting — landed-cost re-costing | `costPrice` |
+| 1971–1998 | purchase return | `stock` |
+| — | `POST /parts/:id/adjust` | `stock` |
+| — | job-card part issue | `stock` |
+| — | job-card part return | `stock` |
+| — | credit-note restock | `stock` |
+| — | stock count posting | `stock` |
+
+### 5.3 Every path that READS it
+
+Reorder report · inventory valuation · `/parts/:id/availability` · opening
+balances (stock at cost) · COGS on issue and its reversal · `deleteBlocker` for
+parts · `validateDoc` min/max check · transfer availability · reservation
+availability · sales analysis (indirectly, via cost).
+
+### 5.4 Order for the cutover, and why
+
+1. **Create the table and a `partStock(client, partId, branchId)` accessor that
+   reads through to `parts.stock` when no branch row exists.** Read-through means
+   every existing read keeps returning the right answer from the first commit.
+2. **Convert the WRITE paths one at a time**, each with its own verification run.
+   A write path converted while its reads still use `parts.stock` is the only
+   genuinely dangerous window, so each conversion must land with its reads.
+3. **Backfill** once all writers are converted, then drop the read-through.
+4. **Remove `stock`/`costPrice` from the item master** only after a full cycle
+   passes with the read-through disabled.
+
+### 5.5 Invariants a test suite must assert
+
+- Sum of `part_branch_stock.stock` for a part equals what `parts.stock` held
+  before the migration, for every part.
+- Weighted-average cost is computed **per branch**: receiving 10 @ 50 in branch A
+  must not move branch B's cost.
+- The Inventory ledger account equals the sum of (stock × cost) across all
+  branches, after every posting.
+- A goods receipt in branch A leaves branch B's quantity untouched.
+- The full enterprise simulation still passes 23/23 after each step.
+
+### 5.6 Open question this raises
+
+Weighted-average cost becomes per branch, but the ledger has **one** Inventory
+account. Either the account is per branch too (which needs the inter-branch
+due-to/due-from pair from §4), or inventory value is consolidated while cost is
+branch-local — and those two give different COGS for the same part sold in
+different branches. **Decide this before writing step 2**, not during.
