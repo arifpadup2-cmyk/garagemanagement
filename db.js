@@ -72,6 +72,13 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Sales credit notes (Phase 6) ──
+-- A sales invoice is evidence given to a customer and posted to the ledger, so
+-- it is never edited or deleted after the fact. A credit note is the correcting
+-- document: it reverses value, optionally restocks the goods, and leaves both
+-- the original and the correction on the record.
+CREATE TABLE IF NOT EXISTS credit_notes    (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+
 -- ── Workshop operations (Phase 5) ──
 -- A bay is a physical work position. Only one job can occupy one at a time,
 -- which is what makes "the workshop is full" a fact rather than a feeling.
@@ -157,6 +164,9 @@ CREATE INDEX IF NOT EXISTS idx_tools_created     ON tools(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_toolissue_tool    ON tool_issues(tool_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_toolissue_open    ON tool_issues ((data->>'status'));
 CREATE INDEX IF NOT EXISTS idx_bays_created      ON bays(created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_cn_created        ON credit_notes(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
+CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
 CREATE INDEX IF NOT EXISTS idx_jc_bay            ON job_cards ((data->>'bayId'));
 `;
 

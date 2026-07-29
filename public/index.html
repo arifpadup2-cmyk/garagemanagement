@@ -1124,6 +1124,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-sales-g" onclick="toggleNavGroup('sales-g')" title="Sales & Billing"><span class="snav-label">Sales & Billing</span><span class="snav-chev" aria-hidden="true">▾</span></button>
         <div class="snav-gitems" id="ng-sales-g">
       <div class="snav-item" id="snav-quick-invoice" onclick="navShow('snav-quick-invoice',showQuickInvoice)" title="Quick Invoice"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1Z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></span><span class="snav-label">Quick Invoice</span></div>
+      <div class="snav-item" id="snav-credit-notes" onclick="navTo('credit-notes')" title="Credit Notes"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span><span class="snav-label">Credit Notes</span></div>
       <div class="snav-item" id="snav-sales" onclick="navTo('sales')" title="Invoices"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span><span class="snav-label">Invoices</span></div>
         </div>
       </div>
@@ -1863,6 +1864,16 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="btn-group"><button class="btn btn-primary" id="save-tool-btn" onclick="saveTool()">Save Tool</button>
           <button class="btn btn-secondary" onclick="navTo('tools')">Cancel</button></div>
       </div>
+    </div>
+
+    <!-- ══ CREDIT NOTES (Phase 6) ══ -->
+    <div id="v-credit-notes" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Credit Notes</div><div class="page-sub">Corrections against issued invoices</div></div>
+      </div>
+      <div id="cn-kpis"></div>
+      <div class="search-wrap"><input type="text" id="cn-search" placeholder="Search note no., invoice or customer…" oninput="renderCreditNotes()"></div>
+      <div id="cn-list"></div>
     </div>
 
     <!-- ══ PURCHASE REQUESTS ══ -->
@@ -3064,7 +3075,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service','v-purchase-requests':'Purchase Requests','v-add-pr':'Purchase Request','v-pr':'Purchase Request','v-rfqs':'RFQs','v-add-rfq':'RFQ','v-rfq':'RFQ','v-goods-receipts':'Goods Receipts','v-receive-po':'Receive Goods','v-grn':'Goods Receipt','v-purchase-invoices':'Purchase Invoices','v-add-pinv':'Purchase Invoice','v-pinv':'Purchase Invoice','v-purchase-returns':'Purchase Returns','v-add-pret':'Return to Supplier','v-pret':'Purchase Return','v-warehouses':'Warehouses','v-add-warehouse':'Warehouse','v-warehouse':'Warehouse','v-stock-movements':'Stock Movements','v-stock-transfers':'Stock Transfers','v-add-transfer':'New Transfer','v-stock-counts':'Stock Count','v-add-count':'New Count','v-count':'Stock Count','v-reorder':'Reorder Report','v-tools':'Tool Inventory','v-add-tool':'Tool','v-credit-notes':'Credit Notes'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 // Today in LOCAL time. toISOString() is UTC, which in Doha (+03) reports
@@ -3091,7 +3102,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service','purchase-requests':'Purchase Requests','rfqs':'RFQs','goods-receipts':'Goods Receipts','purchase-invoices':'Purchase Invoices','purchase-returns':'Purchase Returns','receive-po':'Receive Goods',warehouses:'Warehouses','stock-movements':'Stock Movements','stock-transfers':'Stock Transfers','stock-counts':'Stock Count',reorder:'Reorder Report',tools:'Tool Inventory','credit-notes':'Credit Notes'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -3232,6 +3243,7 @@ function navTo(tab){
   else if(tab==='stock-counts')renderCounts();
   else if(tab==='reorder')renderReorder();
   else if(tab==='tools')renderTools();
+  else if(tab==='credit-notes')renderCreditNotes();
   else if(tab==='purchase-requests')renderPRs();
   else if(tab==='rfqs')renderRFQs();
   else if(tab==='goods-receipts')renderGRNs();
@@ -3302,7 +3314,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'warehouses':['Inventory','Warehouses'],'add-warehouse':['Inventory','Warehouse'],'warehouse':['Inventory','Warehouse'],
   'stock-movements':['Inventory','Stock Movements'],'stock-transfers':['Inventory','Stock Transfers'],'add-transfer':['Inventory','New Transfer'],
   'stock-counts':['Inventory','Stock Count'],'add-count':['Inventory','New Count'],'count':['Inventory','Stock Count'],
-  'reorder':['Inventory','Reorder Report'],'tools':['Inventory','Tool Inventory'],'add-tool':['Inventory','Tool']
+  'reorder':['Inventory','Reorder Report'],'tools':['Inventory','Tool Inventory'],'add-tool':['Inventory','Tool'],
+  'credit-notes':['Sales','Credit Notes']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -3922,6 +3935,11 @@ function initFirestore(){
     toolIssues=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='tools')renderTools();
   },snapErr('tool issues','toolIssues'));
+  db.collection('creditNotes').orderBy('createdAt','desc').onSnapshot(function(snap){
+    _fired.creditNotes=true;
+    creditNotes=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='credit-notes')renderCreditNotes();
+  },snapErr('credit notes','creditNotes'));
   db.collection('purchaseRequests').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.purchaseRequests=true;
     purchaseRequests=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -8782,6 +8800,82 @@ function returnTool(issueId){
   gmsApi.returnTool(issueId,{condition:document.getElementById('tr-cond').value,note:document.getElementById('tr-note').value.trim()})
   .then(function(){document.getElementById('tool-dlg').classList.remove('open');toast('Tool returned','success');renderTools();})
   .catch(function(e){toast(e.message||'Could not record the return.','error');});
+}
+
+// ══ CREDIT NOTES (Phase 6) ══
+// An invoice is evidence handed to a customer; it is corrected forwards with a
+// credit note, never edited or deleted.
+var creditNotes=[];
+function cnNum(d){return 'CN-'+String(d.seq||0).padStart(4,'0');}
+function renderCreditNotes(){
+  var el=document.getElementById('cn-list'),kp=document.getElementById('cn-kpis');if(!el)return;
+  if(!_fired.creditNotes){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(3)+'</div>';el.innerHTML=skelTable(4);return;}
+  var val=creditNotes.reduce(function(s,c){return s+Number(c.total||0);},0);
+  var refunded=creditNotes.reduce(function(s,c){return s+Number(c.refundAmount||0);},0);
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+erpKpi(creditNotes.length,'Credit Notes','')+
+    erpKpi(fmtMoney(val),'Value Credited',val>0.005?'kpi-red':'')+
+    erpKpi(fmtMoney(refunded),'Cash Refunded','')+'</div>';
+  var q=(document.getElementById('cn-search').value||'').trim().toLowerCase();
+  var list=creditNotes.filter(function(c){return !q||cnNum(c).toLowerCase().indexOf(q)>-1||
+    String(c.invoiceNo||'').toLowerCase().indexOf(q)>-1||String(c.customerName||'').toLowerCase().indexOf(q)>-1;});
+  if(!list.length){el.innerHTML='<div class="empty">'+(creditNotes.length?'No credit notes match your search.':'No credit notes. Raise one from an invoice when work is credited back to a customer.')+'</div>';return;}
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Note</th><th>Against</th><th>Customer</th><th>Date</th><th>Reason</th><th class="num">Refunded</th><th class="num">Total</th></tr></thead><tbody>'+
+    list.map(function(c){
+      return '<tr><td style="font-weight:700">'+esc(cnNum(c))+'</td><td>'+esc(c.invoiceNo||'—')+'</td>'+
+        '<td>'+esc(c.customerName||'—')+'</td>'+
+        '<td style="color:var(--t2);white-space:nowrap">'+esc(c.noteDate?fmtDate(c.noteDate):'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(c.reason||'—')+'</td>'+
+        '<td class="num" style="color:var(--t2)">'+(Number(c.refundAmount)?fmtMoney(c.refundAmount):'—')+'</td>'+
+        '<td class="num" style="font-weight:700;color:var(--red)">'+fmtMoney(c.total||0)+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+// Raise a credit note against the invoice on screen.
+function openCreditNote(inv){
+  if(!inv)return;
+  var maxCredit=Math.max(0,Number(inv.total||0)-Number(inv.creditedTotal||0));
+  if(maxCredit<=0.005){toast('This invoice is already fully credited.','error');return;}
+  var ov=document.getElementById('cn-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='cn-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});}
+  ov.innerHTML='<div class="dlg-box" style="max-width:470px" role="dialog" aria-modal="true" aria-label="Raise credit note">'+
+    '<div class="dlg-title">Credit Note</div>'+
+    '<div style="font-size:13px;color:var(--t2);margin:-4px 0 15px">Against '+esc(invNum?invNum(inv):(inv.invoiceNo||''))+
+      ' — up to <b>'+fmtMoney(maxCredit)+'</b> can still be credited.</div>'+
+    '<div class="form-group"><label>Amount to Credit *</label><input type="number" id="cnd-amt" min="0.01" step="0.01" max="'+maxCredit+'" value="'+maxCredit+'" autocomplete="off"></div>'+
+    '<div class="form-group"><label>Reason *</label><input type="text" id="cnd-reason" placeholder="Why is this being credited?" autocomplete="off"></div>'+
+    '<div class="form-group"><label>Cash to Refund <span style="font-size:11px;color:var(--t3)">leave 0 to credit the account only</span></label>'+
+      '<input type="number" id="cnd-refund" min="0" step="0.01" value="0" autocomplete="off"></div>'+
+    '<label class="chk-row" style="margin-bottom:0"><input type="checkbox" id="cnd-restock"> <span>Put the returned parts back into stock</span></label>'+
+    '<div class="dlg-actions"><button class="btn btn-secondary" onclick="document.getElementById(\'cn-dlg\').classList.remove(\'open\')">Cancel</button>'+
+    '<button class="btn btn-red" id="cnd-save" onclick="saveCreditNote(\''+esc(inv.id)+'\')">Issue Credit Note</button></div></div>';
+  ov.classList.add('open');
+}
+function saveCreditNote(invoiceId){
+  var amt=Number(document.getElementById('cnd-amt').value||0);
+  if(!(amt>0)){return invalidField('cnd-amt','Enter the amount to credit.');}
+  var reason=document.getElementById('cnd-reason').value.trim();
+  if(!reason){return invalidField('cnd-reason','Give a reason — the customer and the auditor will both ask.');}
+  var inv=invoices.filter(function(x){return x.id===invoiceId;})[0]||{};
+  var restock=!!document.getElementById('cnd-restock').checked;
+  // Credit the part lines proportionally so a restock knows what came back.
+  var partLines=(inv.items||[]).filter(function(l){return l.partId;});
+  var items=[{description:reason,amount:amt}];
+  if(restock&&partLines.length){
+    items=partLines.map(function(l){
+      return{description:l.description||'Part',partId:l.partId,qty:Number(l.qty)||0,
+        amount:Math.round(amt*((Number(l.cost)||0)/Math.max(1,(inv.subtotal||inv.total||1)))*100)/100};
+    }).filter(function(l){return l.amount>0;});
+    if(!items.length)items=[{description:reason,amount:amt}];
+  }
+  var btn=document.getElementById('cnd-save');btn.disabled=true;btn.textContent='Issuing…';
+  gmsApi.creditNote({invoiceId:invoiceId,noteDate:todayStr(),reason:reason,items:items,
+    restock:restock,refundAmount:Number(document.getElementById('cnd-refund').value||0),refundMethod:'cash'})
+  .then(function(cn){
+    document.getElementById('cn-dlg').classList.remove('open');
+    toast(cnNum(cn)+' issued','success');
+    if(typeof renderInvoiceDetail==='function'&&curInvoice)renderInvoiceDetail();
+  }).catch(function(e){btn.disabled=false;btn.textContent='Issue Credit Note';toast(e.message||'Could not issue the credit note.','error');});
 }
 
 var INV_STATUS={

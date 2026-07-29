@@ -105,13 +105,14 @@ const COLL = {
   tools:            { table: 'tools',             order: 'created_at DESC NULLS LAST' },
   toolIssues:       { table: 'tool_issues',       order: 'created_at DESC NULLS LAST', extra: { tool_id: 'toolId' } },
   bays:             { table: 'bays',             order: 'created_at ASC NULLS LAST' },
+  creditNotes:      { table: 'credit_notes',     order: 'created_at DESC NULLS LAST', seq: true, lock: 1012 },
 };
 
 // Document number prefixes, so every module formats a reference identically.
 const DOC_PREFIX = {
   jobCards: 'JC', invoices: 'INV', estimates: 'EST', purchaseOrders: 'PO',
   purchaseRequests: 'PR', rfqs: 'RFQ', goodsReceipts: 'GRN',
-  purchaseInvoices: 'PINV', purchaseReturns: 'PRTN',
+  purchaseInvoices: 'PINV', purchaseReturns: 'PRTN', creditNotes: 'CN',
 };
 const docNo = (coll, seq) => (DOC_PREFIX[coll] || 'DOC') + '-' + String(seq || 0).padStart(4, '0');
 
@@ -579,6 +580,7 @@ const FILTERABLE = {
   purchaseInvoices: ['status', 'supplierId', 'poId'],
   purchaseReturns: ['grnId', 'supplierId'],
   stockLots: ['partId', 'status', 'warehouseId'],
+  creditNotes: ['invoiceId', 'customerId', 'status'],
   stockMovements: ['partId', 'refType', 'refId', 'warehouseId'],
   bins: ['warehouseId'],
   reservations: ['partId', 'jobCardId', 'status'],
@@ -728,7 +730,7 @@ async function reservedQty(client, partId) {
 // receipt that did not move stock, or a return that did not come out of a lot,
 // would be a document describing something that never happened — so the generic
 // CRUD path hands these straight on to the engine that owns them.
-const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots', 'stockMovements', 'stockTransfers', 'stockCounts']);
+const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots', 'stockMovements', 'stockTransfers', 'stockCounts', 'creditNotes']);
 
 // ---- Create (upsert by id) ----
 app.post('/api/:coll', asyncH(async (req, res, next) => {
@@ -1862,6 +1864,179 @@ app.get('/api/customers/:id/credit', asyncH(async (req, res) => {
   const st = await creditStatus(req.params.id);
   if (!st) return res.status(404).json({ error: 'Customer not found.' });
   res.json(st);
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// CREDIT NOTES & REFUNDS (Phase 6)
+// A sales invoice is evidence handed to a customer and posted to the ledger, so
+// it is never edited or deleted after the fact. Corrections happen forwards: a
+// credit note reverses value, optionally puts the goods back on the shelf, and
+// leaves both documents on the record.
+// ══════════════════════════════════════════════════════════════════════════
+app.post('/api/creditNotes', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const lines = Array.isArray(b.items) ? b.items : [];
+  if (!b.invoiceId) return res.status(400).json({ error: 'A credit note must reference an invoice.' });
+  if (!lines.length) return res.status(400).json({ error: 'Add at least one line to credit.' });
+  if (!String(b.reason || '').trim()) return res.status(400).json({ error: 'Give a reason — the customer and the auditor will both ask.' });
+  if (periodLocked(b.noteDate)) return res.status(400).json({ error: 'The books are locked up to ' + periodLockDate + '.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ir = await client.query(`SELECT data, seq FROM invoices WHERE id = $1 FOR UPDATE`, [b.invoiceId]);
+    if (!ir.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Invoice not found.' }); }
+    const inv = ir.rows[0].data;
+    const invNo = docNo('invoices', ir.rows[0].seq);
+    if (inv.status === 'cancelled') { await client.query('ROLLBACK'); return res.status(400).json({ error: invNo + ' is cancelled.' }); }
+
+    const invTotal = round2(Number(inv.total) || 0);
+    // Everything already credited against this invoice, so the sum of credit
+    // notes can never exceed what was invoiced in the first place.
+    const prev = await client.query(
+      `SELECT COALESCE(SUM((data->>'total')::numeric),0) n FROM credit_notes
+        WHERE data->>'invoiceId' = $1 AND COALESCE(data->>'status','posted') <> 'cancelled'`,
+      [b.invoiceId]
+    );
+    const alreadyCredited = round2(Number(prev.rows[0].n) || 0);
+
+    let sub = 0;
+    for (const l of lines) {
+      const amt = round2(Number(l.amount) || 0);
+      if (amt <= 0) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Credit amounts must be greater than zero.' }); }
+      l.amount = amt;
+      sub += amt;
+    }
+    sub = round2(sub);
+    const rate = Number(inv.taxRate) || 0;
+    const tax = rate > 0 ? round2(sub * rate / 100) : 0;
+    const total = round2(sub + tax);
+    if (alreadyCredited + total > invTotal + 1e-9) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: `Cannot credit ${total.toFixed(2)} — ${invNo} was ${invTotal.toFixed(2)} and ${alreadyCredited.toFixed(2)} has already been credited.`,
+      });
+    }
+
+    const cnId = crypto.randomUUID();
+    const seq = await allocSeq(client, 'creditNotes', 'credit_notes', 1012, cnId);
+    const cnNo = docNo('creditNotes', seq);
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+
+    // Goods coming back go on the shelf, under the same lock discipline as any
+    // other stock movement.
+    const restocked = [];
+    if (b.restock) {
+      const partIds = [...new Set(lines.map((l) => l.partId).filter(Boolean))].sort();
+      for (const pid of partIds) {
+        const pr = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
+        if (!pr.rows.length) continue;
+        const p = pr.rows[0].data;
+        const qty = round2(lines.filter((l) => l.partId === pid).reduce((s, l) => s + (Number(l.qty) || 0), 0));
+        if (qty <= 0) continue;
+        const from = round2(Number(p.stock) || 0), to = round2(from + qty);
+        await client.query(`UPDATE parts SET data = data || $2::jsonb WHERE id = $1`, [pid, JSON.stringify({ stock: to })]);
+        await postMovement(client, {
+          partId: pid, partName: p.name, type: 'in', qty, from, to, unitCost: p.costPrice,
+          refType: 'creditnote', refId: cnId, refNo: cnNo,
+          note: `Returned by customer on ${cnNo} (${invNo})`, at: now, by: actor,
+        });
+        restocked.push({ partId: pid, name: p.name || '', qty });
+      }
+    }
+
+    // Cash actually handed back, recorded in the same transaction.
+    const refund = round2(Number(b.refundAmount) || 0);
+    const paid = round2(Number(inv.totalPaid) || 0);
+    if (refund > 0) {
+      if (refund > paid - alreadyCredited + 1e-9) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Cannot refund ${refund.toFixed(2)} — only ${round2(paid - alreadyCredited).toFixed(2)} has been collected on ${invNo}.` });
+      }
+      await client.query(`INSERT INTO transactions (id, data, txn_date, created_at) VALUES ($1,$2,$3,$4)`,
+        [crypto.randomUUID(), JSON.stringify({
+          type: 'expense', date: b.noteDate || tsToDs(now), amount: refund,
+          description: `Customer refund – ${cnNo} (${invNo})`, category: 'Refunds',
+          paymentMethod: String(b.refundMethod || 'cash'),
+          accountId: b.accountId || '', accountName: b.accountName || '',
+          partyType: 'customer', partyName: inv.customerName || '', customerId: inv.customerId || '',
+          reference: cnNo, creditNoteId: cnId, invoiceId: b.invoiceId,
+          createdAt: now, createdBy: actor,
+        }), b.noteDate || tsToDs(now), now]);
+    }
+
+    const doc = {
+      invoiceId: b.invoiceId, invoiceNo: invNo,
+      customerId: inv.customerId || '', customerName: inv.customerName || '',
+      noteDate: b.noteDate || tsToDs(now), reason: String(b.reason).trim(),
+      items: lines.map((l) => ({ description: l.description || '', partId: l.partId || '', qty: Number(l.qty) || 0, amount: l.amount })),
+      subtotal: sub, taxRate: rate, taxAmount: tax, total,
+      restocked, restock: !!b.restock,
+      refundAmount: refund, refundMethod: refund > 0 ? String(b.refundMethod || 'cash') : '',
+      seq, status: 'posted', createdAt: now, createdBy: actor,
+    };
+    await client.query(`INSERT INTO credit_notes (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [cnId, JSON.stringify(doc), seq, now]);
+
+    // The invoice carries its credited total so every receivable figure in the
+    // system nets it off without having to join.
+    const newCredited = round2(alreadyCredited + total);
+    const invMerged = { ...inv, creditedTotal: newCredited, fullyCredited: newCredited >= invTotal - 1e-9 };
+    await client.query(`UPDATE invoices SET data = $2 WHERE id = $1`, [b.invoiceId, JSON.stringify(invMerged)]);
+
+    await client.query('COMMIT');
+    audit(req, 'credit-note', 'creditNotes', cnId, `${cnNo} against ${invNo} ${total}`);
+    res.json({ id: cnId, ...doc, invoice: { id: b.invoiceId, ...invMerged } });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ---- Cancel (void) an invoice ----
+// Only ever before money or goods have moved. Once either has, the correction
+// is a credit note, not a deletion.
+app.post('/api/invoices/:id/cancel', asyncH(async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(`SELECT data, seq FROM invoices WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Invoice not found.' }); }
+    const inv = r.rows[0].data;
+    const invNo = docNo('invoices', r.rows[0].seq);
+    if (inv.status === 'cancelled') { await client.query('ROLLBACK'); return res.status(400).json({ error: invNo + ' is already cancelled.' }); }
+    if (round2(Number(inv.totalPaid) || 0) > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: `${invNo} has payments recorded — raise a credit note instead of cancelling it.` });
+    }
+    const cn = await client.query(`SELECT 1 FROM credit_notes WHERE data->>'invoiceId' = $1 LIMIT 1`, [req.params.id]);
+    if (cn.rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ error: `${invNo} already has a credit note against it.` }); }
+    // A car that has left on the strength of this invoice cannot have it voided.
+    if (inv.jobCardId) {
+      const jc = await client.query(`SELECT data FROM job_cards WHERE id = $1`, [inv.jobCardId]);
+      if (jc.rows.length && jc.rows[0].data.status === 'delivered') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: `The vehicle on ${invNo} has already been delivered — raise a credit note instead.` });
+      }
+    }
+    const merged = {
+      ...inv, status: 'cancelled', cancelledAt: Date.now(),
+      cancelledBy: (req.auth && req.auth.name) || '?',
+      cancelReason: String((req.body || {}).reason || '').trim(),
+    };
+    await client.query(`UPDATE invoices SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
+    await client.query('COMMIT');
+    audit(req, 'cancel-invoice', 'invoices', req.params.id, invNo);
+    res.json({ id: req.params.id, ...merged });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
 }));
 
 // ══════════════════════════════════════════════════════════════════════════

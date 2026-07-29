@@ -391,6 +391,21 @@
         return r;
       });
     },
+    // ---- Sales corrections (Phase 6) ----
+    // A credit note reverses value on a posted invoice, optionally restocks the
+    // goods and refunds cash — all in one server transaction.
+    creditNote: function (body) {
+      return req('POST', '/creditNotes', body).then(function (r) {
+        refreshColl('creditNotes'); refreshColl('invoices');
+        refreshColl('parts'); refreshColl('stockMovements'); refreshColl('transactions');
+        return r;
+      });
+    },
+    cancelInvoice: function (invId, reason) {
+      return req('POST', '/invoices/' + invId + '/cancel', { reason: reason || '' }).then(function (r) {
+        refreshColl('invoices'); return r;
+      });
+    },
     // ---- Workshop operations (Phase 5) ----
     assignBay: function (jcId, bayId) {
       return req('POST', '/jobCards/' + jcId + '/bay', { bayId: bayId || '' }).then(function (r) {
