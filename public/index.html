@@ -11919,48 +11919,53 @@ function showTechReport(){
   renderTechReport();
 }
 function renderTechReport(){
-  var el=document.getElementById('techr-content');
-  var techStats=technicians.map(function(t){
-    var works=[];
-    jobCards.forEach(function(jc){
-      (jc.works||[]).forEach(function(w){
-        if(w.technicianId===t.id)works.push({desc:w.description,status:w.status,cost:Number(w.cost||0)});
-      });
-    });
-    var rev=works.reduce(function(s,w){return s+w.cost;},0);
-    var done=works.filter(function(w){return w.status==='done';}).length;
-    return{id:t.id,name:t.name,spec:t.specialization||'General',status:t.status,count:works.length,done:done,rev:rev};
-  }).sort(function(a,b){return b.rev-a.rev;});
-  var rows=techStats.map(function(t){
-    var ts=TECH_STATUS[t.status||'available']||TECH_STATUS.available;
-    var compPct=t.count?Math.round(t.done/t.count*100):0;
-    return'<tr>'+
-      '<td style="font-weight:700">'+esc(t.name)+'</td>'+
-      '<td style="color:var(--t2)">'+esc(t.spec)+'</td>'+
-      '<td><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:'+ts.bg+';color:'+ts.color+'">'+ts.label+'</span></td>'+
-      '<td style="text-align:center">'+t.count+'</td>'+
-      '<td style="text-align:center">'+
-        '<div>'+t.done+'/'+t.count+' ('+compPct+'%)</div>'+
-        '<div style="background:var(--b1);border-radius:99px;height:4px;margin-top:3px;width:80px">'+
-          '<div style="height:100%;border-radius:99px;background:var(--green);width:'+compPct+'%"></div></div>'+
-      '</td>'+
-      '<td class="num" style="font-weight:700;color:var(--green)">'+fmtMoney(t.rev)+'</td>'+
-    '</tr>';
-  }).join('');
-  var grandRev=techStats.reduce(function(s,t){return s+t.rev;},0);
-  el.innerHTML=
-    '<div class="r3" style="gap:10px;margin-bottom:14px">'+
-      '<div class="kpi-card"><div class="kpi-val">'+technicians.length+'</div><div class="kpi-label">Technicians</div></div>'+
-      '<div class="kpi-card kpi-green"><div class="kpi-val">'+technicians.filter(function(t){return t.status==='available';}).length+'</div><div class="kpi-label">Available</div></div>'+
-      '<div class="kpi-card kpi-blue"><div class="kpi-val" style="font-size:16px">'+fmtMoney(grandRev)+'</div><div class="kpi-label">Total Revenue</div></div>'+
-    '</div>'+
-    '<div class="card">'+
-      '<div class="card-title">Technician Performance Report</div>'+
-      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table">'+
-        '<thead><tr><th>Technician</th><th>Specialization</th><th>Status</th><th style="text-align:center">Services</th><th style="text-align:center">Completed</th><th class="num">Revenue</th></tr></thead>'+
-        '<tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--t3)">No data</td></tr>')+'</tbody>'+
+  var el=document.getElementById('techr-content');if(!el)return;
+  el.innerHTML=skelTable(6);
+  // Aggregated in Postgres by the workshop report, which already walks the work
+  // items once instead of once per technician.
+  gmsApi.workshopReport('2000-01-01',todayStr()).then(function(r){
+    var techs=r.technicians||[];
+    if(!techs.length){el.innerHTML='<div class="empty">No labour recorded yet. Assign technicians to work items and their output appears here.</div>';return;}
+    var totalValue=techs.reduce(function(s,t){return s+t.value;},0);
+    var totalDone=techs.reduce(function(s,t){return s+t.done;},0);
+    var totalItems=techs.reduce(function(s,t){return s+t.jobs;},0);
+    el.innerHTML='<div class="erp-kpis">'+
+        erpKpi(techs.length,'Technicians','')+
+        erpKpi(totalItems,'Work Items','')+
+        erpKpi(totalDone,'Completed','kpi-green')+
+        erpKpi(fmtMoney(totalValue),'Labour Value','kpi-accent')+
+      '</div>'+
+      '<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">'+
+        '<span>Technician Output</span><button class="btn btn-secondary btn-sm" onclick="exportTechReport()">Export CSV</button></div>'+
+      '<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+      '<th>Technician</th><th class="num">Work Items</th><th class="num">Completed</th>'+
+      '<th class="num">Completion</th><th class="num">Labour Value</th><th class="num">Share</th></tr></thead><tbody>'+
+      techs.map(function(t){
+        var pct=t.jobs?Math.round(t.done/t.jobs*100):0;
+        var share=totalValue>0?Math.round(t.value/totalValue*1000)/10:0;
+        return '<tr><td style="font-weight:700">'+esc(t.technician)+'</td>'+
+          '<td class="num">'+t.jobs+'</td>'+
+          '<td class="num" style="font-weight:700;color:'+(pct===100?'var(--green)':'var(--t1)')+'">'+t.done+'</td>'+
+          '<td class="num" style="color:'+(pct>=80?'var(--green)':(pct>=50?'var(--amber-dk)':'var(--red)'))+'">'+pct+'%</td>'+
+          '<td class="num" style="font-weight:700">'+fmtMoney(t.value)+'</td>'+
+          '<td class="num" style="color:var(--t2)">'+share+'%</td></tr>';
+      }).join('')+
+      '</tbody><tfoot><tr><td style="font-weight:800">Total</td>'+
+      '<td class="num" style="font-weight:800">'+totalItems+'</td>'+
+      '<td class="num" style="font-weight:800">'+totalDone+'</td><td></td>'+
+      '<td class="num" style="font-weight:900">'+fmtMoney(totalValue)+'</td><td></td></tr></tfoot>'+
       '</table></div></div>'+
-    '</div>';
+      (r.avgTurnaroundHours!=null?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Average turnaround across '+r.turnaroundSample+' completed job'+(r.turnaroundSample===1?'':'s')+': '+r.avgTurnaroundHours+' hours, measured check-in to delivery.</div>':'')+
+      '</div>';
+    window._techRep=techs;
+  }).catch(function(e){el.innerHTML='<div class="empty">Could not load the report — '+esc(e.message||'')+'</div>';});
+}
+function exportTechReport(){
+  var t=window._techRep;if(!t)return;
+  downloadCsv('technician-output-'+todayStr()+'.csv',
+    ['Technician','Work Items','Completed','Labour Value'],
+    t.map(function(x){return [x.technician,x.jobs,x.done,x.value];}));
+  toast('Exported '+t.length+' technicians','success');
 }
 
 // ── TECHNICIAN PORTAL ──
