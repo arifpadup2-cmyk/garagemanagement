@@ -36,6 +36,15 @@ CREATE TABLE IF NOT EXISTS appointments (id text PRIMARY KEY, data jsonb NOT NUL
 CREATE TABLE IF NOT EXISTS parts        (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS suppliers    (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS purchase_orders (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+-- Generic master/lookup register. One table, discriminated by "kind"
+-- (category, brand, uom, labourType, vehicleMake, vehicleModel, fuelType,
+-- customerGroup, supplierGroup, taxCode). Hierarchical kinds (vehicleModel ->
+-- vehicleMake) hang off parentId. This is the ERP "configuration lookup"
+-- pattern: one CRUD path, one permission surface, one audit trail.
+CREATE TABLE IF NOT EXISTS masters      (id text PRIMARY KEY, data jsonb NOT NULL, kind text, name text, created_at bigint);
+-- Service Master: the sellable labour catalogue (standard hours + rate),
+-- distinct from parts (sellable goods). Richer than a lookup, so its own table.
+CREATE TABLE IF NOT EXISTS services     (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS settings     (id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS images       (path text PRIMARY KEY, mime text, bytes bytea, created_at bigint);
 CREATE TABLE IF NOT EXISTS seqs         (coll text PRIMARY KEY, last bigint NOT NULL);
@@ -74,10 +83,47 @@ CREATE INDEX IF NOT EXISTS idx_vehicles_customer ON vehicles ((data->>'customerI
 CREATE INDEX IF NOT EXISTS idx_txn_account       ON transactions ((data->>'accountId'));
 CREATE INDEX IF NOT EXISTS idx_txn_invoice       ON transactions ((data->>'invoiceId'));
 CREATE INDEX IF NOT EXISTS idx_audit_at          ON audit_log(at DESC);
+-- Master data: list-by-kind is the only access pattern, plus the make->model drill.
+CREATE INDEX IF NOT EXISTS idx_masters_kind      ON masters(kind, name);
+CREATE INDEX IF NOT EXISTS idx_masters_parent    ON masters ((data->>'parentId'));
+CREATE INDEX IF NOT EXISTS idx_services_created  ON services(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_services_cat      ON services ((data->>'categoryId'));
 `;
+
+// Uniqueness constraints are created SEPARATELY and non-fatally: an existing
+// database may already hold duplicates (the old free-text era allowed them), and
+// a failed CREATE UNIQUE INDEX must never stop the server from booting. When one
+// can't be created we log exactly which duplicates to clean up; the API-level
+// duplicate check still guards every new write in the meantime.
+const UNIQUE_INDEXES = [
+  // A master value is unique by kind + parent + case-insensitive name, so
+  // "Toyota"/"toyota" can't both exist, but Toyota>Camry and Honda>Camry can.
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_masters_kind_name ON masters
+      (kind, COALESCE(data->>'parentId',''), lower(data->>'name'))`,
+   'masters (kind + parent + name)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_masters_kind_code ON masters
+      (kind, lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'masters (kind + code)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_services_code ON services
+      (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
+   'services (code)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_parts_number ON parts
+      (lower(data->>'partNumber')) WHERE COALESCE(data->>'partNumber','') <> ''`,
+   'parts (part number)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_parts_barcode ON parts
+      (lower(data->>'barcode')) WHERE COALESCE(data->>'barcode','') <> ''`,
+   'parts (barcode)'],
+];
 
 async function initSchema() {
   await pool.query(SCHEMA);
+  for (const [sql, label] of UNIQUE_INDEXES) {
+    try {
+      await pool.query(sql);
+    } catch (e) {
+      console.warn(`[gms] Uniqueness not enforced on ${label}: ${e.message} — de-duplicate the existing rows, then restart to enable it.`);
+    }
+  }
   console.log('Schema ready.');
 }
 

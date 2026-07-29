@@ -564,6 +564,26 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
 #v-accounts .fd-rt{font-size:12.5px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #v-accounts .fd-rm{font-size:11px;color:var(--t3)}
 #v-accounts .fd-ramt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+/* ── MASTER DATA ── */
+.chk-row{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;user-select:none}
+.chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer}
+.md-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.md-tile{display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;background:#fff;border:1.5px solid var(--b1);border-radius:var(--r-md);padding:15px 16px;cursor:pointer;transition:border-color .16s var(--ease-out),box-shadow .16s var(--ease-out),transform .16s var(--ease-out);font-family:inherit}
+.md-tile:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.md-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.md-tile .md-ic{flex:none;width:38px;height:38px;border-radius:11px;background:var(--accent-lt);display:flex;align-items:center;justify-content:center}
+.md-tile .md-nm{font-size:13.5px;font-weight:750;color:var(--t1)}
+.md-tile .md-ds{font-size:11.5px;color:var(--t3);margin-top:2px;line-height:1.45}
+.md-tile .md-ct{margin-left:auto;flex:none;font-size:12px;font-weight:800;color:var(--t2);font-variant-numeric:tabular-nums;background:var(--bg);border-radius:20px;padding:2px 9px}
+.pick-row{display:flex;gap:7px;align-items:stretch}
+.pick-row select{flex:1;min-width:0}
+.pick-add{flex:none;width:40px;border:1.5px solid var(--b1);background:#fff;border-radius:var(--r-sm);color:var(--t2);font-size:19px;font-weight:600;line-height:1;cursor:pointer;transition:all .15s var(--ease-out);font-family:inherit}
+.pick-add:hover{border-color:var(--accent);color:var(--accent-text);background:var(--accent-lt)}
+.pick-add:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.md-sec{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.md-sec:first-child{margin-top:0}
+.badge-off{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:#B45309;background:#FEF3C7;border-radius:5px;padding:2px 6px}
+.badge-code{display:inline-block;font-size:11.5px;font-weight:800;color:var(--t2);background:var(--bg);border:1px solid var(--b1);border-radius:5px;padding:1px 6px;font-variant-numeric:tabular-nums}
 /* ── Premium KPI summary strip (shared across list pages) ── */
 .erp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
 .erp-kpis .kpi-val{white-space:nowrap}
@@ -1152,6 +1172,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div class="snav-item" id="snav-advisors" onclick="navTo('advisors')" title="Service Advisors"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="snav-label">Service Advisors</span></div>
         </div>
       </div>
+      <div class="snav-group" id="grp-master">
+        <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-master" onclick="toggleNavGroup('master')" title="Master Data"><span class="snav-label">Master Data</span><span class="snav-chev" aria-hidden="true">▾</span></button>
+        <div class="snav-gitems" id="ng-master">
+      <div class="snav-item" id="snav-services" onclick="navTo('services')" title="Service Master"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="snav-label">Service Master</span></div>
+      <div class="snav-item" id="snav-masters" onclick="navTo('masters')" title="Setup Lists"><span class="snav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="snav-label">Setup Lists</span></div>
+        </div>
+      </div>
       <div class="snav-group" id="grp-admin">
         <button type="button" class="snav-ghead" aria-expanded="true" aria-controls="ng-admin" onclick="toggleNavGroup('admin')" title="Administration"><span class="snav-label">Administration</span><span class="snav-chev" aria-hidden="true">▾</span></button>
         <div class="snav-gitems" id="ng-admin">
@@ -1325,7 +1352,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>WhatsApp</label><input type="tel" id="c-wa" placeholder="+974 3300 0000"></div>
           <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="email@example.com"></div>
         </div>
-        <div class="form-group"><label>Address</label><input type="text" id="c-address" placeholder="Area, city"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Address</label><input type="text" id="c-address" placeholder="Area, city"></div>
+          <div class="form-group"><label>Customer Group</label><div id="c-group-wrap"></div></div>
+        </div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-cust-btn" onclick="saveCustomer()">Save Customer</button>
           <button class="btn btn-secondary" id="cust-cancel-btn" onclick="navTo('customers')">Cancel</button>
@@ -1345,8 +1375,8 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>VIN / Chassis No.</label><input type="text" id="v-vin" placeholder="Chassis number"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Make (Brand) *</label><input type="text" id="v-make" placeholder="e.g. Toyota"></div>
-          <div class="form-group"><label>Model *</label><input type="text" id="v-model" placeholder="e.g. Camry"></div>
+          <div class="form-group"><label>Make (Brand) *</label><div id="v-make-wrap"></div></div>
+          <div class="form-group"><label>Model</label><div id="v-model-wrap"></div></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Year</label><input type="number" id="v-year" placeholder="2020" min="1990" max="2035"></div>
@@ -1355,7 +1385,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="form-row">
           <div class="form-group"><label>Current Mileage (km)</label><input type="number" id="v-mileage" placeholder="e.g. 45000"></div>
           <div class="form-group"><label>Fuel Type</label>
-            <select id="v-fuel"><option value="">Select…</option><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option></select>
+            <div id="v-fuel-wrap"></div>
           </div>
         </div>
         <div class="form-row">
@@ -1489,21 +1519,31 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>OEM Number</label><input type="text" id="pt-oem" placeholder="Manufacturer ref"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Category</label><input type="text" id="pt-category" placeholder="e.g. Filters, Brakes, Fluids" list="pt-cat-list"><datalist id="pt-cat-list"></datalist></div>
-          <div class="form-group"><label>Brand</label><input type="text" id="pt-brand" placeholder="e.g. Bosch"></div>
+          <div class="form-group"><label>Category</label><div id="pt-category-wrap"></div></div>
+          <div class="form-group"><label>Brand</label><div id="pt-brand-wrap"></div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Unit of Measure</label><div id="pt-uom-wrap"></div></div>
+          <div class="form-group"><label>Tax Code</label><div id="pt-taxcode-wrap"></div></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Opening Stock</label><input type="number" id="pt-stock" placeholder="0" min="0" step="1"></div>
           <div class="form-group"><label>Reorder Level (low-stock alert)</label><input type="number" id="pt-reorder" placeholder="5" min="0" step="1"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Cost Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-cost" placeholder="0.00" min="0" step="0.01"></div>
-          <div class="form-group"><label>Selling Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-price" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="form-group"><label>Minimum Stock <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="number" id="pt-min" placeholder="0" min="0" step="1"></div>
+          <div class="form-group"><label>Maximum Stock <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="number" id="pt-max" placeholder="0" min="0" step="1"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Supplier</label><input type="text" id="pt-supplier" placeholder="Supplier name"></div>
+          <div class="form-group"><label>Cost Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-cost" placeholder="0.00" min="0" step="0.01" oninput="ptMarginHint()"></div>
+          <div class="form-group"><label>Selling Price (<span class="cur-lbl">QAR</span>)</label><input type="number" id="pt-price" placeholder="0.00" min="0" step="0.01" oninput="ptMarginHint()">
+            <div id="pt-margin" style="font-size:11.5px;color:var(--t3);margin-top:4px"></div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Preferred Supplier</label><select id="pt-supplier"></select></div>
           <div class="form-group"><label>Location / Bin</label><input type="text" id="pt-location" placeholder="e.g. A-12, Shelf 3"></div>
         </div>
+        <label class="chk-row" style="margin:2px 0 12px"><input type="checkbox" id="pt-active" checked> <span>Active — offered when issuing parts and raising purchase orders</span></label>
         <div class="form-group" id="pt-stock-note" style="display:none;font-size:12px;color:var(--t3)">On-hand stock is locked while editing — use <b>Adjust Stock</b> on the part page so every change is logged in the movement history.</div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="pt-save-btn" onclick="savePart()">Save Part</button>
@@ -1635,6 +1675,76 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
       <div id="estimate-detail"></div>
     </div>
 
+    <!-- ══ MASTER DATA: SETUP LISTS HUB ══ -->
+    <div id="v-masters" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Setup Lists</div><div class="page-sub">The controlled vocabularies every other module selects from</div></div>
+      </div>
+      <div id="masters-hub"></div>
+    </div>
+
+    <!-- MASTER DATA: GENERIC LIST -->
+    <div id="v-master-list" class="view">
+      <div class="page-header">
+        <button class="back-btn" onclick="navTo('masters')">← Setup Lists</button>
+        <button class="btn btn-primary" id="ml-add-btn" onclick="openMasterEdit(null)">+ New Entry</button>
+      </div>
+      <div style="margin-bottom:14px"><div class="page-title" id="ml-title">List</div><div class="page-sub" id="ml-sub"></div></div>
+      <div id="ml-parent-wrap" class="card" style="display:none;margin-bottom:14px;padding:14px 16px">
+        <div class="form-group" style="margin-bottom:0;max-width:340px">
+          <label id="ml-parent-label">Parent</label>
+          <select id="ml-parent" onchange="renderMasterList()"></select>
+        </div>
+      </div>
+      <div class="search-wrap"><input type="text" id="ml-search" placeholder="Search…" oninput="renderMasterList()"></div>
+      <div id="master-list"></div>
+    </div>
+
+    <!-- ══ SERVICE MASTER ══ -->
+    <div id="v-services" class="view premium-view">
+      <div class="page-header">
+        <div><div class="page-title">Service Master</div><div class="page-sub">The labour catalogue job cards, estimates and invoices price from</div></div>
+        <button class="btn btn-primary" onclick="showAddService()">+ New Service</button>
+      </div>
+      <div id="svc-kpis"></div>
+      <div class="search-wrap"><input type="text" id="svc-search" placeholder="Search by name, code or category…" oninput="renderServices()"></div>
+      <div id="svc-filters" style="margin-bottom:12px"></div>
+      <div id="services-list"></div>
+    </div>
+    <div id="v-add-service" class="view">
+      <div class="page-header"><button class="back-btn" onclick="navTo('services')">← Service Master</button></div>
+      <div style="margin-bottom:14px"><div class="page-title" id="add-svc-title">New Service</div><div class="page-sub">Standard hours × standard rate sets the default price on every quote.</div></div>
+      <div class="card" style="max-width:720px">
+        <div class="form-row">
+          <div class="form-group"><label>Service Name *</label><input type="text" id="sv-name" autocomplete="off" placeholder="e.g. Engine oil &amp; filter change"></div>
+          <div class="form-group"><label>Service Code <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="text" id="sv-code" maxlength="16" autocomplete="off" placeholder="e.g. SVC-OIL" style="text-transform:uppercase"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Category</label><select id="sv-category"></select></div>
+          <div class="form-group"><label>Labour Type</label><select id="sv-labourtype"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Standard Hours</label><input type="number" id="sv-hours" min="0" step="0.25" placeholder="1.0" oninput="svcRecalc()"></div>
+          <div class="form-group"><label>Standard Rate (<span class="cur-lbl">QAR</span> / hour)</label><input type="number" id="sv-rate" min="0" step="0.01" placeholder="0.00" oninput="svcRecalc()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Standard Price (<span class="cur-lbl">QAR</span>)</label>
+            <input type="number" id="sv-price" min="0" step="0.01" placeholder="0.00" oninput="svcPriceEdited()">
+            <div style="font-size:11px;color:var(--t3);margin-top:4px" id="sv-price-note">Calculated from hours × rate. Type here to override.</div>
+          </div>
+          <div class="form-group"><label>Tax Code</label><select id="sv-taxcode"></select></div>
+        </div>
+        <div class="form-group"><label>Description <span style="font-size:11px;color:var(--t3)">optional — printed on estimates</span></label><textarea id="sv-desc" placeholder="What this job includes…"></textarea></div>
+        <label class="chk-row" style="margin-bottom:12px"><input type="checkbox" id="sv-active" checked> <span>Active — offered when adding work to a job card</span></label>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="save-svc-btn" onclick="saveService()">Save Service</button>
+          <button class="btn btn-secondary" onclick="navTo('services')">Cancel</button>
+          <button class="btn btn-red" id="svc-del-btn" onclick="deleteService()" style="display:none;margin-left:auto">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <!-- SUPPLIERS LIST -->
     <div id="v-suppliers" class="view premium-view">
       <div class="page-header">
@@ -1659,8 +1769,9 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         </div>
         <div class="form-row">
           <div class="form-group"><label>Payment Terms</label><input type="text" id="sup-terms" placeholder="e.g. Net 30"></div>
-          <div class="form-group"><label>Address</label><input type="text" id="sup-address"></div>
+          <div class="form-group"><label>Supplier Group</label><div id="sup-group-wrap"></div></div>
         </div>
+        <div class="form-group"><label>Address</label><input type="text" id="sup-address"></div>
         <div class="btn-group" style="margin-top:6px"><button class="btn btn-primary" id="save-sup-btn" onclick="saveSupplier()">Save Supplier</button><button class="btn btn-secondary" onclick="navTo('suppliers')">Cancel</button><button class="btn btn-red" id="sup-del-btn" onclick="deleteSupplier()" style="display:none;margin-left:auto">Delete</button></div>
       </div>
     </div>
@@ -2585,7 +2696,7 @@ const TECH_STATUS={
 // UTILS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log'};
+var VIEW_TITLES={'v-mob-home':'Home','v-dashboard':'Dashboard','v-customers':'Customers','v-customer':'Customer Detail','v-add-customer':'Add Customer','v-vehicles':'Vehicles','v-vehicle':'Vehicle Detail','v-add-vehicle':'Add Vehicle','v-estimates':'Estimates','v-add-estimate':'New Estimate','v-estimate':'Estimate','v-jobcards':'Job Cards','v-jobcard':'Job Card Detail','v-inspection':'Vehicle Inspection','v-add-jobcard':'New Job Card','v-technicians':'Technicians','v-add-technician':'Add Technician','v-advisors':'Service Advisors','v-add-advisor':'Add Advisor','v-accounts':'Finance','v-add-transaction':'Transaction','v-appointments':'Appointments','v-add-appointment':'New Appointment','v-suppliers':'Suppliers','v-add-supplier':'Supplier','v-purchases':'Purchase Orders','v-add-po':'New Purchase Order','v-po':'Purchase Order','v-inventory':'Inventory','v-add-part':'Part','v-part':'Part Detail','v-sales':'Sales','v-quick-invoice':'Quick Invoice','v-invoice':'Invoice','v-gate-pass':'Gate Pass','v-settings':'Settings','v-workshop':'Workshop','v-fin-accounts':'Chart of Accounts','v-add-fin-account':'Ledger Account','v-gen-ledger':'General Ledger','v-trial-balance':'Trial Balance','v-pl-statement':'Profit & Loss','v-balance-sheet':'Balance Sheet','v-cust-accs':'Customer Accounts','v-cust-acc-detail':'Customer Account','v-acc-statement':'Account Statement','v-veh-history':'Service History','v-sales-reports':'Sales Reports','v-jc-reports':'Job Card Reports','v-cust-reports':'Customer Reports','v-tech-reports':'Technician Reports','v-cash-flow':'Cash Flow','v-aged-receivables':'Aged Receivables','v-aged-payables':'Aged Payables','v-vat-summary':'VAT Summary','v-activity-log':'Activity Log','v-masters':'Setup Lists','v-master-list':'Setup List','v-services':'Service Master','v-add-service':'Service'};
 function show(id){document.querySelectorAll('.view').forEach(function(el){el.style.display='none';});var _v=document.getElementById(id);_v.style.display='block';_v.classList.remove('view-in');void _v.offsetWidth;_v.classList.add('view-in');window.scrollTo(0,0);var mhs=document.getElementById('mob-hdr-section');if(mhs&&VIEW_TITLES[id])mhs.textContent=VIEW_TITLES[id];var key=id.replace(/^v-/,'');if(typeof syncTopbar==='function')syncTopbar(key);}
 function nowDtLocal(){var n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());return n.toISOString().slice(0,16)}
 function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
@@ -2608,7 +2719,7 @@ function jcNum(jc){return 'JC-'+String(jc.seq||0).padStart(4,'0')}
 function invNum(iv){return 'INV-'+String(iv.seq||0).padStart(4,'0')}
 function jcStatusBadge(status){var s=JC_STATUS[status]||JC_STATUS.pending;return'<span class="badge '+s.badge+'">'+s.label+'</span>'}
 
-var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary'};
+var MOB_SECTION_TITLES={dashboard:'Dashboard',workshop:'Workshop Board',appointments:'Appointments','add-appointment':'New Appointment',inventory:'Inventory',purchases:'Purchase Orders',suppliers:'Suppliers','add-part':'Part','part':'Part Detail',customers:'Customers',vehicles:'Vehicles',estimates:'Estimates',jobcards:'Job Cards',technicians:'Technicians',advisors:'Service Advisors',accounts:'Finance',sales:'Sales','quick-invoice':'Quick Invoice','fin-accounts':'Chart of Accounts','add-fin-account':'New Account','acc-statement':'Statement of Account','cust-accs':'Customer Accounts','cust-acc-detail':'Customer Ledger','gen-ledger':'General Ledger','trial-balance':'Trial Balance','pl-statement':'Profit & Loss','balance-sheet':'Balance Sheet','cash-flow':'Cash Flow','aged-receivables':'Aged Receivables','vat-summary':'VAT Summary',masters:'Setup Lists','master-list':'Setup List',services:'Service Master','add-service':'Service'};
 
 // MOBILE HOME SCREEN
 var _I={
@@ -2737,6 +2848,9 @@ function navTo(tab){
   else if(tab==='vehicles'){renderVehiclesSection();}
   else if(tab==='accounts'){setAccFilter(accFilter);renderAccounts();}
   else if(tab==='sales')renderSales();
+  else if(tab==='masters')renderMastersHub();
+  else if(tab==='master-list')renderMasterList();
+  else if(tab==='services')renderServices();
   else if(tab==='estimates')renderEstimates();
   else if(tab==='suppliers')renderSuppliers();
   else if(tab==='purchases')renderPurchases();
@@ -2795,7 +2909,8 @@ var TB_PARENT={ // section -> [breadcrumb trail] for sub-views
   'cust-acc-detail':['Finance','Customer Ledger'],'acc-statement':['Finance','Statement'],'cash-flow':['Finance','Cash Flow'],'aged-receivables':['Finance','Aged Receivables'],'aged-payables':['Finance','Aged Payables'],'vat-summary':['Finance','VAT Summary'],'gate-pass':['Job Cards','Gate Pass'],'sales-reports':['Sales','Reports'],
   'jc-reports':['Job Cards','Reports'],'cust-reports':['Customers','Reports'],'tech-reports':['Technicians','Reports'],'veh-history':['Vehicles','Service History'],
   'add-appointment':['Appointments','New Appointment'],
-  'add-part':['Inventory','Part'],'part':['Inventory','Part Detail']
+  'add-part':['Inventory','Part'],'part':['Inventory','Part Detail'],
+  'masters':['Master Data','Setup Lists'],'master-list':['Master Data','Setup Lists'],'services':['Master Data','Service Master'],'add-service':['Master Data','Service']
 };
 function tbIco(n,s){return ico(n,s||16);}
 function syncTopbar(tab){
@@ -2875,7 +2990,7 @@ function computeNotifs(){
   var brk=(technicians||[]).filter(function(t){return t.status==='on_break';});
   if(brk.length)out.push({icon:'technicians',col:'#B45309',bg:'#FFFBEB',title:brk.length+' technician'+(brk.length>1?'s':'')+' on break',sub:brk.map(function(t){return t.name;}).slice(0,3).join(', '),go:function(){navTo('technicians');}});
   var lowP=(parts||[]).filter(function(p){return typeof partLow==='function'&&partLow(p);});
-  if(lowP.length)out.push({icon:'box',col:'#B45309',bg:'#FFFBEB',title:lowP.length+' part'+(lowP.length>1?'s':'')+' low on stock',sub:lowP.map(function(p){return p.name;}).slice(0,3).join(', '),go:function(){navTo('inventory');invFilter='low';renderInventory();}});
+  if(lowP.length)out.push({icon:'scale',col:'#B45309',bg:'#FFFBEB',title:lowP.length+' part'+(lowP.length>1?'s':'')+' low on stock',sub:lowP.map(function(p){return p.name;}).slice(0,3).join(', '),go:function(){navTo('inventory');invFilter='low';renderInventory();}});
   // Service reminders: vehicles due (by date) within 14 days or overdue.
   var todayStr=new Date().toISOString().slice(0,10);
   var soon=new Date();soon.setDate(soon.getDate()+14);var soonStr=soon.toISOString().slice(0,10);
@@ -3336,6 +3451,21 @@ function initFirestore(){
     suppliers=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(activeNav==='suppliers')renderSuppliers();
   },snapErr('suppliers','suppliers'));
+  // Master data feeds every picker in the app, so a change re-renders whichever
+  // master screen is open AND any form currently showing a master-backed select.
+  db.collection('masters').onSnapshot(function(snap){
+    _fired.masters=true;
+    masters=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='masters')renderMastersHub();
+    if(activeNav==='master-list')renderMasterList();
+    if(activeNav==='services')renderServices();
+  },snapErr('master data','masters'));
+  db.collection('services').onSnapshot(function(snap){
+    _fired.services=true;
+    services=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(activeNav==='services')renderServices();
+    if(activeNav==='masters')renderMastersHub();
+  },snapErr('services','services'));
   db.collection('purchaseOrders').orderBy('createdAt','desc').onSnapshot(function(snap){
     _fired.purchaseOrders=true;
     purchaseOrders=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -3852,6 +3982,8 @@ function showAddCustomer(editing){
   document.getElementById('save-cust-btn').textContent=editing?'Update Customer':'Save Customer';
   document.getElementById('cust-back-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
   document.getElementById('cust-cancel-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
+  document.getElementById('c-group-wrap').innerHTML=mdPicker('c-group','customerGroup');
+  fillMasterSelect('c-group','customerGroup',editing&&curCustomer?curCustomer.groupId:'','No group');
   if(editing&&curCustomer){
     document.getElementById('c-name').value=curCustomer.name||'';
     document.getElementById('c-phone').value=curCustomer.phone||'';
@@ -3871,7 +4003,9 @@ function saveCustomer(){
   if(!phone){return invalidField('c-phone','Please enter a phone number.');}
   var btn=document.getElementById('save-cust-btn');
   btn.disabled=true;btn.textContent='Saving…';
-  var data={name:name,phone:phone,wa:document.getElementById('c-wa').value.trim(),email:document.getElementById('c-email').value.trim(),address:document.getElementById('c-address').value.trim()};
+  var grp=document.getElementById('c-group').value;
+  var data={name:name,phone:phone,wa:document.getElementById('c-wa').value.trim(),email:document.getElementById('c-email').value.trim(),address:document.getElementById('c-address').value.trim(),
+    groupId:grp,group:grp?masterName(grp):''};
   var fail=function(e){btn.disabled=false;btn.textContent=editingCustomerId?'Update Customer':'Save Customer';toast('Could not save customer: '+e.message,'error');};
   if(editingCustomerId){
     db.collection('customers').doc(editingCustomerId).update(data).then(function(){
@@ -3938,23 +4072,37 @@ function showAddVehicle(editing){
   editingVehicleId=editing&&curVehicle?curVehicle.id:null;
   document.getElementById('add-veh-title').textContent=editing?'Edit Vehicle':'Add Vehicle';
   document.getElementById('save-veh-btn').textContent=editing?'Update Vehicle':'Save Vehicle';
-  if(editing&&curVehicle){
-    document.getElementById('v-reg').value=curVehicle.registrationNo||'';
-    document.getElementById('v-vin').value=curVehicle.vin||'';
-    document.getElementById('v-make').value=curVehicle.make||'';
-    document.getElementById('v-model').value=curVehicle.model||'';
-    document.getElementById('v-year').value=curVehicle.year||'';
-    document.getElementById('v-color').value=curVehicle.color||'';
-    document.getElementById('v-mileage').value=curVehicle.mileage||'';
-    document.getElementById('v-fuel').value=curVehicle.fuelType||'';
-    document.getElementById('v-nextservice-date').value=curVehicle.nextServiceDate||'';
-    document.getElementById('v-nextservice-km').value=curVehicle.nextServiceKm||'';
-    document.getElementById('v-notes').value=curVehicle.notes||'';
+  var cv=editing&&curVehicle?curVehicle:null;
+  // Make drives Model: choosing a make narrows the model list to that make's
+  // models, which is what stops "Camry" ever being filed under Nissan.
+  document.getElementById('v-make-wrap').innerHTML=mdPicker('v-make','vehicleMake');
+  document.getElementById('v-model-wrap').innerHTML=mdPicker('v-model','vehicleModel',null,'v-make');
+  document.getElementById('v-fuel-wrap').innerHTML=mdPicker('v-fuel','fuelType');
+  fillMasterSelect('v-make','vehicleMake',cv&&cv.makeId,'Select make…');
+  fillMasterSelect('v-fuel','fuelType',cv&&cv.fuelTypeId,'Select…');
+  document.getElementById('v-make').onchange=vehMakeChanged;
+  fillMasterSelect('v-model','vehicleModel',cv&&cv.modelId,'Select model…',(cv&&cv.makeId)||'__none__');
+  if(cv){
+    document.getElementById('v-reg').value=cv.registrationNo||'';
+    document.getElementById('v-vin').value=cv.vin||'';
+    document.getElementById('v-year').value=cv.year||'';
+    document.getElementById('v-color').value=cv.color||'';
+    document.getElementById('v-mileage').value=cv.mileage||'';
+    document.getElementById('v-nextservice-date').value=cv.nextServiceDate||'';
+    document.getElementById('v-nextservice-km').value=cv.nextServiceKm||'';
+    document.getElementById('v-notes').value=cv.notes||'';
   } else {
-    ['v-reg','v-vin','v-make','v-model','v-year','v-color','v-mileage','v-nextservice-date','v-nextservice-km','v-notes'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('v-fuel').value='';
+    ['v-reg','v-vin','v-year','v-color','v-mileage','v-nextservice-date','v-nextservice-km','v-notes'].forEach(function(id){document.getElementById(id).value='';});
   }
   show('v-add-vehicle');
+}
+// Re-point the model list at the newly chosen make, dropping a model that no
+// longer belongs rather than silently keeping a mismatched pair.
+function vehMakeChanged(){
+  var makeId=document.getElementById('v-make').value;
+  var cur=document.getElementById('v-model').value;
+  var keep=cur&&(masterById(cur)||{}).parentId===makeId?cur:'';
+  fillMasterSelect('v-model','vehicleModel',keep,'Select model…',makeId||'__none__');
 }
 
 function goBackToCustomer(){
@@ -3964,18 +4112,28 @@ function goBackToCustomer(){
 
 function saveVehicle(){
   var reg=document.getElementById('v-reg').value.trim().toUpperCase();
-  var make=document.getElementById('v-make').value.trim();
-  var model=document.getElementById('v-model').value.trim();
+  var makeId=document.getElementById('v-make').value;
+  var modelId=document.getElementById('v-model').value;
+  var fuelId=document.getElementById('v-fuel').value;
   if(!reg){return invalidField('v-reg','Please enter the registration number.');}
-  if(!make){return invalidField('v-make','Please enter the vehicle make.');}
+  if(!makeId){return invalidField('v-make','Please choose the vehicle make.');}
+  // The plate identifies the vehicle across every job card and invoice, so two
+  // records sharing one plate would split its history in half.
+  var dupReg=vehicles.filter(function(v){
+    return v.id!==editingVehicleId&&String(v.registrationNo||'').trim().toUpperCase()===reg;
+  })[0];
+  if(dupReg){return invalidField('v-reg','Plate '+reg+' is already registered'+(dupReg.customerName?' to '+dupReg.customerName:'')+'.');}
   var btn=document.getElementById('save-veh-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var data={
     registrationNo:reg,vin:document.getElementById('v-vin').value.trim(),
-    make:make,model:model,year:document.getElementById('v-year').value,
+    // id = the link to master data, name = the snapshot every existing screen reads.
+    makeId:makeId,make:masterName(makeId),
+    modelId:modelId,model:modelId?masterName(modelId):'',
+    year:document.getElementById('v-year').value,
     color:document.getElementById('v-color').value.trim(),
     mileage:document.getElementById('v-mileage').value,
-    fuelType:document.getElementById('v-fuel').value,
+    fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):'',
     nextServiceDate:document.getElementById('v-nextservice-date').value,
     nextServiceKm:document.getElementById('v-nextservice-km').value,
     notes:document.getElementById('v-notes').value.trim(),
@@ -4349,24 +4507,81 @@ function showAddPart(editing){
   document.getElementById('part-back-btn').onclick=p?function(){showPart(curPart);}:function(){navTo('inventory');};
   document.getElementById('pt-stock-note').style.display=p?'':'none';
   document.getElementById('pt-stock').disabled=!!p; // stock changes only via Adjust Stock (audited movements)
-  var cats=[];parts.forEach(function(x){if(x.category&&cats.indexOf(x.category)<0)cats.push(x.category);});
-  document.getElementById('pt-cat-list').innerHTML=cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('');
-  var f=function(id,v){document.getElementById(id).value=(v==null||v==='')?'':v;};
+  // Master-backed pickers are rebuilt each time the form opens so newly added
+  // categories/brands/units appear without a reload.
+  document.getElementById('pt-category-wrap').innerHTML=mdPicker('pt-category','category');
+  document.getElementById('pt-brand-wrap').innerHTML=mdPicker('pt-brand','brand');
+  document.getElementById('pt-uom-wrap').innerHTML=mdPicker('pt-uom','uom');
+  document.getElementById('pt-taxcode-wrap').innerHTML=mdPicker('pt-taxcode','taxCode');
+  fillMasterSelect('pt-category','category',p&&p.categoryId,'No category');
+  fillMasterSelect('pt-brand','brand',p&&p.brandId,'No brand');
+  fillMasterSelect('pt-uom','uom',p&&p.uomId,'No unit');
+  fillMasterSelect('pt-taxcode','taxCode',p&&p.taxCodeId,'Default (company VAT setting)');
+  // Supplier is a real link into the suppliers register, not a typed name.
+  var supSel=document.getElementById('pt-supplier');
+  supSel.innerHTML='<option value="">No preferred supplier</option>'+suppliers.slice().sort(function(a,b){
+    return String(a.name||'').localeCompare(String(b.name||''));
+  }).map(function(s){return '<option value="'+esc(s.id)+'"'+(p&&p.supplierId===s.id?' selected':'')+'>'+esc(s.name)+'</option>';}).join('');
+  var f=function(id,v){var el=document.getElementById(id);if(el)el.value=(v==null||v==='')?'':v;};
   f('pt-name',p&&p.name);f('pt-number',p&&p.partNumber);f('pt-barcode',p&&p.barcode);f('pt-oem',p&&p.oemNumber);
-  f('pt-category',p&&p.category);f('pt-brand',p&&p.brand);f('pt-stock',p?p.stock:'');f('pt-reorder',p?p.reorderLevel:'');
-  f('pt-cost',p&&p.costPrice);f('pt-price',p&&p.sellingPrice);f('pt-supplier',p&&p.supplier);f('pt-location',p&&p.location);
+  f('pt-stock',p?p.stock:'');f('pt-reorder',p?p.reorderLevel:'');
+  f('pt-min',p&&p.minStock);f('pt-max',p&&p.maxStock);
+  f('pt-cost',p&&p.costPrice);f('pt-price',p&&p.sellingPrice);f('pt-location',p&&p.location);
+  document.getElementById('pt-active').checked=!p||p.active!==false;
+  ptMarginHint();
   show('v-add-part');
+}
+// Live margin feedback: pricing an item below cost is the kind of mistake that
+// only surfaces at month-end, so surface it at the point of entry.
+function ptMarginHint(){
+  var el=document.getElementById('pt-margin');if(!el)return;
+  var c=Number((document.getElementById('pt-cost')||{}).value||0),s=Number((document.getElementById('pt-price')||{}).value||0);
+  if(!c&&!s){el.textContent='';return;}
+  var m=s-c;
+  if(!s){el.style.color='var(--t3)';el.textContent='No selling price set.';return;}
+  if(m<0){el.style.color='var(--red)';el.textContent='Selling below cost — margin '+fmtMoney(m)+'.';return;}
+  el.style.color='var(--t3)';
+  el.textContent='Margin '+fmtMoney(m)+(c?' ('+Math.round(m/c*100)+'%)':'');
 }
 function savePart(){
   var name=document.getElementById('pt-name').value.trim();
   if(!name){return invalidField('pt-name','Please enter the part name.');}
+  var minS=Number(document.getElementById('pt-min').value||0),maxS=Number(document.getElementById('pt-max').value||0);
+  if(maxS>0&&minS>maxS){return invalidField('pt-min','Minimum stock cannot be more than the maximum.');}
+  var cost=Number(document.getElementById('pt-cost').value||0),sell=Number(document.getElementById('pt-price').value||0);
+  if(cost<0){return invalidField('pt-cost','Cost price cannot be negative.');}
+  if(sell<0){return invalidField('pt-price','Selling price cannot be negative.');}
+  var partNo=document.getElementById('pt-number').value.trim();
+  var barcode=document.getElementById('pt-barcode').value.trim();
+  // Part number and barcode identify the item to suppliers and the scanner —
+  // a duplicate makes stock unreconcilable, so catch it before the round-trip.
+  var dup=parts.filter(function(x){
+    if(x.id===editingPartId)return false;
+    return (partNo&&String(x.partNumber||'').toLowerCase()===partNo.toLowerCase())||
+           (barcode&&String(x.barcode||'').toLowerCase()===barcode.toLowerCase());
+  })[0];
+  if(dup){
+    var byNo=partNo&&String(dup.partNumber||'').toLowerCase()===partNo.toLowerCase();
+    return invalidField(byNo?'pt-number':'pt-barcode','“'+dup.name+'” already uses this '+(byNo?'part number':'barcode')+'.');
+  }
+  var supSel=document.getElementById('pt-supplier'),supOpt=supSel.options[supSel.selectedIndex];
+  var catSel=document.getElementById('pt-category'),brandSel=document.getElementById('pt-brand');
+  var uomSel=document.getElementById('pt-uom'),taxSel=document.getElementById('pt-taxcode');
   var data={
-    name:name,partNumber:document.getElementById('pt-number').value.trim(),barcode:document.getElementById('pt-barcode').value.trim(),
-    oemNumber:document.getElementById('pt-oem').value.trim(),category:document.getElementById('pt-category').value.trim(),
-    brand:document.getElementById('pt-brand').value.trim(),
-    reorderLevel:Number(document.getElementById('pt-reorder').value||0),costPrice:Number(document.getElementById('pt-cost').value||0),
-    sellingPrice:Number(document.getElementById('pt-price').value||0),supplier:document.getElementById('pt-supplier').value.trim(),
-    location:document.getElementById('pt-location').value.trim()
+    name:name,partNumber:partNo,barcode:barcode,
+    oemNumber:document.getElementById('pt-oem').value.trim(),
+    // Both the id (the link) and the name (the snapshot) are stored: the id keeps
+    // the record joined to master data, the name keeps every existing list,
+    // report and print-out reading correctly without a migration.
+    categoryId:catSel.value,category:catSel.value?masterName(catSel.value):'',
+    brandId:brandSel.value,brand:brandSel.value?masterName(brandSel.value):'',
+    uomId:uomSel.value,unit:uomSel.value?masterName(uomSel.value):'',
+    taxCodeId:taxSel.value,
+    reorderLevel:Number(document.getElementById('pt-reorder').value||0),
+    minStock:minS,maxStock:maxS,costPrice:cost,sellingPrice:sell,
+    supplierId:supSel.value,supplier:supSel.value&&supOpt?supOpt.text:'',
+    location:document.getElementById('pt-location').value.trim(),
+    active:!!document.getElementById('pt-active').checked
   };
   // Stock is set only at creation; afterwards it moves exclusively through
   // Adjust Stock so the movement history always reconciles with on-hand.
@@ -4621,6 +4836,7 @@ function modalSearchPhone(){
         '<div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(found.phone||found.wa||'')+'</div>'+
       '</div>'+
       renderModalVehicleForm();
+    initModalVehicleForm(false);
     document.getElementById('jc-modal-title').textContent='Add Vehicle for '+found.name;
   } else {
     modalFoundCustomer=null;
@@ -4635,6 +4851,7 @@ function modalSearchPhone(){
       '<div style="font-size:13px;font-weight:700;color:var(--t1);margin:16px 0 12px;padding-top:16px;border-top:1.5px solid var(--b1)">Add Vehicle</div>'+
       renderModalVehicleForm(true)+
       '<button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="modalSaveNewCustomerAndVehicle()">Save Customer + Vehicle & Continue</button>';
+    initModalVehicleForm(true);
     document.getElementById('jc-modal-title').textContent='Add New Customer & Vehicle';
   }
   if(found){
@@ -4650,6 +4867,20 @@ function modalSearchPhone(){
   }
 }
 
+// The quick-create pickers are injected as markup, so they're filled once
+// they're in the DOM — same make->model cascade as the full vehicle form.
+function initModalVehicleForm(isNew){
+  var p=isNew?'mn-':'modal-';
+  fillMasterSelect(p+'v-make','vehicleMake','','Select make…');
+  fillMasterSelect(p+'v-model','vehicleModel','','Select model…','__none__');
+  fillMasterSelect(p+'v-fuel','fuelType','','Select…');
+  var mk=document.getElementById(p+'v-make');
+  if(mk)mk.onchange=function(){
+    var cur=document.getElementById(p+'v-model').value;
+    var keep=cur&&(masterById(cur)||{}).parentId===mk.value?cur:'';
+    fillMasterSelect(p+'v-model','vehicleModel',keep,'Select model…',mk.value||'__none__');
+  };
+}
 function renderModalVehicleForm(isNew){
   var p=isNew?'mn-':'modal-';
   return'<div class="form-row">'+
@@ -4657,8 +4888,8 @@ function renderModalVehicleForm(isNew){
     '<div class="form-group"><label>VIN / Chassis No.</label><input type="text" id="'+p+'v-vin" placeholder="Chassis number"></div>'+
   '</div>'+
   '<div class="form-row">'+
-    '<div class="form-group"><label>Make *</label><input type="text" id="'+p+'v-make" placeholder="e.g. Toyota"></div>'+
-    '<div class="form-group"><label>Model *</label><input type="text" id="'+p+'v-model" placeholder="e.g. Camry"></div>'+
+    '<div class="form-group"><label>Make *</label>'+mdPicker(p+'v-make','vehicleMake')+'</div>'+
+    '<div class="form-group"><label>Model</label>'+mdPicker(p+'v-model','vehicleModel',null,p+'v-make')+'</div>'+
   '</div>'+
   '<div class="form-row">'+
     '<div class="form-group"><label>Year</label><input type="number" id="'+p+'v-year" placeholder="2020" min="1990" max="2035"></div>'+
@@ -4666,24 +4897,26 @@ function renderModalVehicleForm(isNew){
   '</div>'+
   '<div class="form-row">'+
     '<div class="form-group"><label>Mileage (km)</label><input type="number" id="'+p+'v-mileage" placeholder="e.g. 45000"></div>'+
-    '<div class="form-group"><label>Fuel Type</label><select id="'+p+'v-fuel"><option value="">Select…</option><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option></select></div>'+
+    '<div class="form-group"><label>Fuel Type</label>'+mdPicker(p+'v-fuel','fuelType')+'</div>'+
   '</div>';
 }
 
 function modalSaveVehicleForExistingCustomer(){
   var c=modalFoundCustomer;if(!c)return;
   var reg=(document.getElementById('modal-v-reg').value||'').trim().toUpperCase();
-  var make=(document.getElementById('modal-v-make').value||'').trim();
-  var model=(document.getElementById('modal-v-model').value||'').trim();
+  var makeId=document.getElementById('modal-v-make').value;
+  var modelId=document.getElementById('modal-v-model').value;
+  var fuelId=document.getElementById('modal-v-fuel').value;
   if(!reg){toast('Please enter the plate/registration number.');return;}
-  if(!make){toast('Please enter vehicle make.');return;}
+  if(!makeId){toast('Please choose the vehicle make.');return;}
+  if(vehicles.some(function(v){return String(v.registrationNo||'').trim().toUpperCase()===reg;})){toast('Plate '+reg+' is already registered.','error');return;}
   var vData={
     registrationNo:reg,vin:(document.getElementById('modal-v-vin').value||'').trim(),
-    make:make,model:model,
+    makeId:makeId,make:masterName(makeId),modelId:modelId,model:modelId?masterName(modelId):'',
     year:document.getElementById('modal-v-year').value,
     color:(document.getElementById('modal-v-color').value||'').trim(),
     mileage:document.getElementById('modal-v-mileage').value,
-    fuelType:document.getElementById('modal-v-fuel').value,
+    fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):'',
     notes:'',customerId:c.id,customerName:c.name,createdAt:Date.now()
   };
   db.collection('vehicles').add(vData).then(function(ref){
@@ -4697,22 +4930,24 @@ function modalSaveNewCustomerAndVehicle(){
   var name=(document.getElementById('modal-c-name').value||'').trim();
   var phone=(document.getElementById('modal-c-phone').value||'').trim();
   var reg=(document.getElementById('mn-v-reg').value||'').trim().toUpperCase();
-  var make=(document.getElementById('mn-v-make').value||'').trim();
-  var model=(document.getElementById('mn-v-model').value||'').trim();
+  var makeId=document.getElementById('mn-v-make').value;
+  var modelId=document.getElementById('mn-v-model').value;
+  var fuelId=document.getElementById('mn-v-fuel').value;
   if(!name){toast('Please enter customer name.');return;}
   if(!phone){toast('Please enter phone number.');return;}
   if(!reg){toast('Please enter vehicle plate number.');return;}
-  if(!make){toast('Please enter vehicle make.');return;}
+  if(!makeId){toast('Please choose the vehicle make.');return;}
+  if(vehicles.some(function(v){return String(v.registrationNo||'').trim().toUpperCase()===reg;})){toast('Plate '+reg+' is already registered.','error');return;}
   var cData={name:name,phone:phone,wa:(document.getElementById('modal-c-wa').value||'').trim(),email:(document.getElementById('modal-c-email').value||'').trim(),address:(document.getElementById('modal-c-address').value||'').trim(),createdAt:Date.now()};
   db.collection('customers').add(cData).then(function(cRef){
     var newC=Object.assign({id:cRef.id},cData);
     var vData={
       registrationNo:reg,vin:(document.getElementById('mn-v-vin').value||'').trim(),
-      make:make,model:model,
+      makeId:makeId,make:masterName(makeId),modelId:modelId,model:modelId?masterName(modelId):'',
       year:document.getElementById('mn-v-year').value,
       color:(document.getElementById('mn-v-color').value||'').trim(),
       mileage:document.getElementById('mn-v-mileage').value,
-      fuelType:document.getElementById('mn-v-fuel').value,
+      fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):'',
       notes:'',customerId:cRef.id,customerName:name,createdAt:Date.now()
     };
     db.collection('vehicles').add(vData).then(function(vRef){
@@ -4737,8 +4972,15 @@ function renderWorksEditor(){
     el.innerHTML='<div style="text-align:center;padding:20px;background:var(--bg);border-radius:var(--r-sm);color:var(--t3);font-size:13px">No works added. Click "+ Add Work" to add services.</div>';
     document.getElementById('works-total').textContent='';return;
   }
+  // Active catalogue entries only — a retired service must not be sold again.
+  var svcOpts=services.filter(function(sv){return sv.active!==false;})
+    .sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));})
+    .map(function(sv){return '<option value="'+esc(sv.id)+'">'+esc(sv.name)+(svcPrice(sv)?' — '+fmtMoney(svcPrice(sv)):'')+'</option>';}).join('');
   var rows=jcWorkItems.map(function(w,i){
     return'<tr>'+
+      '<td><select onchange="applyServiceToWork('+i+',this.value)" style="min-width:150px" aria-label="Service from catalogue">'+
+        '<option value="">— Custom / free text —</option>'+svcOpts+
+      '</select></td>'+
       '<td><input type="text" value="'+esc(w.description||'')+'" onchange="jcWorkItems['+i+'].description=this.value" placeholder="Service description" style="min-width:130px"></td>'+
       '<td><select onchange="jcWorkItems['+i+'].technicianId=this.value;var o=this.options[this.selectedIndex].text;jcWorkItems['+i+'].technicianName=o.split(\' (\')[0]" style="min-width:140px">'+
         '<option value="">Unassigned</option>'+techOpts+
@@ -4753,20 +4995,40 @@ function renderWorksEditor(){
     '</tr>';
   }).join('');
   el.innerHTML='<div style="overflow-x:auto"><table class="works-tbl">'+
-    '<thead><tr><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost ('+cur()+')</th><th></th></tr></thead>'+
+    '<thead><tr><th>Service</th><th>Description</th><th>Technician</th><th>Status</th><th style="text-align:right">Cost ('+cur()+')</th><th></th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>';
-  // Restore technician selects
+  // Re-select the catalogue entry each line was created from.
+  el.querySelectorAll('tbody tr').forEach(function(tr,i){
+    var sel=tr.querySelector('td:first-child select');
+    if(sel&&jcWorkItems[i]&&jcWorkItems[i].serviceId)sel.value=jcWorkItems[i].serviceId;
+  });
+  // Restore technician selects. Index 1, not 0 — the first select in each row is
+  // now the Service Master picker.
   var trs=el.querySelectorAll('tbody tr');
   jcWorkItems.forEach(function(w,i){
     if(!w.technicianId)return;
-    var sel=trs[i]?trs[i].querySelector('select'):null;
+    var sel=trs[i]?trs[i].querySelectorAll('select')[1]:null;
     if(sel)sel.value=w.technicianId;
   });
   updateWorksTotal();
 }
 
+// Choosing a catalogue entry fills the description and the standard price.
+// A price the user has already typed is left alone — the catalogue is the
+// starting point for a quote, not an override of a decision already made.
+function applyServiceToWork(i,serviceId){
+  var w=jcWorkItems[i];if(!w)return;
+  if(!serviceId){w.serviceId='';w.serviceName='';renderWorksEditor();return;}
+  var sv=services.filter(function(x){return x.id===serviceId;})[0];
+  if(!sv)return;
+  w.serviceId=sv.id;w.serviceName=sv.name;
+  if(!String(w.description||'').trim())w.description=sv.name;
+  if(!Number(w.cost))w.cost=svcPrice(sv)||'';
+  renderWorksEditor();updateWorksTotal();
+}
+
 function addWorkRow(){
-  jcWorkItems.push({id:uid(),description:'',technicianId:'',technicianName:'',cost:'',status:'pending'});
+  jcWorkItems.push({id:uid(),description:'',serviceId:'',serviceName:'',technicianId:'',technicianName:'',cost:'',status:'pending'});
   renderWorksEditor();
 }
 
@@ -4799,7 +5061,7 @@ function saveJobCard(){
     status:calcJcStatus(jcWorkItems,editingJobCardId?curJobCard:null),
     complaints:document.getElementById('jc-complaints').value.trim(),
     notes:document.getElementById('jc-notes').value.trim(),
-    works:jcWorkItems.map(function(w){return{id:w.id||uid(),description:w.description||'',technicianId:w.technicianId||'',technicianName:w.technicianName||'',cost:Number(w.cost)||0,status:w.status||'pending'};})
+    works:jcWorkItems.map(function(w){return{id:w.id||uid(),description:w.description||'',serviceId:w.serviceId||'',serviceName:w.serviceName||'',technicianId:w.technicianId||'',technicianName:w.technicianName||'',cost:Number(w.cost)||0,status:w.status||'pending'};})
   };
   // Delete removed images from storage
   jcRemovedImagePaths.forEach(function(path){
@@ -5293,6 +5555,386 @@ function updateWorkStatus(jcId,workId,newWStatus){
       if(update.status){curJobCard.status=update.status;renderJobCardDetail();}
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MASTER DATA — the controlled vocabularies every other module reads.
+// One generic CRUD path over the `masters` collection, discriminated by
+// `kind`, so adding a new lookup list is a one-line change to MD_KINDS.
+// ═══════════════════════════════════════════════════════════════════
+var masters=[], editingMasterId=null, curMasterKind='category';
+
+// Each entry drives the hub tile, the list page, the editor and the pickers.
+//   rate:true    → the entry carries a percentage (tax codes)
+//   parent:'…'   → the entry hangs off another kind (models under makes)
+//   uses:[…]     → [collection, field, label] refs used for the in-use count
+var MD_KINDS=[
+  {key:'category',     label:'Categories',        sec:'Items & Services', icon:'folder', desc:'Group parts and services for reporting and pricing.',      ex:'Filters, Brakes, Fluids',
+   uses:[['parts','categoryId','parts'],['services','categoryId','services']]},
+  {key:'brand',        label:'Brands',            sec:'Items & Services', icon:'book',  desc:'Parts manufacturers, so you can buy and report by brand.',  ex:'Bosch, Denso, Mobil',
+   uses:[['parts','brandId','parts']]},
+  {key:'uom',          label:'Units of Measure',  sec:'Items & Services', icon:'scale',    desc:'How each item is counted, bought and sold.',                ex:'Piece, Litre, Set',
+   uses:[['parts','uomId','parts']]},
+  {key:'labourType',   label:'Labour Types',      sec:'Items & Services', icon:'technicians',   desc:'Skill bands used to rate workshop labour.',                 ex:'Mechanical, Electrical, Body',
+   uses:[['services','labourTypeId','services']]},
+  {key:'taxCode',      label:'Tax Codes',         sec:'Items & Services', icon:'cash',desc:'Named tax rates applied to items and services.',            ex:'Standard 0%, Exempt', rate:true,
+   uses:[['parts','taxCodeId','parts'],['services','taxCodeId','services']]},
+  {key:'vehicleMake',  label:'Vehicle Makes',     sec:'Vehicles',         icon:'vehicles',    desc:'Manufacturers you accept into the workshop.',               ex:'Toyota, Nissan, Lexus',
+   uses:[['vehicles','makeId','vehicles'],['masters','parentId','models']]},
+  {key:'vehicleModel', label:'Vehicle Models',    sec:'Vehicles',         icon:'vehicles',    desc:'Models, each filed under its make.',                        ex:'Camry, Patrol, LC300', parent:'vehicleMake',
+   uses:[['vehicles','modelId','vehicles']]},
+  {key:'fuelType',     label:'Fuel Types',        sec:'Vehicles',         icon:'bolt',    desc:'Fuel or drivetrain recorded against each vehicle.',         ex:'Petrol, Diesel, Hybrid',
+   uses:[['vehicles','fuelTypeId','vehicles']]},
+  {key:'customerGroup',label:'Customer Groups',   sec:'Partners',         icon:'customers',  desc:'Segment customers — retail, fleet, insurance, internal.',   ex:'Retail, Fleet, Insurance',
+   uses:[['customers','groupId','customers']]},
+  {key:'supplierGroup',label:'Supplier Groups',   sec:'Partners',         icon:'building',  desc:'Segment vendors — parts, tyres, sublet, consumables.',      ex:'Parts, Tyres, Sublet',
+   uses:[['suppliers','groupId','suppliers']]}
+];
+function mdKind(k){for(var i=0;i<MD_KINDS.length;i++){if(MD_KINDS[i].key===k)return MD_KINDS[i];}return MD_KINDS[0];}
+
+// All entries of a kind, name-sorted. `activeOnly` is what the pickers use, so a
+// retired value stays visible on the records that already carry it but is never
+// offered on a new one.
+function mastersOf(kind,activeOnly,parentId){
+  return masters.filter(function(m){
+    if(m.kind!==kind)return false;
+    if(activeOnly&&m.active===false)return false;
+    if(parentId!=null&&parentId!==''&&m.parentId!==parentId)return false;
+    return true;
+  }).sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));});
+}
+function masterById(id){if(!id)return null;for(var i=0;i<masters.length;i++){if(masters[i].id===id)return masters[i];}return null;}
+// Name for display. Falls back to the stored free-text so records created before
+// the master lists existed still read correctly.
+function masterName(id,fallback){var m=masterById(id);return m?m.name:(fallback||'');}
+
+// How many live records point at this entry — the number that decides whether
+// Delete is offered. The server enforces the same rule; this is the honest
+// preview so the user isn't surprised by a 409.
+function masterUsage(m){
+  var d=mdKind(m.kind),n=0;
+  (d.uses||[]).forEach(function(u){
+    var coll=({parts:parts,services:services,vehicles:vehicles,customers:customers,suppliers:suppliers,masters:masters})[u[0]]||[];
+    n+=coll.filter(function(r){return r[u[1]]===m.id;}).length;
+  });
+  return n;
+}
+
+// <option> list for a master-backed <select>. Always includes the currently
+// selected value even when retired, so editing an old record can't silently
+// re-point it at something else.
+function masterOpts(kind,selId,placeholder,parentId){
+  var list=mastersOf(kind,true,parentId);
+  if(selId&&!list.some(function(m){return m.id===selId;})){
+    var cur=masterById(selId);if(cur)list=[cur].concat(list);
+  }
+  return '<option value="">'+esc(placeholder||'Select…')+'</option>'+list.map(function(m){
+    return '<option value="'+esc(m.id)+'"'+(m.id===selId?' selected':'')+'>'+esc(m.name)+(m.active===false?' (inactive)':'')+'</option>';
+  }).join('');
+}
+// Fill a <select> in place, preserving the current value where possible.
+function fillMasterSelect(elId,kind,selId,placeholder,parentId){
+  var el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=masterOpts(kind,selId,placeholder,parentId);
+}
+// Markup for a master-backed picker: the select plus a "+" that creates a new
+// entry without leaving the form. Missing a value mid-form is the single most
+// common reason people abandon a record, so the escape hatch lives right there.
+function mdPicker(elId,kind,placeholder,parentSelId){
+  var d=mdKind(kind);
+  return '<div class="pick-row"><select id="'+elId+'"></select>'+
+    '<button type="button" class="pick-add" onclick="quickAddMaster(\''+kind+'\',\''+elId+'\''+(parentSelId?',\''+parentSelId+'\'':'')+')" '+
+    'title="Add a new '+esc(d.label.replace(/ies$/,'y').replace(/s$/,'').toLowerCase())+'" aria-label="Add a new '+esc(d.label.replace(/ies$/,'y').replace(/s$/,'').toLowerCase())+'">+</button></div>';
+}
+// Where a quick-add should drop its result once saved.
+var masterQuickTarget=null;
+function quickAddMaster(kind,targetSelId,parentSelId){
+  var prevKind=curMasterKind;
+  curMasterKind=kind;
+  var parentId=parentSelId?(document.getElementById(parentSelId)||{}).value:'';
+  masterQuickTarget={sel:targetSelId,kind:kind,parentId:parentId||'',restore:prevKind};
+  openMasterEdit(null,parentId);
+}
+
+// ── Hub ──
+function renderMastersHub(){
+  var el=document.getElementById('masters-hub');if(!el)return;
+  if(!_fired.masters){el.innerHTML=skelRows(6);return;}
+  var secs=[],seen={};
+  MD_KINDS.forEach(function(d){if(!seen[d.sec]){seen[d.sec]=1;secs.push(d.sec);}});
+  el.innerHTML=secs.map(function(sec){
+    return '<div class="md-sec">'+esc(sec)+'</div><div class="md-grid">'+
+      MD_KINDS.filter(function(d){return d.sec===sec;}).map(function(d){
+        var all=mastersOf(d.key),live=all.filter(function(m){return m.active!==false;}).length;
+        return '<button type="button" class="md-tile" onclick="openMasterList(\''+d.key+'\')" aria-label="'+esc(d.label)+', '+live+' active entries">'+
+          '<span class="md-ic">'+ico(d.icon,19,'var(--accent-text)')+'</span>'+
+          '<span style="min-width:0"><span class="md-nm" style="display:block">'+esc(d.label)+'</span>'+
+          '<span class="md-ds" style="display:block">'+esc(d.desc)+'</span></span>'+
+          '<span class="md-ct" title="'+live+' active of '+all.length+'">'+live+'</span></button>';
+      }).join('')+'</div>';
+  }).join('');
+}
+
+// ── Generic list ──
+function openMasterList(kind){curMasterKind=kind;var s=document.getElementById('ml-search');if(s)s.value='';navTo('master-list');}
+function renderMasterList(){
+  var d=mdKind(curMasterKind),el=document.getElementById('master-list');if(!el)return;
+  document.getElementById('ml-title').textContent=d.label;
+  document.getElementById('ml-sub').textContent=d.desc+' For example: '+d.ex+'.';
+  // Hierarchical kinds get a parent chooser; a model can't exist without a make.
+  var pw=document.getElementById('ml-parent-wrap'),pSel=document.getElementById('ml-parent'),parentId='';
+  if(d.parent){
+    var pd=mdKind(d.parent);
+    document.getElementById('ml-parent-label').textContent=pd.label.replace(/s$/,'');
+    var keep=pSel.value;
+    pSel.innerHTML='<option value="">All '+esc(pd.label.toLowerCase())+'</option>'+mastersOf(d.parent,false).map(function(m){
+      return '<option value="'+esc(m.id)+'"'+(m.id===keep?' selected':'')+'>'+esc(m.name)+'</option>';}).join('');
+    parentId=pSel.value;pw.style.display='';
+  } else { pw.style.display='none'; }
+  if(!_fired.masters){el.innerHTML=skelTable(5);return;}
+
+  var q=(document.getElementById('ml-search').value||'').trim().toLowerCase();
+  var rows=mastersOf(curMasterKind,false,parentId).filter(function(m){
+    if(!q)return true;
+    return (m.name||'').toLowerCase().indexOf(q)>-1||(m.code||'').toLowerCase().indexOf(q)>-1||(m.description||'').toLowerCase().indexOf(q)>-1;
+  });
+  var total=mastersOf(curMasterKind,false,parentId).length;
+  if(!rows.length){
+    el.innerHTML='<div class="empty"><div style="font-weight:700;color:var(--t2)">'+(q?'Nothing matches “'+esc(q)+'”.':'No '+esc(d.label.toLowerCase())+' yet.')+'</div>'+
+      (q?'':'<div style="font-size:12.5px;color:var(--t3);margin-top:4px">Add your first entry — for example '+esc(d.ex)+'.</div>')+'</div>';
+    return;
+  }
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Name</th><th>Code</th>'+(d.parent?'<th>'+esc(mdKind(d.parent).label.replace(/s$/,''))+'</th>':'')+
+    (d.rate?'<th class="num">Rate</th>':'')+'<th>Description</th><th class="num">In use</th><th>Status</th></tr></thead><tbody>'+
+    rows.map(function(m){
+      var n=masterUsage(m);
+      return '<tr onclick="openMasterEdit(\''+esc(m.id)+'\')" style="cursor:pointer" title="Edit '+esc(m.name)+'">'+
+        '<td style="font-weight:700">'+esc(m.name)+'</td>'+
+        '<td>'+(m.code?'<span class="badge-code">'+esc(m.code)+'</span>':'<span style="color:var(--t3)">—</span>')+'</td>'+
+        (d.parent?'<td style="color:var(--t2)">'+esc(masterName(m.parentId)||'—')+'</td>':'')+
+        (d.rate?'<td class="num" style="font-weight:700">'+(Number(m.rate)||0)+'%</td>':'')+
+        '<td style="color:var(--t2)">'+esc(m.description||'—')+'</td>'+
+        '<td class="num" style="font-variant-numeric:tabular-nums;color:'+(n?'var(--t1)':'var(--t3)')+'">'+n+'</td>'+
+        '<td>'+(m.active===false?'<span class="badge-off">Inactive</span>':'<span style="font-size:12px;font-weight:700;color:var(--green)">Active</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>'+
+    '<div style="font-size:12px;color:var(--t3);margin-top:10px">'+rows.length+' of '+total+' shown. Entries in use cannot be deleted — deactivate them instead.</div>';
+}
+
+// ── Entry editor ──
+function openMasterEdit(id,presetParentId){
+  var d=mdKind(curMasterKind),m=id?masterById(id):null;
+  editingMasterId=id||null;
+  var ov=document.getElementById('master-dlg');
+  if(!ov){ov=document.createElement('div');ov.id='master-dlg';ov.className='dlg-overlay';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)closeMasterEdit();});
+    ov.addEventListener('keydown',function(e){if(e.key==='Escape')closeMasterEdit();});}
+  var inUse=m?masterUsage(m):0;
+  var pd=d.parent?mdKind(d.parent):null;
+  var preParent=presetParentId||(document.getElementById('ml-parent')||{}).value||'';
+  ov.innerHTML='<div class="dlg-box" style="max-width:480px" role="dialog" aria-modal="true" aria-label="'+(m?'Edit':'New')+' '+esc(d.label.replace(/s$/,''))+'">'+
+    '<div class="dlg-title">'+(m?'Edit':'New')+' '+esc(d.label.replace(/ies$/,'y').replace(/s$/,''))+'</div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label>Name *</label><input type="text" id="mm-name" maxlength="80" autocomplete="off" value="'+esc(m?m.name:'')+'" placeholder="'+esc(d.ex.split(',')[0].trim())+'"></div>'+
+      '<div class="form-group"><label>Code <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="text" id="mm-code" maxlength="16" autocomplete="off" value="'+esc(m&&m.code?m.code:'')+'" style="text-transform:uppercase" placeholder="Short code"></div>'+
+    '</div>'+
+    (pd?'<div class="form-group"><label>'+esc(pd.label.replace(/s$/,''))+' *</label><select id="mm-parent">'+
+        masterOpts(d.parent,(m?m.parentId:preParent),'Select '+pd.label.replace(/s$/,'').toLowerCase()+'…')+'</select></div>':'')+
+    (d.rate?'<div class="form-group"><label>Tax Rate (%) *</label><input type="number" id="mm-rate" min="0" max="100" step="0.01" value="'+(m?Number(m.rate||0):0)+'"></div>':'')+
+    '<div class="form-group"><label>Description <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="text" id="mm-desc" maxlength="140" autocomplete="off" value="'+esc(m&&m.description?m.description:'')+'" placeholder="Short note for your team"></div>'+
+    '<label class="chk-row"><input type="checkbox" id="mm-active"'+(!m||m.active!==false?' checked':'')+'> <span>Active — offered when creating new records</span></label>'+
+    (inUse?'<div style="font-size:12px;color:var(--t3);margin-top:10px">Used by '+inUse+' record'+(inUse===1?'':'s')+', so it can\'t be deleted or deactivated.</div>':'')+
+    '<div class="dlg-actions">'+
+      (m&&!inUse?'<button class="btn btn-red" onclick="deleteMaster()" style="margin-right:auto">Delete</button>':'')+
+      '<button class="btn btn-secondary" onclick="closeMasterEdit()">Cancel</button>'+
+      '<button class="btn btn-primary" id="mm-save" onclick="saveMaster()">'+(m?'Update':'Save')+'</button>'+
+    '</div></div>';
+  ov.classList.add('open');
+  var f=document.getElementById('mm-name');if(f)f.focus();
+}
+function closeMasterEdit(){
+  var o=document.getElementById('master-dlg');if(o)o.classList.remove('open');
+  editingMasterId=null;
+  // A cancelled quick-add must put the list back where the user left it.
+  if(masterQuickTarget){curMasterKind=masterQuickTarget.restore;masterQuickTarget=null;}
+}
+function saveMaster(){
+  var d=mdKind(curMasterKind);
+  var name=(document.getElementById('mm-name').value||'').trim();
+  if(!name){return invalidField('mm-name','Please enter a name.');}
+  var parentEl=document.getElementById('mm-parent');
+  if(d.parent&&(!parentEl||!parentEl.value)){return invalidField('mm-parent','Please choose a '+mdKind(d.parent).label.replace(/s$/,'').toLowerCase()+'.');}
+  var rateEl=document.getElementById('mm-rate');
+  if(d.rate){var r=Number(rateEl.value);if(!isFinite(r)||r<0||r>100){return invalidField('mm-rate','Enter a rate between 0 and 100.');}}
+  // Catch the duplicate here so the user gets an inline message on the field
+  // rather than a round-trip 409. The unique index is still the real guarantee.
+  var parentId=parentEl?parentEl.value:'';
+  var clash=masters.filter(function(m){
+    return m.kind===curMasterKind&&m.id!==editingMasterId&&
+      (m.parentId||'')===(parentId||'')&&
+      String(m.name||'').toLowerCase()===name.toLowerCase();
+  })[0];
+  if(clash){return invalidField('mm-name','“'+name+'” is already in this list.');}
+  var data={kind:curMasterKind,name:name,code:(document.getElementById('mm-code').value||'').trim().toUpperCase(),
+    description:(document.getElementById('mm-desc').value||'').trim(),active:!!document.getElementById('mm-active').checked};
+  if(d.parent)data.parentId=parentId;
+  if(d.rate)data.rate=Number(rateEl.value)||0;
+  var btn=document.getElementById('mm-save');btn.disabled=true;btn.textContent='Saving…';
+  var qt=masterQuickTarget;
+  var done=function(newId){
+    // A quick-add drops straight back into the field that triggered it, with the
+    // new value already chosen — the user never loses their place in the form.
+    if(qt&&newId){
+      masterQuickTarget=null;curMasterKind=qt.restore;
+      // Don't depend on the snapshot round-trip having landed yet.
+      if(!masterById(newId))masters.push(Object.assign({id:newId},data));
+      var o=document.getElementById('master-dlg');if(o)o.classList.remove('open');editingMasterId=null;
+      fillMasterSelect(qt.sel,qt.kind,newId,null,qt.parentId||null);
+      var t=document.getElementById(qt.sel);if(t){t.value=newId;if(t.onchange)t.onchange();t.focus();}
+    } else {
+      closeMasterEdit();renderMasterList();
+    }
+    renderMastersHub();
+    toast(d.label.replace(/ies$/,'y').replace(/s$/,'')+' saved','success');
+  };
+  var fail=function(e){btn.disabled=false;btn.textContent=editingMasterId?'Update':'Save';toast(e.message||'Could not save.','error');};
+  if(editingMasterId)db.collection('masters').doc(editingMasterId).update(data).then(function(){done(null);}).catch(fail);
+  else{data.createdAt=Date.now();db.collection('masters').add(data).then(function(ref){done(ref&&ref.id);}).catch(fail);}
+}
+function deleteMaster(){
+  if(!editingMasterId)return;
+  var m=masterById(editingMasterId);if(!m)return;
+  var id=editingMasterId;
+  confirmDialog({title:'Delete “'+m.name+'”?',message:'This removes it from the list for good. Records already using it are unaffected.',confirmText:'Delete',danger:true,onConfirm:function(){
+    db.collection('masters').doc(id).delete().then(function(){
+      closeMasterEdit();renderMasterList();renderMastersHub();toast('Entry deleted','success');
+    }).catch(function(e){toast(e.message||'Could not delete.','error');});
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SERVICE MASTER — the priced labour catalogue.
+// ═══════════════════════════════════════════════════════════════════
+var services=[], editingServiceId=null, svcFilter='all';
+
+function svcPrice(s){return Number(s.price||0);}
+function svcRecalc(){
+  // Price tracks hours × rate until the user types a price of their own.
+  var pEl=document.getElementById('sv-price');
+  if(pEl&&pEl.dataset.override==='1')return;
+  var h=Number(document.getElementById('sv-hours').value||0),r=Number(document.getElementById('sv-rate').value||0);
+  if(pEl)pEl.value=Math.round(h*r*100)/100||'';
+}
+function svcPriceEdited(){
+  var pEl=document.getElementById('sv-price');if(!pEl)return;
+  pEl.dataset.override='1';
+  document.getElementById('sv-price-note').textContent='Overridden — clear this field to go back to hours × rate.';
+  if(!pEl.value){pEl.dataset.override='';document.getElementById('sv-price-note').textContent='Calculated from hours × rate. Type here to override.';svcRecalc();}
+}
+function renderServices(){
+  var el=document.getElementById('services-list'),kp=document.getElementById('svc-kpis');if(!el)return;
+  if(!_fired.services){if(kp)kp.innerHTML='<div class="erp-kpis">'+skelKpis(4)+'</div>';el.innerHTML=skelTable(6);return;}
+  var act=services.filter(function(s){return s.active!==false;});
+  var avg=act.length?act.reduce(function(a,s){return a+svcPrice(s);},0)/act.length:0;
+  var noPrice=act.filter(function(s){return !svcPrice(s);}).length;
+  if(kp)kp.innerHTML='<div class="erp-kpis">'+
+    erpKpi(services.length,'Services','')+
+    erpKpi(act.length,'Active','kpi-green')+
+    erpKpi(fmtMoney(avg),'Avg. Price','kpi-accent')+
+    erpKpi(noPrice,'Unpriced',noPrice?'kpi-red':'')+
+  '</div>';
+
+  var fl=document.getElementById('svc-filters');
+  if(fl)fl.innerHTML=['all','active','inactive','unpriced'].map(function(k){
+    var lbl={all:'All',active:'Active',inactive:'Inactive',unpriced:'Unpriced'}[k];
+    return '<button type="button" class="jc-fpill'+(svcFilter===k?' active':'')+'" onclick="setSvcFilter(\''+k+'\')">'+lbl+'</button>';
+  }).join('');
+
+  var q=(document.getElementById('svc-search').value||'').trim().toLowerCase();
+  var rows=services.filter(function(s){
+    if(svcFilter==='active'&&s.active===false)return false;
+    if(svcFilter==='inactive'&&s.active!==false)return false;
+    if(svcFilter==='unpriced'&&svcPrice(s))return false;
+    if(!q)return true;
+    return (s.name||'').toLowerCase().indexOf(q)>-1||(s.code||'').toLowerCase().indexOf(q)>-1||
+           masterName(s.categoryId).toLowerCase().indexOf(q)>-1;
+  }).sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));});
+
+  if(!rows.length){
+    el.innerHTML='<div class="empty"><div style="font-weight:700;color:var(--t2)">'+(services.length?'No services match this view.':'No services in the catalogue yet.')+'</div>'+
+      '<div style="font-size:12.5px;color:var(--t3);margin-top:4px">'+(services.length?'Try a different filter or search.':'Add the jobs you sell most — oil change, brake pads, AC service — with their standard hours and rate.')+'</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="dt-wrap"><div class="dt-scroll"><table class="data-table"><thead><tr>'+
+    '<th>Service</th><th>Code</th><th>Category</th><th>Labour Type</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Price</th><th>Status</th></tr></thead><tbody>'+
+    rows.map(function(s){
+      return '<tr onclick="showAddService(\''+esc(s.id)+'\')" style="cursor:pointer" title="Edit '+esc(s.name)+'">'+
+        '<td style="font-weight:700">'+esc(s.name)+'</td>'+
+        '<td>'+(s.code?'<span class="badge-code">'+esc(s.code)+'</span>':'<span style="color:var(--t3)">—</span>')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(masterName(s.categoryId)||'—')+'</td>'+
+        '<td style="color:var(--t2)">'+esc(masterName(s.labourTypeId)||'—')+'</td>'+
+        '<td class="num">'+(Number(s.standardHours)||0)+'</td>'+
+        '<td class="num">'+fmtMoney(s.standardRate||0)+'</td>'+
+        '<td class="num" style="font-weight:800">'+(svcPrice(s)?fmtMoney(svcPrice(s)):'<span style="color:var(--red)">Not set</span>')+'</td>'+
+        '<td>'+(s.active===false?'<span class="badge-off">Inactive</span>':'<span style="font-size:12px;font-weight:700;color:var(--green)">Active</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>'+
+    '<div style="font-size:12px;color:var(--t3);margin-top:10px">'+rows.length+' of '+services.length+' services.</div>';
+}
+function setSvcFilter(k){svcFilter=k;renderServices();}
+function showAddService(id){
+  var s=id?services.filter(function(x){return x.id===id;})[0]:null;
+  editingServiceId=s?s.id:null;
+  document.getElementById('add-svc-title').textContent=s?'Edit Service':'New Service';
+  document.getElementById('save-svc-btn').textContent=s?'Update Service':'Save Service';
+  document.getElementById('sv-name').value=s?(s.name||''):'';
+  document.getElementById('sv-code').value=s?(s.code||''):'';
+  document.getElementById('sv-hours').value=s&&s.standardHours!=null?s.standardHours:'';
+  document.getElementById('sv-rate').value=s&&s.standardRate!=null?s.standardRate:'';
+  var pEl=document.getElementById('sv-price');
+  pEl.value=s&&s.price!=null?s.price:'';
+  pEl.dataset.override=s&&s.priceOverride?'1':'';
+  document.getElementById('sv-price-note').textContent=(s&&s.priceOverride)?'Overridden — clear this field to go back to hours × rate.':'Calculated from hours × rate. Type here to override.';
+  document.getElementById('sv-desc').value=s?(s.description||''):'';
+  document.getElementById('sv-active').checked=!s||s.active!==false;
+  fillMasterSelect('sv-category','category',s?s.categoryId:'','No category');
+  fillMasterSelect('sv-labourtype','labourType',s?s.labourTypeId:'','No labour type');
+  fillMasterSelect('sv-taxcode','taxCode',s?s.taxCodeId:'','Default (company VAT setting)');
+  document.getElementById('svc-del-btn').style.display=s?'':'none';
+  navTo('add-service');
+}
+function saveService(){
+  var name=(document.getElementById('sv-name').value||'').trim();
+  if(!name){return invalidField('sv-name','Please enter the service name.');}
+  var code=(document.getElementById('sv-code').value||'').trim().toUpperCase();
+  var clash=services.filter(function(s){
+    return s.id!==editingServiceId&&(
+      String(s.name||'').toLowerCase()===name.toLowerCase()||
+      (code&&String(s.code||'').toUpperCase()===code));
+  })[0];
+  if(clash){return invalidField(clash.code&&code&&String(clash.code).toUpperCase()===code?'sv-code':'sv-name','Another service already uses this '+(clash.code&&code&&String(clash.code).toUpperCase()===code?'code':'name')+'.');}
+  var hours=Number(document.getElementById('sv-hours').value||0),rate=Number(document.getElementById('sv-rate').value||0);
+  if(hours<0){return invalidField('sv-hours','Hours cannot be negative.');}
+  if(rate<0){return invalidField('sv-rate','Rate cannot be negative.');}
+  var pEl=document.getElementById('sv-price'),override=pEl.dataset.override==='1'&&pEl.value!=='';
+  var price=Number(pEl.value||0);
+  if(price<0){return invalidField('sv-price','Price cannot be negative.');}
+  var data={name:name,code:code,categoryId:document.getElementById('sv-category').value,
+    labourTypeId:document.getElementById('sv-labourtype').value,taxCodeId:document.getElementById('sv-taxcode').value,
+    standardHours:hours,standardRate:rate,price:price,priceOverride:override,
+    description:(document.getElementById('sv-desc').value||'').trim(),active:!!document.getElementById('sv-active').checked};
+  var btn=document.getElementById('save-svc-btn');btn.disabled=true;btn.textContent='Saving…';
+  var fail=function(e){btn.disabled=false;btn.textContent=editingServiceId?'Update Service':'Save Service';toast(e.message||'Could not save the service.','error');};
+  var done=function(){btn.disabled=false;btn.textContent='Save Service';toast('Service saved','success');navTo('services');};
+  if(editingServiceId)db.collection('services').doc(editingServiceId).update(data).then(done).catch(fail);
+  else{data.createdAt=Date.now();db.collection('services').add(data).then(done).catch(fail);}
+}
+function deleteService(){
+  if(!editingServiceId)return;
+  var id=editingServiceId;
+  confirmDialog({title:'Delete this service?',message:'It will no longer be offered when adding work. Job cards that already use it keep their line.',confirmText:'Delete',danger:true,onConfirm:function(){
+    db.collection('services').doc(id).delete().then(function(){toast('Service deleted','success');navTo('services');})
+      .catch(function(e){toast(e.message||'Could not delete the service.','error');});
+  }});
 }
 
 // SERVICE ADVISORS
@@ -5866,7 +6508,7 @@ function showAddEstimate(id){
   var csel=document.getElementById('est-customer');
   csel.innerHTML='<option value="">— Select customer —</option>'+customers.map(function(c){return'<option value="'+esc(c.id)+'"'+(e&&e.customerId===c.id?' selected':'')+'>'+esc(c.name)+'</option>';}).join('');
   estSyncVehicles(e?e.vehicleId:'');
-  estItems=e&&e.items?e.items.map(function(it){return{description:it.description||'',cost:Number(it.cost)||0};}):[{description:'',cost:''}];
+  estItems=e&&e.items?e.items.map(function(it){return{description:it.description||'',cost:Number(it.cost)||0,serviceId:it.serviceId||'',serviceName:it.serviceName||''};}):[{description:'',cost:'',serviceId:'',serviceName:''}];
   document.getElementById('est-notes').value=e?(e.notes||''):'';
   renderEstItems();
   show('v-add-estimate');
@@ -5877,15 +6519,38 @@ function estSyncVehicles(selId){
   var vs=vehicles.filter(function(v){return v.customerId===cid;});
   vsel.innerHTML=vs.length?vs.map(function(v){return'<option value="'+esc(v.id)+'"'+(selId===v.id?' selected':'')+'>'+esc(v.registrationNo||'')+' · '+esc(((v.make||'')+' '+(v.model||'')).trim())+'</option>';}).join(''):'<option value="">— No vehicles for this customer —</option>';
 }
-function estAddItem(){estItems.push({description:'',cost:''});renderEstItems();}
-function estRemoveItem(i){estItems.splice(i,1);if(!estItems.length)estItems.push({description:'',cost:''});renderEstItems();}
+function estAddItem(){estItems.push({description:'',cost:'',serviceId:'',serviceName:''});renderEstItems();}
+// Same catalogue-first behaviour as job-card work lines: pick a service, get its
+// description and standard price; anything already typed is respected.
+function applyServiceToEst(i,serviceId){
+  var it=estItems[i];if(!it)return;
+  if(!serviceId){it.serviceId='';it.serviceName='';renderEstItems();return;}
+  var sv=services.filter(function(x){return x.id===serviceId;})[0];
+  if(!sv)return;
+  it.serviceId=sv.id;it.serviceName=sv.name;
+  if(!String(it.description||'').trim())it.description=sv.name;
+  if(!Number(it.cost))it.cost=svcPrice(sv)||'';
+  renderEstItems();estSyncTotal();
+}
+function estRemoveItem(i){estItems.splice(i,1);if(!estItems.length)estItems.push({description:'',cost:'',serviceId:'',serviceName:''});renderEstItems();}
 function renderEstItems(){
   var el=document.getElementById('est-items');if(!el)return;
+  var svcOpts=services.filter(function(sv){return sv.active!==false;})
+    .sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));})
+    .map(function(sv){return '<option value="'+esc(sv.id)+'">'+esc(sv.name)+(svcPrice(sv)?' \u2014 '+fmtMoney(svcPrice(sv)):'')+'</option>';}).join('');
   el.innerHTML=estItems.map(function(it,i){
-    return'<div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" placeholder="Description of work / part" value="'+esc(it.description)+'" oninput="estItems['+i+'].description=this.value" style="flex:1">'+
+    return'<div style="display:flex;gap:8px;margin-bottom:8px">'+
+      '<select onchange="applyServiceToEst('+i+',this.value)" style="width:190px;flex:none" aria-label="Service from catalogue">'+
+        '<option value="">\u2014 Custom \u2014</option>'+svcOpts+
+      '</select>'+
+      '<input type="text" placeholder="Description of work / part" value="'+esc(it.description)+'" oninput="estItems['+i+'].description=this.value" style="flex:1">'+
       '<input type="number" placeholder="0.00" min="0" step="0.01" value="'+(it.cost===''?'':esc(it.cost))+'" oninput="estItems['+i+'].cost=this.value;estSyncTotal()" style="width:120px">'+
       '<button class="btn btn-danger btn-sm" style="padding:6px 10px" onclick="estRemoveItem('+i+')">✕</button></div>';
   }).join('');
+  // Re-select the catalogue entry each line came from.
+  el.querySelectorAll('select').forEach(function(sel,i){
+    if(estItems[i]&&estItems[i].serviceId)sel.value=estItems[i].serviceId;
+  });
   estSyncTotal();
 }
 function estSyncTotal(){
@@ -5895,7 +6560,7 @@ function estSyncTotal(){
 function saveEstimate(){
   var cid=document.getElementById('est-customer').value;
   if(!cid){toast('Please select a customer.');return;}
-  var items=estItems.filter(function(it){return (it.description||'').trim()||Number(it.cost||0)>0;}).map(function(it){return{description:(it.description||'').trim()||'Item',cost:Number(it.cost)||0};});
+  var items=estItems.filter(function(it){return (it.description||'').trim()||Number(it.cost||0)>0;}).map(function(it){return{description:(it.description||'').trim()||'Item',cost:Number(it.cost)||0,serviceId:it.serviceId||'',serviceName:it.serviceName||''};});
   if(!items.length){toast('Add at least one estimate line.');return;}
   var cust=customers.find(function(c){return c.id===cid;})||{};
   var vid=document.getElementById('est-vehicle').value;
@@ -5995,6 +6660,8 @@ function showAddSupplier(id){
   document.getElementById('add-sup-title').textContent=s?'Edit Supplier':'New Supplier';
   document.getElementById('save-sup-btn').textContent=s?'Update Supplier':'Save Supplier';
   document.getElementById('sup-del-btn').style.display=s?'':'none';
+  document.getElementById('sup-group-wrap').innerHTML=mdPicker('sup-group','supplierGroup');
+  fillMasterSelect('sup-group','supplierGroup',s&&s.groupId,'No group');
   var f=function(id,v){document.getElementById(id).value=v||'';};
   f('sup-name',s&&s.name);f('sup-contact',s&&s.contact);f('sup-phone',s&&s.phone);f('sup-email',s&&s.email);f('sup-trn',s&&s.trn);f('sup-terms',s&&s.terms);f('sup-address',s&&s.address);
   show('v-add-supplier');
@@ -6002,7 +6669,10 @@ function showAddSupplier(id){
 function saveSupplier(){
   var name=document.getElementById('sup-name').value.trim();
   if(!name){return invalidField('sup-name','Please enter the supplier name.');}
-  var data={name:name,contact:document.getElementById('sup-contact').value.trim(),phone:document.getElementById('sup-phone').value.trim(),email:document.getElementById('sup-email').value.trim(),trn:document.getElementById('sup-trn').value.trim(),terms:document.getElementById('sup-terms').value.trim(),address:document.getElementById('sup-address').value.trim()};
+  var dupSup=suppliers.filter(function(x){return x.id!==editingSupplierId&&String(x.name||'').trim().toLowerCase()===name.toLowerCase();})[0];
+  if(dupSup){return invalidField('sup-name','A supplier named \u201c'+name+'\u201d already exists.');}
+  var supGrp=document.getElementById('sup-group').value;
+  var data={groupId:supGrp,group:supGrp?masterName(supGrp):'',name:name,contact:document.getElementById('sup-contact').value.trim(),phone:document.getElementById('sup-phone').value.trim(),email:document.getElementById('sup-email').value.trim(),trn:document.getElementById('sup-trn').value.trim(),terms:document.getElementById('sup-terms').value.trim(),address:document.getElementById('sup-address').value.trim()};
   var btn=document.getElementById('save-sup-btn');btn.disabled=true;btn.textContent='Saving…';
   var fail=function(e){btn.disabled=false;btn.textContent=editingSupplierId?'Update Supplier':'Save Supplier';toast('Could not save supplier: '+e.message,'error');};
   if(editingSupplierId){
@@ -6747,7 +7417,7 @@ var ACC_OPTIONS=[
   {id:'cf',       group:'Statements',        label:'Cash Flow',          sub:'Monthly money in vs out',             icon:'trendUp',     ic:'#3478FF', action:function(){showCashFlow();}},
   // Analysis & Tax
   {id:'aged',     group:'Analysis & Tax',    label:'Aged Receivables',   sub:'Outstanding by age (30/60/90 days)',  icon:'clock',       ic:'#B45309', action:function(){showAgedReceivables();}},
-  {id:'agedpay',  group:'Analysis & Tax',    label:'Aged Payables',      sub:'Owed to suppliers by age',            icon:'truck',       ic:'#7C3AED', action:function(){showAgedPayables();}},
+  {id:'agedpay',  group:'Analysis & Tax',    label:'Aged Payables',      sub:'Owed to suppliers by age',            icon:'building',       ic:'#7C3AED', action:function(){showAgedPayables();}},
   {id:'vat',      group:'Analysis & Tax',    label:'VAT Summary',        sub:'Tax collected on sales by month',     icon:'statement',   ic:'#0369A1', action:function(){showVatSummary();}},
   {id:'reports',  group:'Analysis & Tax',    label:'Reports',            sub:'Sales & financial analytics',         icon:'barChart',    ic:'#475569', action:function(){showSalesReports();}},
 ];

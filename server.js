@@ -88,6 +88,8 @@ const COLL = {
   parts:        { table: 'parts',        order: 'created_at DESC NULLS LAST' },
   suppliers:    { table: 'suppliers',    order: 'created_at DESC NULLS LAST' },
   purchaseOrders: { table: 'purchase_orders', order: 'created_at DESC NULLS LAST', seq: true, lock: 1004 },
+  masters:      { table: 'masters',      order: 'kind ASC NULLS LAST, name ASC NULLS LAST', extra: { kind: 'kind', name: 'name' } },
+  services:     { table: 'services',     order: 'created_at DESC NULLS LAST' },
 };
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -130,6 +132,25 @@ function sanitizeDoc(coll, doc) {
     }
   }
   if (coll === 'transactions' && typeof doc.amount === 'number') doc.amount = round2(doc.amount);
+  // Master data is normalised on the way in so the uniqueness indexes and the
+  // lookups that read it can never be defeated by stray whitespace or casing.
+  if (coll === 'masters') {
+    if (doc.name != null) doc.name = String(doc.name).trim().replace(/\s+/g, ' ');
+    if (doc.code != null) doc.code = String(doc.code).trim().toUpperCase();
+    if (doc.kind != null) doc.kind = String(doc.kind).trim();
+    if (doc.active == null) doc.active = true;
+    if (doc.rate != null) doc.rate = round2(doc.rate);
+  }
+  if (coll === 'services') {
+    if (doc.name != null) doc.name = String(doc.name).trim().replace(/\s+/g, ' ');
+    if (doc.code != null) doc.code = String(doc.code).trim().toUpperCase();
+    if (doc.active == null) doc.active = true;
+    for (const k of ['standardRate', 'price']) if (doc[k] != null) doc[k] = round2(doc[k]);
+    if (doc.standardHours != null) doc.standardHours = Math.round((Number(doc.standardHours) || 0) * 100) / 100;
+    // Price is derived from hours x rate unless the admin overrode it, so the
+    // catalogue can never quote a figure its own inputs don't support.
+    if (!doc.priceOverride) doc.price = round2((Number(doc.standardHours) || 0) * (Number(doc.standardRate) || 0));
+  }
   // Never store a technician PIN in plaintext — hash any incoming plaintext PIN.
   if (coll === 'technicians' && doc.pin != null && isLegacyPin(doc.pin) && String(doc.pin).length) {
     doc.pin = hashPin(String(doc.pin));
@@ -137,11 +158,71 @@ function sanitizeDoc(coll, doc) {
   return doc;
 }
 
+// Human wording for each uniqueness index, so a race that slips past the
+// application-level duplicate check still surfaces as a clear 409 rather than a
+// generic "server error".
+const UNIQUE_MSG = {
+  uq_masters_kind_name: 'Another entry with this name already exists in this list.',
+  uq_masters_kind_code: 'Another entry with this code already exists in this list.',
+  uq_services_code: 'Another service already uses this code.',
+  uq_parts_number: 'Another part already uses this part number.',
+  uq_parts_barcode: 'Another part already uses this barcode.',
+  uq_invoices_jobcard: 'This job card has already been invoiced.',
+};
+
 const asyncH = (fn) => (req, res, next) => fn(req, res, next).catch((e) => {
+  // 23505 = unique_violation. It's a user-correctable data clash, not a fault.
+  if (e && e.code === '23505') {
+    return res.status(409).json({ error: UNIQUE_MSG[e.constraint] || 'That value is already in use.' });
+  }
   console.error(`${req.method} ${req.originalUrl}:`, e.message);
   // Never leak Postgres internals to the UI.
   res.status(500).json({ error: 'Server error — please try again.' });
 });
+
+// ---- Master-data validation ----
+// The database enforces uniqueness; this enforces shape. Both run server-side so
+// a tampered or buggy client cannot write a master record the rest of the ERP
+// would then have to defend against on every read.
+const MASTER_KINDS = new Set([
+  'category', 'brand', 'uom', 'labourType', 'vehicleMake', 'vehicleModel',
+  'fuelType', 'customerGroup', 'supplierGroup', 'taxCode',
+]);
+// Kinds whose rows must hang off a parent, and the parent kind they require.
+const MASTER_PARENT = { vehicleModel: 'vehicleMake' };
+
+async function validateDoc(coll, doc, id) {
+  if (coll === 'masters') {
+    if (!MASTER_KINDS.has(doc.kind)) return 'Unknown master data list.';
+    if (!doc.name) return 'Name is required.';
+    if (String(doc.name).length > 80) return 'Name is too long (max 80 characters).';
+    const parentKind = MASTER_PARENT[doc.kind];
+    if (parentKind) {
+      if (!doc.parentId) return 'Please choose the parent record first.';
+      const { rows } = await pool.query(`SELECT kind FROM masters WHERE id=$1`, [doc.parentId]);
+      if (!rows.length || rows[0].kind !== parentKind) return 'The parent record no longer exists.';
+    }
+    if (doc.kind === 'taxCode') {
+      const r = Number(doc.rate);
+      if (!Number.isFinite(r) || r < 0 || r > 100) return 'Tax rate must be between 0 and 100.';
+    }
+  }
+  if (coll === 'services') {
+    if (!doc.name) return 'Service name is required.';
+    if (Number(doc.standardHours) < 0) return 'Standard hours cannot be negative.';
+    if (Number(doc.standardRate) < 0) return 'Standard rate cannot be negative.';
+    if (Number(doc.price) < 0) return 'Price cannot be negative.';
+  }
+  if (coll === 'parts') {
+    if (doc.name != null && !String(doc.name).trim()) return 'Part name is required.';
+    if (Number(doc.costPrice) < 0 || Number(doc.sellingPrice) < 0) return 'Prices cannot be negative.';
+    if (doc.minStock != null && doc.maxStock != null &&
+        Number(doc.maxStock) > 0 && Number(doc.minStock) > Number(doc.maxStock)) {
+      return 'Minimum stock cannot exceed maximum stock.';
+    }
+  }
+  return null;
+}
 
 // ---- Auth (stateless HMAC tokens; survive server restarts) ----
 // SESSION_SECRET is the token-signing key and MUST be set independently of the
@@ -342,7 +423,9 @@ app.use('/api', requireAuth);
 // they need, update job-card work status, and toggle ONLY their own
 // availability. Everything else (finance, other people's records, deletes,
 // the atomic money/stock endpoints, export, image mutations) is 403.
-const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts']);
+// Master data is reference material the shop floor reads but never edits, so
+// technicians get GET on masters/services and nothing more.
+const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services']);
 function authorize(req, res, next) {
   const role = req.auth && req.auth.role;
   if (role === 'admin') return next();
@@ -385,6 +468,8 @@ const FILTERABLE = {
   estimates: ['status', 'customerId'],
   appointments: ['status'],
   parts: ['category'],
+  masters: ['kind', 'parentId'],
+  services: ['categoryId', 'active'],
 };
 
 // ---- List ----
@@ -456,6 +541,8 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
   const id = body.id || crypto.randomUUID();
   const isNew = !body.id;
   delete body.id;
+  const invalid = await validateDoc(req.params.coll, body, id);
+  if (invalid) return res.status(400).json({ error: invalid });
   // Actor attribution for the audit trail.
   const actor = (req.auth && req.auth.name) || '?';
   if (isNew && body.createdBy == null) body.createdBy = actor;
@@ -844,6 +931,23 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
       }
       merged = sanitizeDoc('invoices', merged);
     }
+    // Master data is re-derived and re-validated from the MERGED document, so a
+    // partial patch can't slip past rules the full document would have failed.
+    if (req.params.coll === 'masters' || req.params.coll === 'services') {
+      merged = sanitizeDoc(req.params.coll, merged);
+      const bad = await validateDoc(req.params.coll, merged, req.params.id);
+      if (bad) { await client.query('ROLLBACK'); return res.status(400).json({ error: bad }); }
+      // Retiring a master that live records still point at would silently blank
+      // those fields in the UI — block it the same way a delete is blocked.
+      if (merged.active === false && cur.rows[0].data.active !== false) {
+        const inUse = await masterInUse(req.params.coll, req.params.id);
+        if (inUse) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Cannot deactivate — ' + inUse + '.' }); }
+      }
+    }
+    if (req.params.coll === 'parts') {
+      const bad = await validateDoc('parts', merged, req.params.id);
+      if (bad) { await client.query('ROLLBACK'); return res.status(400).json({ error: bad }); }
+    }
     const cols = extractedColumns(cfg, merged);
     if (cfg.seq && merged.seq != null) cols.seq = merged.seq;
     const sets = ['data = $2'];
@@ -864,9 +968,45 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
 // Referential-integrity guard: refuse to hard-delete a record that other
 // records still point at (there are no DB foreign keys), so a delete can never
 // silently orphan vehicles/invoices/job-cards or a referenced ledger account.
+const hasRow = async (sql, params) => (await pool.query(sql + ' LIMIT 1', params)).rows.length > 0;
+
+// Is this master/service value still referenced by live records? Master data is
+// the foundation every other module reads by id, so removing or retiring a value
+// in use would blank fields on records that are already closed and invoiced.
+// Returns a human reason string, or null when the value is safe to remove.
+async function masterInUse(coll, id) {
+  if (coll === 'services') {
+    if (await hasRow(`SELECT 1 FROM job_cards jc WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(jc.data->'works','[]'::jsonb)) w WHERE w->>'serviceId'=$1)`, [id])) return 'this service is used on job cards';
+    if (await hasRow(`SELECT 1 FROM estimates e WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(e.data->'lines','[]'::jsonb)) l WHERE l->>'serviceId'=$1)`, [id])) return 'this service is used on estimates';
+    return null;
+  }
+  const { rows } = await pool.query(`SELECT kind FROM masters WHERE id=$1`, [id]);
+  if (!rows.length) return null;
+  const refs = {
+    category:      [[`parts`, 'categoryId', 'parts'], [`services`, 'categoryId', 'services']],
+    brand:         [[`parts`, 'brandId', 'parts']],
+    uom:           [[`parts`, 'uomId', 'parts']],
+    labourType:    [[`services`, 'labourTypeId', 'services']],
+    vehicleMake:   [[`vehicles`, 'makeId', 'vehicles'], [`masters`, 'parentId', 'vehicle models']],
+    vehicleModel:  [[`vehicles`, 'modelId', 'vehicles']],
+    fuelType:      [[`vehicles`, 'fuelTypeId', 'vehicles']],
+    customerGroup: [[`customers`, 'groupId', 'customers']],
+    supplierGroup: [[`suppliers`, 'groupId', 'suppliers']],
+    taxCode:       [[`parts`, 'taxCodeId', 'parts'], [`services`, 'taxCodeId', 'services']],
+  }[rows[0].kind] || [];
+  for (const [table, field, label] of refs) {
+    if (await hasRow(`SELECT 1 FROM ${table} WHERE data->>'${field}'=$1`, [id])) {
+      return `it is still used by existing ${label}`;
+    }
+  }
+  return null;
+}
+
 async function deleteBlocker(coll, id) {
-  const has = async (sql, params) => (await pool.query(sql + ' LIMIT 1', params)).rows.length > 0;
-  if (coll === 'customers') {
+  const has = hasRow;
+  if (coll === 'masters' || coll === 'services') {
+    return await masterInUse(coll, id);
+  } else if (coll === 'customers') {
     if (await has(`SELECT 1 FROM vehicles WHERE data->>'customerId'=$1`, [id])) return 'this customer still has vehicles';
     if (await has(`SELECT 1 FROM job_cards WHERE data->>'customerId'=$1`, [id])) return 'this customer still has job cards';
     if (await has(`SELECT 1 FROM invoices WHERE data->>'customerId'=$1`, [id])) return 'this customer still has invoices';
@@ -884,6 +1024,16 @@ async function deleteBlocker(coll, id) {
     if (await has(`SELECT 1 FROM job_cards WHERE data->>'advisorId'=$1`, [id])) return 'this advisor is linked to job cards';
   } else if (coll === 'finAccounts') {
     if (await has(`SELECT 1 FROM transactions WHERE data->>'accountId'=$1 OR data->>'debitAccountId'=$1 OR data->>'creditAccountId'=$1`, [id])) return 'this account has posted transactions';
+  } else if (coll === 'parts') {
+    // An item with stock on hand is an asset on the balance sheet, and one with
+    // consumption history is evidence behind posted revenue — neither may vanish.
+    const { rows } = await pool.query(`SELECT data FROM parts WHERE id=$1`, [id]);
+    if (rows.length) {
+      if (Number(rows[0].data.stock || 0) !== 0) return 'this item still has stock on hand — adjust it to zero first';
+      if (Array.isArray(rows[0].data.movements) && rows[0].data.movements.length) return 'this item has stock movement history — deactivate it instead of deleting';
+    }
+    if (await has(`SELECT 1 FROM job_cards jc WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(jc.data->'parts','[]'::jsonb)) p WHERE p->>'partId'=$1)`, [id])) return 'this item has been issued to job cards';
+    if (await has(`SELECT 1 FROM purchase_orders po WHERE EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(po.data->'lines','[]'::jsonb)) l WHERE l->>'partId'=$1)`, [id])) return 'this item appears on purchase orders';
   }
   return null;
 }
