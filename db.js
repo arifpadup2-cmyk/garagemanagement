@@ -72,6 +72,17 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Double-entry general ledger (Phase 7) ──
+-- Until now the trial balance was DERIVED in the browser from invoices and cash
+-- transactions, which is why it could never balance: inventory and COGS had no
+-- representation at all. These two tables are the actual books. Every business
+-- event posts a balanced journal; every report reads from journal_lines.
+CREATE TABLE IF NOT EXISTS journal_entries (id text PRIMARY KEY, data jsonb NOT NULL, seq int, entry_date text, created_at bigint);
+CREATE TABLE IF NOT EXISTS journal_lines   (id text PRIMARY KEY, entry_id text NOT NULL, account_id text,
+                                            debit numeric(14,2) NOT NULL DEFAULT 0,
+                                            credit numeric(14,2) NOT NULL DEFAULT 0,
+                                            entry_date text, data jsonb NOT NULL);
+
 -- ── Sales credit notes (Phase 6) ──
 -- A sales invoice is evidence given to a customer and posted to the ledger, so
 -- it is never edited or deleted after the fact. A credit note is the correcting
@@ -167,6 +178,13 @@ CREATE INDEX IF NOT EXISTS idx_bays_created      ON bays(created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_cn_created        ON credit_notes(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
 CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
+-- The ledger is read by account, by date, and by the document that caused it.
+CREATE INDEX IF NOT EXISTS idx_je_date           ON journal_entries(entry_date DESC);
+CREATE INDEX IF NOT EXISTS idx_je_seq            ON journal_entries(seq);
+CREATE INDEX IF NOT EXISTS idx_je_ref            ON journal_entries ((data->>'refId'));
+CREATE INDEX IF NOT EXISTS idx_jl_entry          ON journal_lines(entry_id);
+CREATE INDEX IF NOT EXISTS idx_jl_account        ON journal_lines(account_id, entry_date);
+CREATE INDEX IF NOT EXISTS idx_jl_date           ON journal_lines(entry_date);
 CREATE INDEX IF NOT EXISTS idx_jc_bay            ON job_cards ((data->>'bayId'));
 `;
 

@@ -391,6 +391,14 @@
         return r;
       });
     },
+    // ---- Financial statements from the ledger (Phase 7) ----
+    trialBalance: function (asAt, from) {
+      return req('GET', '/reports/trial-balance?asAt=' + encodeURIComponent(asAt || '') + '&from=' + encodeURIComponent(from || ''));
+    },
+    profitAndLoss: function (from, to) {
+      return req('GET', '/reports/pl?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || ''));
+    },
+    balanceSheet: function (asAt) { return req('GET', '/reports/balance-sheet?asAt=' + encodeURIComponent(asAt || '')); },
     // ---- Sales corrections (Phase 6) ----
     // A credit note reverses value on a posted invoice, optionally restocks the
     // goods and refunds cash — all in one server transaction.

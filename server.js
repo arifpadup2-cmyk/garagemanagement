@@ -106,6 +106,7 @@ const COLL = {
   toolIssues:       { table: 'tool_issues',       order: 'created_at DESC NULLS LAST', extra: { tool_id: 'toolId' } },
   bays:             { table: 'bays',             order: 'created_at ASC NULLS LAST' },
   creditNotes:      { table: 'credit_notes',     order: 'created_at DESC NULLS LAST', seq: true, lock: 1012 },
+  journalEntries:   { table: 'journal_entries',  order: 'entry_date DESC NULLS LAST, seq DESC', extra: { entry_date: 'date' }, seq: true, lock: 1013 },
 };
 
 // Document number prefixes, so every module formats a reference identically.
@@ -581,6 +582,7 @@ const FILTERABLE = {
   purchaseReturns: ['grnId', 'supplierId'],
   stockLots: ['partId', 'status', 'warehouseId'],
   creditNotes: ['invoiceId', 'customerId', 'status'],
+  journalEntries: ['refType', 'refId'],
   stockMovements: ['partId', 'refType', 'refId', 'warehouseId'],
   bins: ['warehouseId'],
   reservations: ['partId', 'jobCardId', 'status'],
@@ -726,11 +728,139 @@ async function reservedQty(client, partId) {
   return round2(Number(rows[0].n) || 0);
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// DOUBLE-ENTRY GENERAL LEDGER (Phase 7)
+//
+// Until now the trial balance was derived in the browser from invoices and cash
+// transactions. That can never balance, because inventory and cost of sales had
+// no representation at all — the goods went out of the door without anything
+// recording that they had left. These are the real books.
+//
+// postJournal() is the ONLY way anything reaches the ledger, and it refuses to
+// write an entry whose debits and credits differ. That single check is what
+// makes the trial balance an arithmetic certainty rather than a hope.
+// ══════════════════════════════════════════════════════════════════════════
+
+// System accounts, resolved by role rather than by name so a garage can rename
+// them freely. Held in settings; auto-created on first use.
+const SYS_ACCOUNTS = {
+  ar:        { name: 'Accounts Receivable',       type: 'asset' },
+  ap:        { name: 'Accounts Payable',          type: 'liability' },
+  cash:      { name: 'Cash',                      type: 'asset' },
+  bank:      { name: 'Bank',                      type: 'asset' },
+  inventory: { name: 'Inventory',                 type: 'asset' },
+  grni:      { name: 'Goods Received Not Invoiced', type: 'liability' },
+  sales:     { name: 'Sales Revenue',             type: 'income' },
+  cogs:      { name: 'Cost of Goods Sold',        type: 'expense' },
+  vatOut:    { name: 'VAT Payable',               type: 'liability' },
+  vatIn:     { name: 'VAT Receivable',            type: 'asset' },
+  discount:  { name: 'Discounts Allowed',         type: 'expense' },
+  adjust:    { name: 'Stock Adjustments',         type: 'expense' },
+  opening:   { name: 'Opening Balance Equity',    type: 'equity' },
+};
+
+let sysAccountCache = null;
+// Map role -> account id, creating any missing account once. Cached because
+// every posting needs it and it changes only when accounts are added.
+async function sysAccounts(client) {
+  if (sysAccountCache) return sysAccountCache;
+  const q = client || pool;
+  const { rows } = await q.query(`SELECT id, data FROM fin_accounts`);
+  const byRole = {};
+  for (const r of rows) if (r.data.systemRole) byRole[r.data.systemRole] = r.id;
+  for (const [role, def] of Object.entries(SYS_ACCOUNTS)) {
+    if (byRole[role]) continue;
+    const id = crypto.randomUUID();
+    await q.query(`INSERT INTO fin_accounts (id, data, created_at) VALUES ($1,$2,$3)`,
+      [id, JSON.stringify({ name: def.name, type: def.type, systemRole: role, system: true, createdAt: Date.now() }), Date.now()]);
+    byRole[role] = id;
+  }
+  sysAccountCache = byRole;
+  return byRole;
+}
+
+// Post one balanced journal entry inside the caller's transaction.
+// `lines` are { accountId | role, debit, credit, memo, partyId, partyName }.
+async function postJournal(client, entry) {
+  const acc = await sysAccounts(client);
+  const lines = [];
+  let dr = 0, cr = 0;
+  for (const l of (entry.lines || [])) {
+    const accountId = l.accountId || acc[l.role];
+    if (!accountId) throw new Error('Journal line has no account (role: ' + l.role + ')');
+    const debit = round2(l.debit || 0), credit = round2(l.credit || 0);
+    if (debit === 0 && credit === 0) continue;          // nothing to say
+    if (debit > 0 && credit > 0) throw new Error('A journal line cannot be both a debit and a credit.');
+    dr = round2(dr + debit); cr = round2(cr + credit);
+    lines.push({ accountId, debit, credit, memo: l.memo || '', role: l.role || '', partyId: l.partyId || '', partyName: l.partyName || '' });
+  }
+  if (!lines.length) return null;
+  // The invariant. If this ever fires, the caller's arithmetic is wrong and the
+  // whole business event is rolled back rather than half-recorded.
+  if (Math.abs(dr - cr) > 0.005) {
+    throw new Error(`Unbalanced journal: debits ${dr.toFixed(2)} vs credits ${cr.toFixed(2)} (${entry.memo || entry.refNo || ''})`);
+  }
+
+  const id = crypto.randomUUID();
+  const seq = await allocSeq(client, 'journalEntries', 'journal_entries', 1013, id);
+  const date = entry.date || tsToDs(Date.now());
+  const doc = {
+    seq, no: 'JV-' + String(seq).padStart(5, '0'), date,
+    memo: entry.memo || '', refType: entry.refType || '', refId: entry.refId || '', refNo: entry.refNo || '',
+    lines, totalDebit: dr, totalCredit: cr,
+    createdAt: Date.now(), createdBy: entry.by || '',
+  };
+  await client.query(`INSERT INTO journal_entries (id, data, seq, entry_date, created_at) VALUES ($1,$2,$3,$4,$5)`,
+    [id, JSON.stringify(doc), seq, date, doc.createdAt]);
+  for (const l of lines) {
+    await client.query(
+      `INSERT INTO journal_lines (id, entry_id, account_id, debit, credit, entry_date, data) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [crypto.randomUUID(), id, l.accountId, l.debit, l.credit, date,
+       JSON.stringify({ memo: l.memo, role: l.role, partyId: l.partyId, partyName: l.partyName, refType: doc.refType, refNo: doc.refNo })]
+    );
+  }
+  return { id, ...doc };
+}
+
+// Revenue recognition for a sales invoice, plus the cost of the goods that left
+// with it. Selling stock without relieving inventory is exactly why the old
+// balance sheet could not balance.
+async function postSalesJournal(client, invId, inv, invNo, actor) {
+  const sub = round2(Number(inv.subtotal) || 0);
+  const disc = round2(Number(inv.discountAmount) || 0);
+  const tax = round2(Number(inv.taxAmount) || 0);
+  const total = round2(Number(inv.total) || 0);
+  const lines = [
+    { role: 'ar', debit: total, memo: 'Receivable from ' + (inv.customerName || 'customer'),
+      partyId: inv.customerId, partyName: inv.customerName },
+    { role: 'sales', credit: sub, memo: 'Revenue' },
+    { role: 'discount', debit: disc, memo: 'Discount allowed' },
+    { role: 'vatOut', credit: tax, memo: 'Output VAT' },
+  ];
+  // Cost of sales: what the parts on this invoice actually cost us.
+  let cogs = 0;
+  for (const l of (Array.isArray(inv.items) ? inv.items : [])) {
+    if (!l.partId) continue;
+    const pr = await client.query(`SELECT data FROM parts WHERE id = $1`, [l.partId]);
+    if (!pr.rows.length) continue;
+    cogs = round2(cogs + (Number(pr.rows[0].data.costPrice) || 0) * (Number(l.qty) || 0));
+  }
+  if (cogs > 0) {
+    lines.push({ role: 'cogs', debit: cogs, memo: 'Cost of parts sold' });
+    lines.push({ role: 'inventory', credit: cogs, memo: 'Stock relieved' });
+  }
+  return postJournal(client, {
+    date: tsToDs(inv.createdAt) || tsToDs(Date.now()),
+    refType: 'invoice', refId: invId, refNo: invNo, by: actor,
+    memo: 'Sales invoice ' + invNo, lines,
+  });
+}
+
 // Collections that may ONLY be written by their dedicated endpoint. A goods
 // receipt that did not move stock, or a return that did not come out of a lot,
 // would be a document describing something that never happened — so the generic
 // CRUD path hands these straight on to the engine that owns them.
-const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots', 'stockMovements', 'stockTransfers', 'stockCounts', 'creditNotes']);
+const DEDICATED_WRITE = new Set(['goodsReceipts', 'purchaseReturns', 'stockLots', 'stockMovements', 'stockTransfers', 'stockCounts', 'creditNotes', 'journalEntries']);
 
 // ---- Create (upsert by id) ----
 app.post('/api/:coll', asyncH(async (req, res, next) => {
@@ -786,6 +916,11 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
        ON CONFLICT (id) DO UPDATE SET ${updates.join(', ')}`,
       vals
     );
+    // A sales invoice is a business event: recognise the revenue, the tax and the
+    // cost of what left the shelf, all inside the same transaction.
+    if (req.params.coll === 'invoices' && isNew && body.status !== 'cancelled') {
+      await postSalesJournal(client, id, body, docNo('invoices', body.seq), (req.auth && req.auth.name) || '');
+    }
     await client.query('COMMIT');
     audit(req, isNew ? 'create' : 'update', req.params.coll, id, body.seq ? '#' + body.seq : (body.name || ''));
     res.json({ id, ...body });
@@ -811,7 +946,7 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const cur = await client.query(`SELECT data FROM invoices WHERE id = $1 FOR UPDATE`, [req.params.id]);
+    const cur = await client.query(`SELECT data, seq FROM invoices WHERE id = $1 FOR UPDATE`, [req.params.id]);
     if (!cur.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Invoice not found' }); }
     const inv = cur.rows[0].data;
     const total = round2(inv.total);
@@ -841,6 +976,24 @@ app.post('/api/invoices/:id/pay', asyncH(async (req, res) => {
         );
       }
     }
+    // Collection: cash arrives and the receivable is relieved.
+    const payInvNo = docNo('invoices', cur.rows[0].seq);
+    for (const p of payments) {
+      const amt = round2(Number(p.amount) || 0);
+      if (amt <= 0) continue;
+      const meth = String(p.method || 'cash');
+      await postJournal(client, {
+        date: p.date || tsToDs(Date.now()), refType: 'receipt', refId: req.params.id,
+        refNo: payInvNo, by: (req.auth && req.auth.name) || '',
+        memo: `Payment received on ${payInvNo}`,
+        lines: [
+          { role: meth === 'cash' ? 'cash' : 'bank', debit: amt, memo: meth },
+          { role: 'ar', credit: amt, memo: 'Settling ' + payInvNo,
+            partyId: inv.customerId, partyName: inv.customerName },
+        ],
+      });
+    }
+
     await client.query('COMMIT');
     audit(req, 'pay', 'invoices', req.params.id, fmtAmt(adding));
     res.json({ id: req.params.id, ...merged });
@@ -1162,6 +1315,16 @@ app.post('/api/goodsReceipts', asyncH(async (req, res) => {
     const poMerged = { ...po, items: poLines, status: fullyReceived ? 'received' : 'partial', lastReceiptAt: now };
     await client.query(`UPDATE purchase_orders SET data = $2 WHERE id = $1`, [poId, JSON.stringify(poMerged)]);
 
+    await postJournal(client, {
+      date: body.receivedDate || tsToDs(now), refType: 'grn', refId: grnId, refNo: grnNo, by: actor,
+      memo: `Goods received on ${grnNo} against ${poNo}`,
+      lines: [
+        { role: 'inventory', debit: round2(grnLines.reduce((s, l) => s + l.lineTotal, 0)), memo: 'Stock received' },
+        { role: 'grni', credit: round2(grnLines.reduce((s, l) => s + l.lineTotal, 0)),
+          memo: 'Owed to ' + (po.supplierName || 'supplier'), partyId: po.supplierId, partyName: po.supplierName },
+      ],
+    });
+
     const grn = {
       poId, poNo, supplierId: po.supplierId || '', supplierName: po.supplierName || '',
       receivedDate: body.receivedDate || tsToDs(now), deliveryNote: String(body.deliveryNote || '').trim(),
@@ -1317,6 +1480,23 @@ app.post('/api/purchaseInvoices/:id/post', asyncH(async (req, res) => {
       await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
     }
 
+    // The provisional liability from receiving becomes the real payable, and any
+    // input VAT is recognised.
+    const piSub = round2(lines.reduce((s, l) => s + ((Number(l.qty) || 0) * (Number(l.unitCost) || 0)), 0));
+    const piTax = round2(Number(pi.taxAmount) || 0);
+    const piTotal = round2(piSub + piTax + landedTotal);
+    await postJournal(client, {
+      date: pi.invoiceDate, refType: 'purchaseInvoice', refId: req.params.id, refNo: piNo, by: actor,
+      memo: `Supplier invoice ${piNo}` + (pi.invoiceNo ? ' (' + pi.invoiceNo + ')' : ''),
+      lines: [
+        { role: 'grni', debit: piSub, memo: 'Clearing goods received' },
+        { role: 'inventory', debit: landedTotal, memo: 'Landed costs onto stock' },
+        { role: 'vatIn', debit: piTax, memo: 'Input VAT' },
+        { role: 'ap', credit: piTotal, memo: 'Payable to ' + (pi.supplierName || 'supplier'),
+          partyId: pi.supplierId, partyName: pi.supplierName },
+      ],
+    });
+
     const merged = sanitizeDoc('purchaseInvoices', {
       ...pi, items: lines, landedTotal, status: 'unpaid',
       amountPaid: Number(pi.amountPaid) || 0, payments: Array.isArray(pi.payments) ? pi.payments : [],
@@ -1383,6 +1563,15 @@ app.post('/api/purchaseInvoices/:id/pay', asyncH(async (req, res) => {
         partyType: 'vendor', partyName: pi.supplierName || '', supplierId: pi.supplierId || '',
         reference: piNo, purchaseInvoiceId: req.params.id, createdAt: now, createdBy: actor,
       }), date, now]);
+
+    await postJournal(client, {
+      date, refType: 'supplierPayment', refId: req.params.id, refNo: piNo, by: actor,
+      memo: `Payment to ${pi.supplierName || 'supplier'} for ${piNo}`,
+      lines: [
+        { role: 'ap', debit: amount, memo: 'Settling ' + piNo, partyId: pi.supplierId, partyName: pi.supplierName },
+        { role: method === 'cash' ? 'cash' : 'bank', credit: amount, memo: method },
+      ],
+    });
 
     await client.query('COMMIT');
     audit(req, 'pay-purchase-invoice', 'purchaseInvoices', req.params.id, `${piNo} ${amount}`);
@@ -1483,6 +1672,17 @@ app.post('/api/purchaseReturns', asyncH(async (req, res) => {
     });
     await client.query(`INSERT INTO purchase_returns (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
       [retId, JSON.stringify(doc), seq, now]);
+    // Closes the gap Phase 2 flagged: a return now credits the payable instead
+    // of only moving stock.
+    const retTotal = round2(doc.items.reduce((s, l) => s + l.qty * l.unitCost, 0));
+    await postJournal(client, {
+      date: doc.returnDate, refType: 'purchaseReturn', refId: retId, refNo: retNo, by: actor,
+      memo: `Returned to ${doc.supplierName || 'supplier'} on ${retNo}`,
+      lines: [
+        { role: 'ap', debit: retTotal, memo: 'Credit due from supplier', partyId: doc.supplierId, partyName: doc.supplierName },
+        { role: 'inventory', credit: retTotal, memo: 'Stock returned' },
+      ],
+    });
 
     await client.query('COMMIT');
     audit(req, 'purchase-return', 'purchaseReturns', retId, retNo);
@@ -1671,6 +1871,14 @@ app.post('/api/stockCounts', asyncH(async (req, res) => {
         });
         await client.query(`UPDATE parts SET data = data || $2::jsonb WHERE id = $1`,
           [l.partId, JSON.stringify({ stock: countedQty })]);
+        const val = round2(Math.abs(diff) * cost);
+        await postJournal(client, {
+          date: b.countDate || tsToDs(now), refType: 'stockCount', refId: id, refNo: no, by: actor,
+          memo: `Stock count ${no} — ${p.name || ''}`,
+          lines: diff > 0
+            ? [{ role: 'inventory', debit: val, memo: 'Count surplus' }, { role: 'adjust', credit: val, memo: 'Count surplus' }]
+            : [{ role: 'adjust', debit: val, memo: 'Count shortage' }, { role: 'inventory', credit: val, memo: 'Count shortage' }],
+        });
       }
     }
 
@@ -1979,6 +2187,34 @@ app.post('/api/creditNotes', asyncH(async (req, res) => {
     await client.query(`INSERT INTO credit_notes (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
       [cnId, JSON.stringify(doc), seq, now]);
 
+    // Reverse the revenue and tax, relieve the receivable, and put the cost back
+    // into stock if the goods came back. Closes the gap Phase 6 flagged.
+    const cnLines = [
+      { role: 'sales', debit: sub, memo: 'Revenue credited' },
+      { role: 'vatOut', debit: tax, memo: 'Output VAT credited' },
+      { role: 'ar', credit: total, memo: 'Credit to ' + (inv.customerName || 'customer'),
+        partyId: inv.customerId, partyName: inv.customerName },
+    ];
+    let cnCogs = 0;
+    for (const rs of restocked) {
+      const pr = await client.query(`SELECT data FROM parts WHERE id = $1`, [rs.partId]);
+      if (pr.rows.length) cnCogs = round2(cnCogs + (Number(pr.rows[0].data.costPrice) || 0) * rs.qty);
+    }
+    if (cnCogs > 0) {
+      cnLines.push({ role: 'inventory', debit: cnCogs, memo: 'Stock returned to shelf' });
+      cnLines.push({ role: 'cogs', credit: cnCogs, memo: 'Cost of sales reversed' });
+    }
+    if (refund > 0) {
+      // Cash actually handed back: the receivable was already relieved when the
+      // customer paid, so refunding re-creates it and then pays it out.
+      cnLines.push({ role: 'ar', debit: refund, memo: 'Refund paid out', partyId: inv.customerId, partyName: inv.customerName });
+      cnLines.push({ role: String(b.refundMethod || 'cash') === 'cash' ? 'cash' : 'bank', credit: refund, memo: 'Refund' });
+    }
+    await postJournal(client, {
+      date: doc.noteDate, refType: 'creditNote', refId: cnId, refNo: cnNo, by: actor,
+      memo: `Credit note ${cnNo} against ${invNo}`, lines: cnLines,
+    });
+
     // The invoice carries its credited total so every receivable figure in the
     // system nets it off without having to join.
     const newCredited = round2(alreadyCredited + total);
@@ -2222,6 +2458,109 @@ app.post('/api/jobCards/:id/deliver', asyncH(async (req, res) => {
   } finally {
     client.release();
   }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// FINANCIAL STATEMENTS — read from the ledger, not re-derived.
+// Every figure below is a SUM over journal_lines, so the trial balance balances
+// by construction rather than by the reports agreeing with each other.
+// ══════════════════════════════════════════════════════════════════════════
+app.get('/api/reports/trial-balance', asyncH(async (req, res) => {
+  const asAt = String(req.query.asAt || '').slice(0, 10) || '9999-12-31';
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const { rows } = await pool.query(
+    `SELECT jl.account_id,
+            COALESCE(SUM(jl.debit),0)  AS dr,
+            COALESCE(SUM(jl.credit),0) AS cr
+       FROM journal_lines jl
+      WHERE jl.entry_date <= $1 AND jl.entry_date >= $2
+      GROUP BY jl.account_id`,
+    [asAt, from]
+  );
+  const accRows = await pool.query(`SELECT id, data FROM fin_accounts`);
+  const accById = {};
+  for (const a of accRows.rows) accById[a.id] = a.data;
+
+  let totalDr = 0, totalCr = 0;
+  const lines = rows.map((r) => {
+    const a = accById[r.account_id] || {};
+    const dr = round2(Number(r.dr) || 0), cr = round2(Number(r.cr) || 0);
+    const net = round2(dr - cr);
+    totalDr = round2(totalDr + dr); totalCr = round2(totalCr + cr);
+    return {
+      accountId: r.account_id, name: a.name || '(deleted account)',
+      type: a.type || 'asset', systemRole: a.systemRole || '',
+      debit: dr, credit: cr,
+      // Presented the way a trial balance is read: one side per account.
+      balanceDebit: net > 0 ? net : 0, balanceCredit: net < 0 ? -net : 0,
+    };
+  }).filter((l) => l.debit !== 0 || l.credit !== 0)
+    .sort((a, b) => (a.type || '').localeCompare(b.type || '') || a.name.localeCompare(b.name));
+
+  res.json({
+    asAt, from, lines,
+    totalDebit: totalDr, totalCredit: totalCr,
+    difference: round2(totalDr - totalCr),
+    balanced: Math.abs(round2(totalDr - totalCr)) < 0.005,
+  });
+}));
+
+app.get('/api/reports/pl', asyncH(async (req, res) => {
+  const from = String(req.query.from || '').slice(0, 10) || '0000-01-01';
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  const { rows } = await pool.query(
+    `SELECT jl.account_id, COALESCE(SUM(jl.debit),0) dr, COALESCE(SUM(jl.credit),0) cr
+       FROM journal_lines jl WHERE jl.entry_date BETWEEN $1 AND $2 GROUP BY jl.account_id`,
+    [from, to]
+  );
+  const accRows = await pool.query(`SELECT id, data FROM fin_accounts`);
+  const accById = {};
+  for (const a of accRows.rows) accById[a.id] = a.data;
+  const income = [], expense = [];
+  let totalIncome = 0, totalExpense = 0;
+  for (const r of rows) {
+    const a = accById[r.account_id] || {};
+    const dr = round2(Number(r.dr) || 0), cr = round2(Number(r.cr) || 0);
+    if (a.type === 'income') {
+      const amt = round2(cr - dr);
+      if (amt !== 0) { income.push({ name: a.name, amount: amt }); totalIncome = round2(totalIncome + amt); }
+    } else if (a.type === 'expense') {
+      const amt = round2(dr - cr);
+      if (amt !== 0) { expense.push({ name: a.name, amount: amt }); totalExpense = round2(totalExpense + amt); }
+    }
+  }
+  income.sort((x, y) => y.amount - x.amount); expense.sort((x, y) => y.amount - x.amount);
+  res.json({ from, to, income, expense, totalIncome, totalExpense, netProfit: round2(totalIncome - totalExpense) });
+}));
+
+app.get('/api/reports/balance-sheet', asyncH(async (req, res) => {
+  const asAt = String(req.query.asAt || '').slice(0, 10) || '9999-12-31';
+  const { rows } = await pool.query(
+    `SELECT jl.account_id, COALESCE(SUM(jl.debit),0) dr, COALESCE(SUM(jl.credit),0) cr
+       FROM journal_lines jl WHERE jl.entry_date <= $1 GROUP BY jl.account_id`, [asAt]);
+  const accRows = await pool.query(`SELECT id, data FROM fin_accounts`);
+  const accById = {};
+  for (const a of accRows.rows) accById[a.id] = a.data;
+  const assets = [], liabilities = [], equity = [];
+  let ta = 0, tl = 0, te = 0, income = 0, expense = 0;
+  for (const r of rows) {
+    const a = accById[r.account_id] || {};
+    const dr = round2(Number(r.dr) || 0), cr = round2(Number(r.cr) || 0);
+    if (a.type === 'asset') { const v = round2(dr - cr); if (v) { assets.push({ name: a.name, amount: v }); ta = round2(ta + v); } }
+    else if (a.type === 'liability') { const v = round2(cr - dr); if (v) { liabilities.push({ name: a.name, amount: v }); tl = round2(tl + v); } }
+    else if (a.type === 'equity') { const v = round2(cr - dr); if (v) { equity.push({ name: a.name, amount: v }); te = round2(te + v); } }
+    else if (a.type === 'income') income = round2(income + (cr - dr));
+    else if (a.type === 'expense') expense = round2(expense + (dr - cr));
+  }
+  // Retained earnings is the P&L to date; it is what makes the sheet balance.
+  const retained = round2(income - expense);
+  if (retained !== 0) { equity.push({ name: 'Retained Earnings', amount: retained }); te = round2(te + retained); }
+  const diff = round2(ta - (tl + te));
+  res.json({
+    asAt, assets, liabilities, equity,
+    totalAssets: ta, totalLiabilities: tl, totalEquity: te,
+    difference: diff, balanced: Math.abs(diff) < 0.005,
+  });
 }));
 
 // ---- Reorder report ----
@@ -2474,7 +2813,8 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     for (const [c, v] of Object.entries(cols)) { vals.push(v); sets.push(`${c} = $${vals.length}`); }
     await client.query(`UPDATE ${cfg.table} SET ${sets.join(', ')} WHERE id = $1`, vals);
     await client.query('COMMIT');
-    audit(req, 'update', req.params.coll, req.params.id, merged.seq ? '#' + merged.seq : (merged.name || ''));
+    if (req.params.coll === 'finAccounts') sysAccountCache = null;
+  audit(req, 'update', req.params.coll, req.params.id, merged.seq ? '#' + merged.seq : (merged.name || ''));
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
     await client.query('ROLLBACK');
