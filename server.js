@@ -1153,14 +1153,19 @@ async function sysAccounts(client) {
   const { rows } = await q.query(`SELECT id, data FROM fin_accounts`);
   const byRole = {};
   for (const r of rows) if (r.data.systemRole) byRole[r.data.systemRole] = r.id;
+  let created = false;
   for (const [role, def] of Object.entries(SYS_ACCOUNTS)) {
     if (byRole[role]) continue;
+    created = true;
     const id = crypto.randomUUID();
     await q.query(`INSERT INTO fin_accounts (id, data, created_at) VALUES ($1,$2,$3)`,
       [id, JSON.stringify({ name: def.name, type: def.type, systemRole: role, system: true, createdAt: Date.now() }), Date.now()]);
     byRole[role] = id;
   }
-  sysAccountCache = byRole;
+  // Only cache when nothing had to be created. Account rows created inside the
+  // caller's transaction vanish if it rolls back, and a cache holding those ids
+  // would hand every later posting an account that does not exist.
+  if (!created) sysAccountCache = byRole;
   return byRole;
 }
 
@@ -1567,49 +1572,19 @@ app.post('/api/jobCards/:id/work', asyncH(async (req, res) => {
 // Locks the PO then each part (consistent order), stocks in every line
 // (weighted-average cost update), records movements noting the PO, and marks
 // the PO received. Idempotent: a PO already received is rejected.
+// ---- Legacy receive endpoint: retired ----
+// It re-received an order that was already partially received (it only checked
+// for status 'received', never 'partial'), so a second call double-counted the
+// entire order into stock. It also predated the movement ledger and the GL, so
+// anything it did receive was invisible to both. The goods-receipt engine
+// replaces it completely; the route stays only to give an older cached client a
+// clear answer instead of a 404.
 app.post('/api/purchaseOrders/:id/receive', asyncH(async (req, res) => {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const pr = await client.query(`SELECT data, seq FROM purchase_orders WHERE id = $1 FOR UPDATE`, [req.params.id]);
-    if (!pr.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Purchase order not found' }); }
-    const po = pr.rows[0].data;
-    if (po.status === 'received') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'This purchase order has already been received.' }); }
-    const poNo = 'PO-' + String(pr.rows[0].seq || 0).padStart(4, '0');
-    const lines = Array.isArray(po.items) ? po.items : [];
-    // Lock all referenced parts in a stable order (by id) to avoid deadlocks.
-    const partIds = Array.from(new Set(lines.map((l) => l.partId).filter(Boolean))).sort();
-    const partRows = {};
-    for (const pid of partIds) {
-      const r = await client.query(`SELECT data FROM parts WHERE id = $1 FOR UPDATE`, [pid]);
-      if (r.rows.length) partRows[pid] = r.rows[0].data;
-    }
-    for (const line of lines) {
-      const p = partRows[line.partId];
-      if (!p) continue;
-      const from = Number(p.stock) || 0, qty = Number(line.qty) || 0, to = from + qty;
-      const unitCost = round2(Number(line.unitCost) || 0);
-      // Weighted-average cost so valuation reflects the real blended cost.
-      const oldCost = Number(p.costPrice) || 0;
-      const wac = to > 0 ? round2((from * oldCost + qty * unitCost) / to) : unitCost;
-      const mv = { type: 'in', qty, from, to, note: 'Received on ' + poNo, at: Date.now(), by: (req.auth && req.auth.name) || '' };
-      partRows[line.partId] = { ...p, stock: to, costPrice: wac, movements: (Array.isArray(p.movements) ? p.movements : []).concat([mv]) };
-    }
-    for (const pid of partIds) {
-      if (partRows[pid]) await client.query(`UPDATE parts SET data = $2 WHERE id = $1`, [pid, JSON.stringify(partRows[pid])]);
-    }
-    const merged = { ...po, status: 'received', receivedAt: Date.now(), receivedBy: (req.auth && req.auth.name) || '' };
-    await client.query(`UPDATE purchase_orders SET data = $2 WHERE id = $1`, [req.params.id, JSON.stringify(merged)]);
-    await client.query('COMMIT');
-    audit(req, 'receive-po', 'purchaseOrders', req.params.id, poNo);
-    res.json({ id: req.params.id, ...merged });
-  } catch (e) {
-    await client.query('ROLLBACK');
-    throw e;
-  } finally {
-    client.release();
-  }
+  res.status(410).json({
+    error: 'This receiving method has been withdrawn. Use Receive Goods on the purchase order, which records a goods receipt.',
+  });
 }));
+
 
 // ══════════════════════════════════════════════════════════════════════════
 // GOODS RECEIPT — what actually arrived.
@@ -2068,7 +2043,19 @@ app.post('/api/purchaseReturns', asyncH(async (req, res) => {
       partRows[pid] = pr.rows[0].data;
     }
 
-    // Validate the whole return before any stock moves.
+    // Validate the whole return before any stock moves. Quantities are
+    // ACCUMULATED per part first: two lines for the same item were each checked
+    // against the full on-hand figure, so 6 + 6 against 10 on hand both passed
+    // and drove stock to -2.
+    const wantByPart = {};
+    for (const l of lines) wantByPart[l.partId] = round2((wantByPart[l.partId] || 0) + (Number(l.qty) || 0));
+    for (const [pid, want] of Object.entries(wantByPart)) {
+      const p = partRows[pid];
+      if (want > (Number(p.stock) || 0) + 1e-9) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Cannot return ${want} of "${p.name}" — only ${Number(p.stock) || 0} on hand.` });
+      }
+    }
     for (const l of lines) {
       const qty = Number(l.qty) || 0;
       if (qty <= 0) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Return quantities must be greater than zero.' }); }

@@ -3689,6 +3689,12 @@ async function doLogin(){
 }
 function doLogout(){
   localStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_KEY);
+  // Signing out and back in within the same tab left firestoreReady true, so
+  // initFirestore never ran again: the next user saw the previous one's cached
+  // data and no live subscriptions. Reset the whole client-side world.
+  firestoreReady=false;
+  myPermissions=null;
+  _fired={};
   document.getElementById('v-login').style.display='flex';
   document.getElementById('app-wrap').style.display='none';
 }
