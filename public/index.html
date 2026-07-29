@@ -1367,6 +1367,25 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
           <div class="form-group"><label>Address</label><input type="text" id="c-address" placeholder="Area, city"></div>
           <div class="form-group"><label>Customer Group</label><div id="c-group-wrap"></div></div>
         </div>
+        <div class="form-row">
+          <div class="form-group"><label>Account Type</label>
+            <select id="c-type" onchange="custTypeChanged()"><option value="individual">Individual</option><option value="company">Company / Fleet</option></select></div>
+          <div class="form-group" id="c-company-wrap" style="display:none"><label>Company Name *</label><input type="text" id="c-company" placeholder="Registered trade name" autocomplete="off"></div>
+        </div>
+        <div class="form-row" id="c-company-extra" style="display:none">
+          <div class="form-group"><label>Tax Registration No. (TRN)</label><input type="text" id="c-trn" autocomplete="off"></div>
+          <div class="form-group"><label>Contact Person</label><input type="text" id="c-contact" placeholder="Fleet manager" autocomplete="off"></div>
+        </div>
+        <div class="card" style="background:var(--bg);box-shadow:none;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Credit Control</div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:11px">A limit of zero means this customer pays on collection — no credit account. Credit invoices are refused once the limit or the terms are breached.</div>
+          <div class="form-row">
+            <div class="form-group"><label>Credit Limit (<span class="cur-lbl">QAR</span>)</label><input type="number" id="c-credit-limit" min="0" step="0.01" placeholder="0"></div>
+            <div class="form-group"><label>Payment Terms (days)</label><input type="number" id="c-credit-days" min="0" step="1" placeholder="0"></div>
+          </div>
+          <label class="chk-row" style="margin-bottom:0"><input type="checkbox" id="c-credit-hold"> <span>Credit hold — refuse all new credit sales</span></label>
+          <div id="c-credit-status" style="font-size:12px;margin-top:10px"></div>
+        </div>
         <div class="btn-group" style="margin-top:6px">
           <button class="btn btn-primary" id="save-cust-btn" onclick="saveCustomer()">Save Customer</button>
           <button class="btn btn-secondary" id="cust-cancel-btn" onclick="navTo('customers')">Cancel</button>
@@ -1402,6 +1421,25 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom
         <div class="form-row">
           <div class="form-group"><label>Next Service Due (date) <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="date" id="v-nextservice-date"></div>
           <div class="form-group"><label>Next Service Due (km) <span style="font-size:11px;color:var(--t3)">optional</span></label><input type="number" id="v-nextservice-km" placeholder="e.g. 50000"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Engine No.</label><input type="text" id="v-engine" autocomplete="off"></div>
+          <div class="form-group"><label>Transmission</label><select id="v-trans"><option value="">—</option><option>Automatic</option><option>Manual</option><option>CVT</option><option>DSG</option></select></div>
+        </div>
+        <div class="card" style="background:var(--bg);box-shadow:none;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:11px">Insurance &amp; Compliance</div>
+          <div class="form-row">
+            <div class="form-group"><label>Insurance Company</label><input type="text" id="v-ins-co" autocomplete="off"></div>
+            <div class="form-group"><label>Policy Number</label><input type="text" id="v-ins-policy" autocomplete="off"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Insurance Expiry</label><input type="date" id="v-ins-expiry"></div>
+            <div class="form-group"><label>Registration (Istimara) Expiry</label><input type="date" id="v-reg-expiry"></div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0"><label>Warranty Expiry</label><input type="date" id="v-warranty"></div>
+            <div class="form-group" style="margin-bottom:0"><label>Warranty Mileage (km)</label><input type="number" id="v-warranty-km" min="0" placeholder="e.g. 100000"></div>
+          </div>
         </div>
         <div class="form-group"><label>Notes</label><textarea id="v-notes" placeholder="Any additional notes…"></textarea></div>
         <div class="btn-group" style="margin-top:6px">
@@ -3353,6 +3391,30 @@ function computeNotifs(){
     var overdue=due.filter(function(v){return v.nextServiceDate<todayStr;}).length;
     out.push({icon:'calendar',col:'#7C3AED',bg:'#F5F3FF',title:due.length+' vehicle'+(due.length>1?'s':'')+' due for service',sub:(overdue?overdue+' overdue · ':'')+due.map(function(v){return v.registrationNo;}).slice(0,3).join(', '),go:function(){navTo('vehicles');}});
   }
+  // Insurance and Istimara lapse quietly and cost a fine, so they get their own
+  // alert rather than being buried in the vehicle record.
+  var soon30=new Date();soon30.setDate(soon30.getDate()+30);var soon30Str=soon30.toISOString().slice(0,10);
+  [['insuranceExpiry','insurance','#DC2626','#FEF2F2'],['registrationExpiry','registration','#B45309','#FFFBEB']].forEach(function(f){
+    var list=(vehicles||[]).filter(function(v){return v[f[0]]&&v[f[0]]<=soon30Str;});
+    if(!list.length)return;
+    var exp=list.filter(function(v){return v[f[0]]<todayStr;}).length;
+    out.push({icon:'alertTri',col:f[2],bg:f[3],
+      title:list.length+' vehicle'+(list.length>1?'s':'')+' — '+f[1]+(exp?' expired':' expiring'),
+      sub:(exp?exp+' already expired · ':'')+list.map(function(v){return v.registrationNo;}).slice(0,3).join(', '),
+      go:function(){navTo('vehicles');}});
+  });
+  // Customers who have hit their credit ceiling, before the next sale is made.
+  var overLimit=(customers||[]).filter(function(c){
+    if(c.creditHold)return true;
+    var lim=Number(c.creditLimit)||0;if(lim<=0)return false;
+    var owed=(invoices||[]).filter(function(iv){return iv.customerId===c.id&&iv.status!=='cancelled';})
+      .reduce(function(sm,iv){return sm+Math.max(0,(Number(iv.total)||0)-(Number(iv.totalPaid)||0));},0);
+    return owed>=lim;
+  });
+  if(overLimit.length)out.push({icon:'alertTri',col:'#DC2626',bg:'#FEF2F2',
+    title:overLimit.length+' customer'+(overLimit.length>1?'s':'')+' at credit limit',
+    sub:overLimit.map(function(c){return c.name;}).slice(0,3).join(', '),
+    go:function(){navTo('cust-accs');}});
   return out;
 }
 function buildNotifs(){
@@ -4407,6 +4469,16 @@ function showAddCustomer(editing){
   document.getElementById('save-cust-btn').textContent=editing?'Update Customer':'Save Customer';
   document.getElementById('cust-back-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
   document.getElementById('cust-cancel-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
+  var cc=editing&&curCustomer?curCustomer:null;
+  document.getElementById('c-type').value=cc?(cc.customerType||'individual'):'individual';
+  document.getElementById('c-company').value=cc?(cc.companyName||''):'';
+  document.getElementById('c-trn').value=cc?(cc.trn||''):'';
+  document.getElementById('c-contact').value=cc?(cc.contactPerson||''):'';
+  document.getElementById('c-credit-limit').value=cc&&cc.creditLimit?cc.creditLimit:'';
+  document.getElementById('c-credit-days').value=cc&&cc.creditDays?cc.creditDays:'';
+  document.getElementById('c-credit-hold').checked=!!(cc&&cc.creditHold);
+  custTypeChanged();
+  custCreditStatus(cc?cc.id:null);
   document.getElementById('c-group-wrap').innerHTML=mdPicker('c-group','customerGroup');
   fillMasterSelect('c-group','customerGroup',editing&&curCustomer?(curCustomer.groupId||masterIdByName('customerGroup',curCustomer.group)):'','No group');
   if(editing&&curCustomer){
@@ -4429,8 +4501,21 @@ function saveCustomer(){
   var btn=document.getElementById('save-cust-btn');
   btn.disabled=true;btn.textContent='Saving…';
   var grp=document.getElementById('c-group').value;
+  var ctype=document.getElementById('c-type').value;
+  var company=document.getElementById('c-company').value.trim();
+  if(ctype==='company'&&!company){return invalidField('c-company','Enter the company name for a company account.');}
+  // Two customers sharing a phone number split one person's history in two.
+  var norm=function(v){return String(v||'').replace(/[\s\-().+]/g,'');};
+  var dupPhone=customers.filter(function(c){
+    return c.id!==editingCustomerId&&norm(c.phone)&&norm(c.phone)===norm(phone);})[0];
+  if(dupPhone){return invalidField('c-phone','“'+dupPhone.name+'” is already registered with this number.');}
   var data={name:name,phone:phone,wa:document.getElementById('c-wa').value.trim(),email:document.getElementById('c-email').value.trim(),address:document.getElementById('c-address').value.trim(),
-    groupId:grp,group:grp?masterName(grp):''};
+    groupId:grp,group:grp?masterName(grp):'',
+    customerType:ctype,companyName:ctype==='company'?company:'',
+    trn:document.getElementById('c-trn').value.trim(),contactPerson:document.getElementById('c-contact').value.trim(),
+    creditLimit:Number(document.getElementById('c-credit-limit').value||0),
+    creditDays:Number(document.getElementById('c-credit-days').value||0),
+    creditHold:!!document.getElementById('c-credit-hold').checked};
   var fail=function(e){btn.disabled=false;btn.textContent=editingCustomerId?'Update Customer':'Save Customer';toast('Could not save customer: '+e.message,'error');};
   if(editingCustomerId){
     db.collection('customers').doc(editingCustomerId).update(data).then(function(){
@@ -4446,6 +4531,40 @@ function saveCustomer(){
       showCustomer(curCustomer);
     }).catch(fail);
   }
+}
+
+// A company account is billed to an entity, so it asks for entity details.
+function custTypeChanged(){
+  var isCo=document.getElementById('c-type').value==='company';
+  document.getElementById('c-company-wrap').style.display=isCo?'':'none';
+  document.getElementById('c-company-extra').style.display=isCo?'':'none';
+}
+// Live credit position, so whoever is editing the limit can see what is already
+// owed against it rather than setting a number blind.
+function custCreditStatus(customerId){
+  var el=document.getElementById('c-credit-status');if(!el)return;
+  if(!customerId){el.textContent='';return;}
+  el.style.color='var(--t3)';el.textContent='Checking credit position…';
+  gmsApi.creditStatus(customerId).then(function(st){
+    if(!st){el.textContent='';return;}
+    var bits=['Currently owes <b>'+fmtMoney(st.outstanding)+'</b> across '+st.openInvoices+' open invoice'+(st.openInvoices===1?'':'s')];
+    if(st.creditLimit>0)bits.push((st.available>=0?fmtMoney(st.available)+' still available':'over limit by '+fmtMoney(-st.available)));
+    if(st.oldestUnpaidDays)bits.push('oldest unpaid '+st.oldestUnpaidDays+' days');
+    el.style.color=st.blocked?'var(--red)':'var(--t3)';
+    el.innerHTML=(st.blocked?'⚠ ':'')+bits.join(' · ')+'.';
+  }).catch(function(){el.textContent='';});
+}
+// Documents that expire silently are the ones that cost a fine.
+function vehExpiryAlerts(v){
+  var out=[],today=todayStr();
+  var soon=new Date();soon.setDate(soon.getDate()+30);
+  var soonStr=soon.toISOString().slice(0,10);
+  [['insuranceExpiry','Insurance'],['registrationExpiry','Registration'],['warrantyExpiry','Warranty']].forEach(function(f){
+    var d=v[f[0]];if(!d)return;
+    if(d<today)out.push({label:f[1]+' expired',date:d,level:'expired'});
+    else if(d<=soonStr)out.push({label:f[1]+' expires soon',date:d,level:'soon'});
+  });
+  return out;
 }
 
 // VEHICLES
@@ -4518,8 +4637,18 @@ function showAddVehicle(editing){
     document.getElementById('v-nextservice-date').value=cv.nextServiceDate||'';
     document.getElementById('v-nextservice-km').value=cv.nextServiceKm||'';
     document.getElementById('v-notes').value=cv.notes||'';
+    document.getElementById('v-engine').value=cv.engineNo||'';
+    document.getElementById('v-trans').value=cv.transmission||'';
+    document.getElementById('v-ins-co').value=cv.insuranceCompany||'';
+    document.getElementById('v-ins-policy').value=cv.insurancePolicy||'';
+    document.getElementById('v-ins-expiry').value=cv.insuranceExpiry||'';
+    document.getElementById('v-reg-expiry').value=cv.registrationExpiry||'';
+    document.getElementById('v-warranty').value=cv.warrantyExpiry||'';
+    document.getElementById('v-warranty-km').value=cv.warrantyKm||'';
   } else {
-    ['v-reg','v-vin','v-year','v-color','v-mileage','v-nextservice-date','v-nextservice-km','v-notes'].forEach(function(id){document.getElementById(id).value='';});
+    ['v-reg','v-vin','v-year','v-color','v-mileage','v-nextservice-date','v-nextservice-km','v-notes',
+     'v-engine','v-ins-co','v-ins-policy','v-ins-expiry','v-reg-expiry','v-warranty','v-warranty-km'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('v-trans').value='';
   }
   show('v-add-vehicle');
 }
@@ -4561,6 +4690,14 @@ function saveVehicle(){
     color:document.getElementById('v-color').value.trim(),
     mileage:document.getElementById('v-mileage').value,
     fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):(editingVehicleId&&curVehicle?curVehicle.fuelType||'':''),
+    engineNo:document.getElementById('v-engine').value.trim(),
+    transmission:document.getElementById('v-trans').value,
+    insuranceCompany:document.getElementById('v-ins-co').value.trim(),
+    insurancePolicy:document.getElementById('v-ins-policy').value.trim(),
+    insuranceExpiry:document.getElementById('v-ins-expiry').value,
+    registrationExpiry:document.getElementById('v-reg-expiry').value,
+    warrantyExpiry:document.getElementById('v-warranty').value,
+    warrantyKm:Number(document.getElementById('v-warranty-km').value||0),
     nextServiceDate:document.getElementById('v-nextservice-date').value,
     nextServiceKm:document.getElementById('v-nextservice-km').value,
     notes:document.getElementById('v-notes').value.trim(),

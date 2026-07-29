@@ -391,6 +391,8 @@
         return r;
       });
     },
+    // What a customer owes against what they are allowed to owe.
+    creditStatus: function (customerId) { return req('GET', '/customers/' + customerId + '/credit'); },
     // What to buy: computed server-side so every device gets the same answer.
     reorderReport: function () { return req('GET', '/reports/reorder'); },
     availability: function (partId) { return req('GET', '/parts/' + partId + '/availability'); },

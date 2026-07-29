@@ -288,6 +288,23 @@ async function validateDoc(coll, doc, id) {
       return 'Over-receipt tolerance must be between 0 and 100%.';
     }
   }
+  if (coll === 'customers') {
+    if (doc.name != null && !String(doc.name).trim()) return 'Customer name is required.';
+    if (doc.creditLimit != null && Number(doc.creditLimit) < 0) return 'Credit limit cannot be negative.';
+    if (doc.creditDays != null && Number(doc.creditDays) < 0) return 'Payment terms cannot be negative.';
+    // A company account is billed to an entity, so it needs an entity name.
+    if (doc.customerType === 'company' && !String(doc.companyName || '').trim()) {
+      return 'Enter the company name for a company account.';
+    }
+  }
+  if (coll === 'vehicles') {
+    if (doc.registrationNo != null && !String(doc.registrationNo).trim()) return 'Registration number is required.';
+    if (doc.year != null && String(doc.year).trim()) {
+      const y = Number(doc.year);
+      if (!Number.isFinite(y) || y < 1950 || y > new Date().getFullYear() + 2) return 'Enter a valid model year.';
+    }
+    if (doc.mileage != null && Number(doc.mileage) < 0) return 'Mileage cannot be negative.';
+  }
   if (coll === 'parts') {
     if (doc.name != null && !String(doc.name).trim()) return 'Part name is required.';
     // A serialised item is counted one unit at a time; a fractional unit of
@@ -729,6 +746,20 @@ app.post('/api/:coll', asyncH(async (req, res, next) => {
   delete body.id;
   const invalid = await validateDoc(req.params.coll, body, id);
   if (invalid) return res.status(400).json({ error: invalid });
+  // A credit sale to a customer who is over their limit, on hold, or past their
+  // payment terms is refused. Cash and card sales are unaffected — the control
+  // is about lending money, not about selling.
+  if (req.params.coll === 'invoices' && isNew && body.customerId &&
+      ['credit', 'unpaid'].includes(String(body.status || ''))) {
+    const st = await creditStatus(body.customerId);
+    if (st && st.blocked && !body.creditOverride) {
+      const why = st.creditHold ? 'this account is on credit hold'
+        : (st.overdue ? `their oldest invoice is ${st.oldestUnpaidDays} days old against ${st.creditDays}-day terms`
+                      : `they already owe ${st.outstanding.toFixed(2)} against a ${st.creditLimit.toFixed(2)} limit`);
+      return res.status(409).json({ error: `Cannot invoice ${st.name} on credit — ${why}.`, credit: st });
+    }
+  }
+
   // Actor attribution for the audit trail.
   const actor = (req.auth && req.auth.name) || '?';
   if (isNew && body.createdBy == null) body.createdBy = actor;
@@ -1774,6 +1805,62 @@ app.post('/api/toolIssues/:id/return', asyncH(async (req, res) => {
   } finally {
     client.release();
   }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// CUSTOMER CREDIT
+// What a customer owes, against what they are allowed to owe. Without this a
+// credit account grows without limit and nobody notices until it is a bad debt.
+// ══════════════════════════════════════════════════════════════════════════
+async function creditStatus(customerId, client) {
+  const q = client || pool;
+  const cr = await q.query(`SELECT data FROM customers WHERE id = $1`, [customerId]);
+  if (!cr.rows.length) return null;
+  const c = cr.rows[0].data;
+  // Outstanding = invoiced but not yet collected, across every open invoice.
+  const inv = await q.query(
+    `SELECT COALESCE(SUM(
+        GREATEST(COALESCE((data->>'total')::numeric,0) - COALESCE((data->>'totalPaid')::numeric,0), 0)
+     ),0) AS owed,
+     COUNT(*) FILTER (WHERE COALESCE((data->>'total')::numeric,0) - COALESCE((data->>'totalPaid')::numeric,0) > 0.005) AS open_count
+       FROM invoices
+      WHERE data->>'customerId' = $1
+        AND COALESCE(data->>'status','') <> 'cancelled'`,
+    [customerId]
+  );
+  const outstanding = round2(Number(inv.rows[0].owed) || 0);
+  const limit = round2(Number(c.creditLimit) || 0);
+  const onHold = c.creditHold === true;
+  // Oldest unpaid invoice, which is what "overdue" is actually measured from.
+  const oldest = await q.query(
+    `SELECT data FROM invoices
+      WHERE data->>'customerId' = $1
+        AND COALESCE((data->>'total')::numeric,0) - COALESCE((data->>'totalPaid')::numeric,0) > 0.005
+      ORDER BY created_at ASC LIMIT 1`,
+    [customerId]
+  );
+  let oldestDays = 0;
+  if (oldest.rows.length) {
+    const t = Number(oldest.rows[0].data.createdAt) || 0;
+    if (t) oldestDays = Math.max(0, Math.floor((Date.now() - t) / 86400000));
+  }
+  const creditDays = Number(c.creditDays) || 0;
+  return {
+    customerId, name: c.name || '', creditLimit: limit, outstanding,
+    available: limit > 0 ? round2(limit - outstanding) : null,
+    openInvoices: Number(inv.rows[0].open_count) || 0,
+    creditHold: onHold, creditDays, oldestUnpaidDays: oldestDays,
+    overdue: creditDays > 0 && oldestDays > creditDays,
+    // A limit of 0 means "no credit account", not "unlimited" — that reading is
+    // how an unlimited account gets created by leaving a field blank.
+    blocked: onHold || (limit > 0 && outstanding >= limit) || (creditDays > 0 && oldestDays > creditDays),
+  };
+}
+
+app.get('/api/customers/:id/credit', asyncH(async (req, res) => {
+  const st = await creditStatus(req.params.id);
+  if (!st) return res.status(404).json({ error: 'Customer not found.' });
+  res.json(st);
 }));
 
 // ---- Reorder report ----
