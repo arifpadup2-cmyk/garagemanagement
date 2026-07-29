@@ -3983,7 +3983,7 @@ function showAddCustomer(editing){
   document.getElementById('cust-back-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
   document.getElementById('cust-cancel-btn').onclick=editing?function(){showCustomer(curCustomer);}:function(){navTo('customers');};
   document.getElementById('c-group-wrap').innerHTML=mdPicker('c-group','customerGroup');
-  fillMasterSelect('c-group','customerGroup',editing&&curCustomer?curCustomer.groupId:'','No group');
+  fillMasterSelect('c-group','customerGroup',editing&&curCustomer?(curCustomer.groupId||masterIdByName('customerGroup',curCustomer.group)):'','No group');
   if(editing&&curCustomer){
     document.getElementById('c-name').value=curCustomer.name||'';
     document.getElementById('c-phone').value=curCustomer.phone||'';
@@ -4078,10 +4078,12 @@ function showAddVehicle(editing){
   document.getElementById('v-make-wrap').innerHTML=mdPicker('v-make','vehicleMake');
   document.getElementById('v-model-wrap').innerHTML=mdPicker('v-model','vehicleModel',null,'v-make');
   document.getElementById('v-fuel-wrap').innerHTML=mdPicker('v-fuel','fuelType');
-  fillMasterSelect('v-make','vehicleMake',cv&&cv.makeId,'Select make…');
-  fillMasterSelect('v-fuel','fuelType',cv&&cv.fuelTypeId,'Select…');
+  var mkId=cv?(cv.makeId||masterIdByName('vehicleMake',cv.make)):'';
+  var mdId=cv?(cv.modelId||masterIdByName('vehicleModel',cv.model,mkId)):'';
+  fillMasterSelect('v-make','vehicleMake',mkId,'Select make…');
+  fillMasterSelect('v-fuel','fuelType',cv&&(cv.fuelTypeId||masterIdByName('fuelType',cv.fuelType)),'Select…');
   document.getElementById('v-make').onchange=vehMakeChanged;
-  fillMasterSelect('v-model','vehicleModel',cv&&cv.modelId,'Select model…',(cv&&cv.makeId)||'__none__');
+  fillMasterSelect('v-model','vehicleModel',mdId,'Select model…',mkId||'__none__');
   if(cv){
     document.getElementById('v-reg').value=cv.registrationNo||'';
     document.getElementById('v-vin').value=cv.vin||'';
@@ -4129,11 +4131,11 @@ function saveVehicle(){
     registrationNo:reg,vin:document.getElementById('v-vin').value.trim(),
     // id = the link to master data, name = the snapshot every existing screen reads.
     makeId:makeId,make:masterName(makeId),
-    modelId:modelId,model:modelId?masterName(modelId):'',
+    modelId:modelId,model:modelId?masterName(modelId):(editingVehicleId&&curVehicle?curVehicle.model||'':''),
     year:document.getElementById('v-year').value,
     color:document.getElementById('v-color').value.trim(),
     mileage:document.getElementById('v-mileage').value,
-    fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):'',
+    fuelTypeId:fuelId,fuelType:fuelId?masterName(fuelId):(editingVehicleId&&curVehicle?curVehicle.fuelType||'':''),
     nextServiceDate:document.getElementById('v-nextservice-date').value,
     nextServiceKm:document.getElementById('v-nextservice-km').value,
     notes:document.getElementById('v-notes').value.trim(),
@@ -4513,9 +4515,9 @@ function showAddPart(editing){
   document.getElementById('pt-brand-wrap').innerHTML=mdPicker('pt-brand','brand');
   document.getElementById('pt-uom-wrap').innerHTML=mdPicker('pt-uom','uom');
   document.getElementById('pt-taxcode-wrap').innerHTML=mdPicker('pt-taxcode','taxCode');
-  fillMasterSelect('pt-category','category',p&&p.categoryId,'No category');
-  fillMasterSelect('pt-brand','brand',p&&p.brandId,'No brand');
-  fillMasterSelect('pt-uom','uom',p&&p.uomId,'No unit');
+  fillMasterSelect('pt-category','category',p&&(p.categoryId||masterIdByName('category',p.category)),'No category');
+  fillMasterSelect('pt-brand','brand',p&&(p.brandId||masterIdByName('brand',p.brand)),'No brand');
+  fillMasterSelect('pt-uom','uom',p&&(p.uomId||masterIdByName('uom',p.unit)),'No unit');
   fillMasterSelect('pt-taxcode','taxCode',p&&p.taxCodeId,'Default (company VAT setting)');
   // Supplier is a real link into the suppliers register, not a typed name.
   var supSel=document.getElementById('pt-supplier');
@@ -4573,9 +4575,11 @@ function savePart(){
     // Both the id (the link) and the name (the snapshot) are stored: the id keeps
     // the record joined to master data, the name keeps every existing list,
     // report and print-out reading correctly without a migration.
-    categoryId:catSel.value,category:catSel.value?masterName(catSel.value):'',
-    brandId:brandSel.value,brand:brandSel.value?masterName(brandSel.value):'',
-    uomId:uomSel.value,unit:uomSel.value?masterName(uomSel.value):'',
+    // With nothing selected, keep whatever the record already said rather than
+    // erasing a value this form simply couldn't represent yet.
+    categoryId:catSel.value,category:catSel.value?masterName(catSel.value):(editingPartId&&curPart?curPart.category||'':''),
+    brandId:brandSel.value,brand:brandSel.value?masterName(brandSel.value):(editingPartId&&curPart?curPart.brand||'':''),
+    uomId:uomSel.value,unit:uomSel.value?masterName(uomSel.value):(editingPartId&&curPart?curPart.unit||'':''),
     taxCodeId:taxSel.value,
     reorderLevel:Number(document.getElementById('pt-reorder').value||0),
     minStock:minS,maxStock:maxS,costPrice:cost,sellingPrice:sell,
@@ -5607,6 +5611,19 @@ function masterById(id){if(!id)return null;for(var i=0;i<masters.length;i++){if(
 // Name for display. Falls back to the stored free-text so records created before
 // the master lists existed still read correctly.
 function masterName(id,fallback){var m=masterById(id);return m?m.name:(fallback||'');}
+// Records created before the master lists existed hold a free-text value and no
+// id. Resolve that text to a master by name so opening an old record preselects
+// the right entry instead of showing a blank picker (which would blank the
+// record's own value on save).
+function masterIdByName(kind,name,parentId){
+  if(!name)return '';
+  var want=String(name).trim().toLowerCase();
+  var hit=masters.filter(function(m){
+    return m.kind===kind&&String(m.name||'').toLowerCase()===want&&
+      (parentId==null||parentId===''||m.parentId===parentId);
+  })[0];
+  return hit?hit.id:'';
+}
 
 // How many live records point at this entry — the number that decides whether
 // Delete is offered. The server enforces the same rule; this is the honest
@@ -6661,7 +6678,7 @@ function showAddSupplier(id){
   document.getElementById('save-sup-btn').textContent=s?'Update Supplier':'Save Supplier';
   document.getElementById('sup-del-btn').style.display=s?'':'none';
   document.getElementById('sup-group-wrap').innerHTML=mdPicker('sup-group','supplierGroup');
-  fillMasterSelect('sup-group','supplierGroup',s&&s.groupId,'No group');
+  fillMasterSelect('sup-group','supplierGroup',s&&(s.groupId||masterIdByName('supplierGroup',s.group)),'No group');
   var f=function(id,v){document.getElementById(id).value=v||'';};
   f('sup-name',s&&s.name);f('sup-contact',s&&s.contact);f('sup-phone',s&&s.phone);f('sup-email',s&&s.email);f('sup-trn',s&&s.trn);f('sup-terms',s&&s.terms);f('sup-address',s&&s.address);
   show('v-add-supplier');

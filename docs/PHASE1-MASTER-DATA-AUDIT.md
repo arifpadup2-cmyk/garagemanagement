@@ -95,6 +95,13 @@ Phase 1 converts the vocabulary from *typed* to *governed*.
 | W12 | **Medium** | An item could be hard-deleted while holding stock or carrying movement history — destroying balance-sheet evidence. |
 | W13 | **Low** | A second, hidden vehicle-creation form inside the job-card flow (`renderModalVehicleForm`) wrote free-text make/model, bypassing any control the main form imposed. |
 
+### Found during re-audit (introduced by the first remediation pass, now fixed)
+
+| # | Severity | Finding | Resolution |
+|---|---|---|---|
+| R1 | **Critical** | Every legacy record holds free text and no id. Opening one in an edited form showed an empty picker, and saving would have **erased the record's own category / brand / make**. | `masterIdByName()` resolves legacy text to its master on form open; if nothing matches, the save preserves the existing text instead of blanking it. |
+| R2 | **High** | No migration path — legacy records would only ever link if someone re-edited each one by hand. | The seeder now backfills ids on an exact name match: 23 of 29 legacy values linked automatically; the 6 it could not match are reported by name and left untouched. |
+
 ---
 
 ## 4. ERP Standard Gaps — closed
@@ -230,6 +237,7 @@ register, enforced on both creation paths.
 | Item Master fields | UoM, tax code, supplier **link**, min/max stock, active flag, live margin |
 | Party segmentation | customer + supplier groups |
 | Idempotent seeder | `node scripts/seed-masters.js` — safe to re-run, never overwrites |
+| Legacy backfill | Same script links pre-existing records to the new masters on exact name match; unmatched values are reported, never guessed |
 
 ---
 
@@ -279,10 +287,20 @@ Headless Chrome (`playwright-core`, `channel: 'chrome'`) driving the real UI on
 | B11 | Job-card work line offers the catalogue | ✅ |
 | B12 | Picking "Wheel Alignment" fills description and 70.00, links `serviceId` | ✅ |
 | B13 | Estimate line offers the catalogue | ✅ |
-| B14 | In-use category cannot be deleted (409) | ✅ |
-| B15 | Part with stock/movements cannot be deleted | ✅ |
+| B14 | Legacy vehicle preselects its make **and** model from free text | ✅ |
+| B15 | Unmatched legacy value survives a save unchanged | ✅ |
+| B16 | In-use category cannot be deleted (409) | ✅ |
+| B17 | Part with stock/movements cannot be deleted | ✅ |
 
-**Console errors across both suites: zero.**
+**23 checks. Console errors across both suites: zero.**
+
+### Suite C — migration (against live data)
+| # | Test | Result |
+|---|---|---|
+| C1 | Backfill links 23 of 29 legacy values | ✅ |
+| C2 | 6 unmatched values (Fluids, Accessories, Valeo, Total, Mann, LX570) left untouched and reported | ✅ |
+| C3 | Re-running the backfill links nothing further | ✅ idempotent |
+| C4 | No orphaned vehicle models (`parentId` always resolves) | ✅ 0 |
 
 ---
 
@@ -296,6 +314,9 @@ Headless Chrome (`playwright-core`, `channel: 'chrome'`) driving the real UI on
 | Job-card technician select | Still restores after adding the service column | ✅ index corrected 0 → 1 |
 | Invoice totals | Untouched by this phase | ✅ no change to `sanitizeDoc('invoices')` |
 | Seeder | Re-run adds nothing | ✅ `0 added, 154 already present` |
+| Backfill | Re-run links nothing | ✅ `0 linked` on second pass |
+| Legacy parts | Existing 6 parts keep their names and categories | ✅ verified in Postgres |
+| Legacy vehicles | Existing 6 vehicles keep make/model/fuel text | ✅ 6/6 makes and fuels now also linked |
 | Schema boot | Restart applies cleanly | ✅ `Schema ready.`, no uniqueness warnings |
 
 ---

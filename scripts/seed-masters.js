@@ -216,6 +216,45 @@ async function main() {
 
   console.log(`Master lists: ${added} added, ${skipped} already present.`);
   console.log(`Services:     ${svcAdded} added, ${svcSkipped} already present.`);
+
+  // ---- Backfill: link records written before the master lists existed ----
+  // Only fills an id that is MISSING, and only on an exact case-insensitive name
+  // match. Never rewrites a name, never guesses, never touches a record that is
+  // already linked — so this is safe to run repeatedly on live data.
+  const link = async (table, field, kind, idField, parentFrom) => {
+    const { rows } = await pool.query(
+      `SELECT id, data FROM ${table}
+        WHERE COALESCE(data->>'${idField}','') = ''
+          AND COALESCE(data->>'${field}','') <> ''`
+    );
+    let n = 0, miss = new Set();
+    for (const r of rows) {
+      const parentId = parentFrom ? (r.data[parentFrom] || '') : '';
+      const key = `${kind}|${parentId}|${String(r.data[field]).trim().toLowerCase()}`;
+      const id = existing.get(key);
+      if (!id) { miss.add(r.data[field]); continue; }
+      await pool.query(`UPDATE ${table} SET data = data || $2::jsonb WHERE id = $1`,
+        [r.id, JSON.stringify({ [idField]: id })]);
+      n++;
+    }
+    if (n || miss.size) {
+      console.log(`  ${table}.${field} → ${idField}: ${n} linked` +
+        (miss.size ? `, ${miss.size} unmatched (${[...miss].slice(0, 6).join(', ')})` : ''));
+    }
+  };
+
+  console.log('Backfill:');
+  await link('parts', 'category', 'category', 'categoryId');
+  await link('parts', 'brand', 'brand', 'brandId');
+  await link('parts', 'unit', 'uom', 'uomId');
+  await link('vehicles', 'make', 'vehicleMake', 'makeId');
+  await link('vehicles', 'fuelType', 'fuelType', 'fuelTypeId');
+  // Models resolve within their make, so this must run after makeId is set.
+  await link('vehicles', 'model', 'vehicleModel', 'modelId', 'makeId');
+  await link('customers', 'group', 'customerGroup', 'groupId');
+  await link('suppliers', 'group', 'supplierGroup', 'groupId');
+  console.log('  (unmatched values are left exactly as they are — add them to the list, then re-run)');
+
   await pool.end();
 }
 
