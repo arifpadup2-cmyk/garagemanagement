@@ -106,6 +106,8 @@ const COLL = {
   toolIssues:       { table: 'tool_issues',       order: 'created_at DESC NULLS LAST', extra: { tool_id: 'toolId' } },
   bays:             { table: 'bays',             order: 'created_at ASC NULLS LAST' },
   creditNotes:      { table: 'credit_notes',     order: 'created_at DESC NULLS LAST', seq: true, lock: 1012 },
+  users:            { table: 'users',            order: 'created_at ASC NULLS LAST', extra: { username: 'username' } },
+  roles:            { table: 'roles',            order: 'created_at ASC NULLS LAST' },
   journalEntries:   { table: 'journal_entries',  order: 'entry_date DESC NULLS LAST, seq DESC', extra: { entry_date: 'date' }, seq: true, lock: 1013 },
 };
 
@@ -217,6 +219,14 @@ function sanitizeDoc(coll, doc) {
   if (coll === 'technicians' && doc.pin != null && isLegacyPin(doc.pin) && String(doc.pin).length) {
     doc.pin = hashPin(String(doc.pin));
   }
+  if (coll === 'users') {
+    if (doc.username != null) doc.username = String(doc.username).trim().toLowerCase();
+    // A plaintext password arrives once, is hashed here, and is never stored or
+    // returned. Blank means "leave the existing password alone".
+    if (doc.password) { doc.passwordHash = hashPin(String(doc.password)); }
+    delete doc.password;
+    if (doc.active == null) doc.active = true;
+  }
   return doc;
 }
 
@@ -290,6 +300,19 @@ async function validateDoc(coll, doc, id) {
     if (doc.overReceiptPct != null && (Number(doc.overReceiptPct) < 0 || Number(doc.overReceiptPct) > 100)) {
       return 'Over-receipt tolerance must be between 0 and 100%.';
     }
+  }
+  if (coll === 'users') {
+    if (!String(doc.username || '').trim()) return 'A username is required.';
+    if (!/^[a-z0-9._-]{3,32}$/.test(String(doc.username))) return 'Usernames may use letters, numbers, dot, underscore and hyphen (3–32 characters).';
+    if (!String(doc.name || '').trim()) return 'Enter the person\'s name.';
+    if (!doc.roleId) return 'Choose a role.';
+    if (!doc.passwordHash) return 'Set a password.';
+  }
+  if (coll === 'roles') {
+    if (!String(doc.name || '').trim()) return 'A role needs a name.';
+    if (!Array.isArray(doc.permissions) || !doc.permissions.length) return 'A role needs at least one permission.';
+    const unknown = doc.permissions.filter((p) => !PERMISSIONS[p]);
+    if (unknown.length) return 'Unknown permission: ' + unknown[0];
   }
   if (coll === 'customers') {
     if (doc.name != null && !String(doc.name).trim()) return 'Customer name is required.';
@@ -519,7 +542,161 @@ app.get('/api/image', asyncH(async (req, res) => {
 }));
 
 // ---- Everything below requires a valid token ----
+// ---- User login ----
+// Sits alongside the bootstrap admin from the environment, which stays so a
+// garage can never lock itself out of its own system.
+app.post('/api/user-login', loginGuard((req) => String((req.body || {}).username || '').trim().toLowerCase()),
+  asyncH(async (req, res) => {
+  const username = String((req.body || {}).username || '').trim().toLowerCase();
+  const password = String((req.body || {}).password || '');
+  if (!username || !password) return res.status(400).json({ error: 'Enter your username and password.' });
+
+  const { rows } = await pool.query(`SELECT id, data FROM users WHERE lower(username) = $1`, [username]);
+  const u = rows.length ? rows[0].data : null;
+  // Same message either way: a wrong username and a wrong password must not be
+  // distinguishable, or the login page becomes a user-enumeration tool.
+  if (!u || u.active === false || !verifyPin(password, u.passwordHash)) {
+    noteLoginFail(req);
+    return res.status(401).json({ error: 'Incorrect username or password.' });
+  }
+  clearLoginFail(req);
+  const role = await permsForRole(u.roleId);
+  await pool.query(`UPDATE users SET data = data || $2::jsonb WHERE id = $1`,
+    [rows[0].id, JSON.stringify({ lastLoginAt: Date.now() })]);
+  res.json({
+    ok: true, name: u.name || u.username, userId: rows[0].id,
+    roleId: u.roleId, roleName: u.roleName || '',
+    permissions: [...role],
+    token: signToken({ role: 'user', name: u.name || u.username, userId: rows[0].id, roleId: u.roleId }),
+  });
+}));
+
 app.use('/api', requireAuth);
+
+// ══════════════════════════════════════════════════════════════════════════
+// PERMISSIONS (Phase 9)
+// Named capabilities rather than a binary admin flag. A service advisor should
+// be able to raise a job card without also being able to post a journal or edit
+// the chart of accounts, and until now there was no way to express that.
+// ══════════════════════════════════════════════════════════════════════════
+const PERMISSIONS = {
+  'masters.view': 'View master data', 'masters.manage': 'Manage master data',
+  'customers.view': 'View customers', 'customers.manage': 'Add and edit customers',
+  'vehicles.view': 'View vehicles', 'vehicles.manage': 'Add and edit vehicles',
+  'jobcards.view': 'View job cards', 'jobcards.manage': 'Create and edit job cards',
+  'jobcards.deliver': 'Check in, quality check and deliver vehicles',
+  'inventory.view': 'View stock', 'inventory.manage': 'Adjust, transfer and count stock',
+  'purchasing.view': 'View purchasing', 'purchasing.manage': 'Raise requests and orders',
+  'purchasing.approve': 'Approve purchase orders',
+  'purchasing.receive': 'Receive goods',
+  'purchasing.invoice': 'Enter and pay supplier invoices',
+  'sales.view': 'View invoices', 'sales.manage': 'Raise invoices',
+  'sales.payment': 'Take payments', 'sales.credit': 'Issue credit notes and refunds',
+  'finance.view': 'View financial reports', 'finance.manage': 'Manage accounts and journals',
+  'reports.view': 'View reports',
+  'admin.users': 'Manage users and roles', 'admin.settings': 'Change system settings',
+  'admin.audit': 'View the audit log', 'admin.backup': 'Export and back up data',
+};
+
+// Which permission each route needs. Keyed by collection, then by intent.
+const PERM_MAP = {
+  masters: ['masters.view', 'masters.manage'], services: ['masters.view', 'masters.manage'],
+  customers: ['customers.view', 'customers.manage'], vehicles: ['vehicles.view', 'vehicles.manage'],
+  jobCards: ['jobcards.view', 'jobcards.manage'], estimates: ['jobcards.view', 'jobcards.manage'],
+  appointments: ['jobcards.view', 'jobcards.manage'],
+  parts: ['inventory.view', 'inventory.manage'], stockLots: ['inventory.view', 'inventory.manage'],
+  stockMovements: ['inventory.view', 'inventory.manage'], warehouses: ['inventory.view', 'inventory.manage'],
+  bins: ['inventory.view', 'inventory.manage'], stockTransfers: ['inventory.view', 'inventory.manage'],
+  stockCounts: ['inventory.view', 'inventory.manage'], reservations: ['inventory.view', 'inventory.manage'],
+  tools: ['inventory.view', 'inventory.manage'], toolIssues: ['inventory.view', 'inventory.manage'],
+  suppliers: ['purchasing.view', 'purchasing.manage'], purchaseRequests: ['purchasing.view', 'purchasing.manage'],
+  rfqs: ['purchasing.view', 'purchasing.manage'], purchaseOrders: ['purchasing.view', 'purchasing.manage'],
+  goodsReceipts: ['purchasing.view', 'purchasing.receive'],
+  purchaseInvoices: ['purchasing.view', 'purchasing.invoice'],
+  purchaseReturns: ['purchasing.view', 'purchasing.receive'],
+  invoices: ['sales.view', 'sales.manage'], creditNotes: ['sales.view', 'sales.credit'],
+  transactions: ['finance.view', 'finance.manage'], finAccounts: ['finance.view', 'finance.manage'],
+  journalEntries: ['finance.view', 'finance.manage'],
+  technicians: ['jobcards.view', 'admin.users'], advisors: ['jobcards.view', 'admin.users'],
+  bays: ['jobcards.view', 'inventory.manage'],
+  users: ['admin.users', 'admin.users'], roles: ['admin.users', 'admin.users'],
+};
+
+// Sub-actions that need more than the collection's write permission.
+const ACTION_PERM = {
+  'purchaseOrders/status': 'purchasing.approve',
+  'purchaseInvoices/pay': 'purchasing.invoice',
+  'invoices/pay': 'sales.payment',
+  'invoices/cancel': 'sales.credit',
+  'jobCards/checkin': 'jobcards.deliver',
+  'jobCards/qc': 'jobcards.deliver',
+  'jobCards/deliver': 'jobcards.deliver',
+  'jobCards/bay': 'jobcards.manage',
+};
+
+// Roles a garage actually has. Created once, then editable.
+const DEFAULT_ROLES = [
+  { name: 'Owner', system: true, description: 'Everything, including users and the books.',
+    permissions: Object.keys(PERMISSIONS) },
+  { name: 'Manager', description: 'Runs the garage day to day; cannot manage users.',
+    permissions: Object.keys(PERMISSIONS).filter((p) => !p.startsWith('admin.') || p === 'admin.audit') },
+  { name: 'Service Advisor', description: 'Front desk: customers, job cards, invoices and payments.',
+    permissions: ['masters.view', 'customers.view', 'customers.manage', 'vehicles.view', 'vehicles.manage',
+      'jobcards.view', 'jobcards.manage', 'jobcards.deliver', 'inventory.view',
+      'sales.view', 'sales.manage', 'sales.payment', 'reports.view'] },
+  { name: 'Storekeeper', description: 'Stock and receiving; no pricing or money.',
+    permissions: ['masters.view', 'inventory.view', 'inventory.manage', 'purchasing.view',
+      'purchasing.manage', 'purchasing.receive', 'jobcards.view', 'reports.view'] },
+  { name: 'Accountant', description: 'The books, supplier invoices and credit control.',
+    permissions: ['masters.view', 'customers.view', 'sales.view', 'sales.payment', 'sales.credit',
+      'purchasing.view', 'purchasing.invoice', 'finance.view', 'finance.manage',
+      'reports.view', 'admin.audit', 'admin.backup'] },
+  { name: 'Technician', description: 'Shop floor only.',
+    permissions: ['jobcards.view', 'inventory.view', 'masters.view'] },
+];
+
+async function ensureRoles() {
+  try {
+    const { rows } = await pool.query(`SELECT data FROM roles`);
+    const have = new Set(rows.map((r) => String(r.data.name || '').toLowerCase()));
+    for (const r of DEFAULT_ROLES) {
+      if (have.has(r.name.toLowerCase())) continue;
+      await pool.query(`INSERT INTO roles (id, data, created_at) VALUES ($1,$2,$3)`,
+        [crypto.randomUUID(), JSON.stringify({ ...r, createdAt: Date.now() }), Date.now()]);
+    }
+  } catch (e) { console.warn('[gms] role seed skipped:', e.message); }
+}
+
+// Resolve a user's permissions from their role, cached per request-ish.
+let roleCache = null;
+async function permsForRole(roleId) {
+  if (!roleCache) {
+    const { rows } = await pool.query(`SELECT id, data FROM roles`);
+    roleCache = {};
+    for (const r of rows) roleCache[r.id] = r.data;
+  }
+  const r = roleCache[roleId];
+  return new Set((r && Array.isArray(r.permissions)) ? r.permissions : []);
+}
+
+
+// ---- Who am I, and what may I do ----
+app.get('/api/me', asyncH(async (req, res) => {
+  const a = req.auth || {};
+  if (a.role === 'admin') {
+    return res.json({ role: 'admin', name: a.name, permissions: Object.keys(PERMISSIONS), isBootstrapAdmin: true });
+  }
+  if (a.role === 'user') {
+    const perms = await permsForRole(a.roleId);
+    return res.json({ role: 'user', name: a.name, userId: a.userId, roleId: a.roleId, permissions: [...perms] });
+  }
+  res.json({ role: a.role || 'none', name: a.name || '', permissions: [] });
+}));
+
+// ---- The permission catalogue, for the role editor ----
+app.get('/api/permissions', asyncH(async (req, res) => {
+  res.json({ permissions: Object.entries(PERMISSIONS).map(([key, label]) => ({ key, label, group: key.split('.')[0] })) });
+}));
 
 // ---- Authorization (RBAC) ----
 // Admin: full access. Technician: a tight allowlist — read the shop-floor data
@@ -530,8 +707,35 @@ app.use('/api', requireAuth);
 // technicians get GET on masters/services and nothing more.
 const TECH_READ = new Set(['jobCards', 'technicians', 'customers', 'vehicles', 'parts', 'masters', 'services',
   'warehouses', 'bins', 'stockLots', 'stockMovements', 'reservations', 'tools', 'toolIssues', 'bays']);
+async function authorizeUser(req, res, next) {
+  // A permissioned user account. Everything is denied unless their role grants
+  // it, which is the opposite of the old model.
+  const parts = req.path.split('/').filter(Boolean);
+  const coll = parts[0], sub = parts[2];
+  const perms = await permsForRole(req.auth.roleId);
+  const grant = (p) => perms.has(p);
+
+  // Reports and lookups everyone with a login can see.
+  if (coll === 'settings' || coll === 'image') return next();
+  if (coll === 'reports') return grant('reports.view') || grant('finance.view')
+    ? next() : res.status(403).json({ error: 'You do not have permission to view reports.' });
+  if (coll === 'audit-log') return grant('admin.audit') ? next() : res.status(403).json({ error: 'You do not have permission to view the audit log.' });
+  if (coll === 'export') return grant('admin.backup') ? next() : res.status(403).json({ error: 'You do not have permission to export data.' });
+  if (coll === 'logout-all') return grant('admin.users') ? next() : res.status(403).json({ error: 'Admin only.' });
+
+  const map = PERM_MAP[coll];
+  if (!map) return res.status(403).json({ error: 'Not permitted for this account.' });
+  const needed = req.method === 'GET' ? map[0] : (ACTION_PERM[coll + '/' + sub] || map[1]);
+  if (grant(needed)) return next();
+  return res.status(403).json({
+    error: `Your role does not allow this — it needs "${PERMISSIONS[needed] || needed}".`,
+  });
+}
+
 function authorize(req, res, next) {
   const role = req.auth && req.auth.role;
+  // A real user account is checked against its role's permissions.
+  if (role === 'user' && req.auth.roleId) return authorizeUser(req, res, next).catch(next);
   if (role === 'admin') return next();
   if (role === 'tech') {
     // Mounted at '/api', so req.path is mount-relative: '/<coll>/<id>/<sub>'.
@@ -560,6 +764,10 @@ const requireAdmin = (req, res, next) => (req.auth && req.auth.role === 'admin')
 // only re-sets it when the admin types a new one.
 function redactTechs(auth, docs) {
   return docs.map((d) => { const c = { ...d }; delete c.pin; c.hasPin = !!d.pin; return c; });
+}
+// A password hash has no reason to leave the server, for anyone.
+function redactUsers(docs) {
+  return docs.map((d) => { const c = { ...d }; delete c.passwordHash; delete c.password; c.hasPassword = !!d.passwordHash; return c; });
 }
 
 // Whitelisted JSONB filter fields per collection (indexed above). Any other
@@ -612,6 +820,7 @@ app.get('/api/:coll', asyncH(async (req, res, next) => {
   const { rows } = await pool.query(sql, params);
   let docs = rows.map((r) => ({ ...r.data, id: r.id }));
   if (req.params.coll === 'technicians') docs = redactTechs(req.auth, docs);
+  if (req.params.coll === 'users') docs = redactUsers(docs);
   res.json(docs);
 }));
 
@@ -623,6 +832,7 @@ app.get('/api/:coll/:id', asyncH(async (req, res, next) => {
   if (!rows.length) return res.status(404).json({ error: 'not found' });
   let doc = { ...rows[0].data, id: rows[0].id };
   if (req.params.coll === 'technicians') doc = redactTechs(req.auth, [doc])[0];
+  if (req.params.coll === 'users') doc = redactUsers([doc])[0];
   res.json(doc);
 }));
 
@@ -3000,6 +3210,7 @@ app.put('/api/:coll/:id', asyncH(async (req, res, next) => {
     await client.query(`UPDATE ${cfg.table} SET ${sets.join(', ')} WHERE id = $1`, vals);
     await client.query('COMMIT');
     if (req.params.coll === 'finAccounts') sysAccountCache = null;
+  if (req.params.coll === 'roles') roleCache = null;
   audit(req, 'update', req.params.coll, req.params.id, merged.seq ? '#' + merged.seq : (merged.name || ''));
     res.json({ id: req.params.id, ...merged });
   } catch (e) {
@@ -3101,6 +3312,13 @@ async function deleteBlocker(coll, id) {
     if (await has(`SELECT 1 FROM parts WHERE data->>'supplierId'=$1`, [id])) return 'this supplier is the preferred supplier on items';
   } else if (coll === 'stockLots') {
     return 'stock lots are created by goods receipts and cannot be deleted directly';
+  } else if (coll === 'roles') {
+    if (await hasRow(`SELECT 1 FROM users WHERE data->>'roleId'=$1`, [id])) return 'people are still assigned to this role';
+    const { rows } = await pool.query(`SELECT data FROM roles WHERE id=$1`, [id]);
+    if (rows.length && rows[0].data.system) return 'this is a built-in role';
+  } else if (coll === 'users') {
+    // Deleting a user erases who did what. Deactivate instead.
+    return 'a user account is referenced by the audit trail — deactivate it instead of deleting';
   }
   return null;
 }
@@ -3197,6 +3415,7 @@ const PORT = process.env.PORT || 3000;
 initSchema()
   .then(loadAuthEpoch)
   .then(loadPeriodLock)
+  .then(ensureRoles)
   .then(migrateMovements)
   .then(() => app.listen(PORT, () => console.log(`GMS server on http://localhost:${PORT}`)))
   .catch((e) => { console.error('Startup failed:', e.message); process.exit(1); });

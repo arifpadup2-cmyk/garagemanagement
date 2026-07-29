@@ -72,6 +72,14 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Users, roles & permissions (Phase 9) ──
+-- Until now there was one hardcoded admin from the environment plus technician
+-- PINs. Everyone who was not a technician had complete authority over money,
+-- stock and master data, with no way to tell who did what beyond one shared
+-- login. These are real accounts with real, named permissions.
+CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, data jsonb NOT NULL, username text, created_at bigint);
+CREATE TABLE IF NOT EXISTS roles (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
+
 -- ── Double-entry general ledger (Phase 7) ──
 -- Until now the trial balance was DERIVED in the browser from invoices and cash
 -- transactions, which is why it could never balance: inventory and COGS had no
@@ -179,6 +187,8 @@ CREATE INDEX IF NOT EXISTS idx_cn_created        ON credit_notes(created_at DESC
 CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
 CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
 -- The ledger is read by account, by date, and by the document that caused it.
+CREATE INDEX IF NOT EXISTS idx_users_created     ON users(created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_roles_created     ON roles(created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_je_date           ON journal_entries(entry_date DESC);
 CREATE INDEX IF NOT EXISTS idx_je_seq            ON journal_entries(seq);
 CREATE INDEX IF NOT EXISTS idx_je_ref            ON journal_entries ((data->>'refId'));
@@ -238,6 +248,11 @@ const UNIQUE_INDEXES = [
   [`CREATE UNIQUE INDEX IF NOT EXISTS uq_bays_code ON bays
       (lower(data->>'code')) WHERE COALESCE(data->>'code','') <> ''`,
    'bays (code)'],
+  // Two accounts sharing a username makes "who did this?" unanswerable.
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username ON users (lower(username))`,
+   'users (username)'],
+  [`CREATE UNIQUE INDEX IF NOT EXISTS uq_roles_name ON roles (lower(data->>'name'))`,
+   'roles (name)'],
 ];
 
 async function initSchema() {
