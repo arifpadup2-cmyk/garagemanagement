@@ -72,6 +72,12 @@ CREATE TABLE IF NOT EXISTS reservations    (id text PRIMARY KEY, data jsonb NOT 
 CREATE TABLE IF NOT EXISTS tools           (id text PRIMARY KEY, data jsonb NOT NULL, created_at bigint);
 CREATE TABLE IF NOT EXISTS tool_issues     (id text PRIMARY KEY, data jsonb NOT NULL, tool_id text, created_at bigint);
 
+-- ── Bank reconciliation ──
+-- A statement from the bank, and which of our own postings each line matches.
+-- The point is the DIFFERENCE: what the bank says minus what we have matched
+-- is either a timing difference we can name or an error we need to find.
+CREATE TABLE IF NOT EXISTS bank_recs (id text PRIMARY KEY, data jsonb NOT NULL, seq int, created_at bigint);
+
 -- ── Users, roles & permissions (Phase 9) ──
 -- Until now there was one hardcoded admin from the environment plus technician
 -- PINs. Everyone who was not a technician had complete authority over money,
@@ -187,6 +193,10 @@ CREATE INDEX IF NOT EXISTS idx_cn_created        ON credit_notes(created_at DESC
 CREATE INDEX IF NOT EXISTS idx_cn_seq            ON credit_notes(seq);
 CREATE INDEX IF NOT EXISTS idx_cn_invoice        ON credit_notes ((data->>'invoiceId'));
 -- The ledger is read by account, by date, and by the document that caused it.
+CREATE INDEX IF NOT EXISTS idx_bankrec_created   ON bank_recs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bankrec_acct      ON bank_recs ((data->>'accountId'));
+-- Reconciled state lives on the journal line, so an extract can show it.
+CREATE INDEX IF NOT EXISTS idx_jl_recon         ON journal_lines ((data->>'reconciledIn'));
 CREATE INDEX IF NOT EXISTS idx_users_created     ON users(created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_roles_created     ON roles(created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_je_date           ON journal_entries(entry_date DESC);

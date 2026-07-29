@@ -108,6 +108,7 @@ const COLL = {
   creditNotes:      { table: 'credit_notes',     order: 'created_at DESC NULLS LAST', seq: true, lock: 1012 },
   users:            { table: 'users',            order: 'created_at ASC NULLS LAST', extra: { username: 'username' } },
   roles:            { table: 'roles',            order: 'created_at ASC NULLS LAST' },
+  bankRecs:         { table: 'bank_recs',        order: 'created_at DESC NULLS LAST', seq: true, lock: 1014 },
   journalEntries:   { table: 'journal_entries',  order: 'entry_date DESC NULLS LAST, seq DESC', extra: { entry_date: 'date' }, seq: true, lock: 1013 },
 };
 
@@ -658,6 +659,7 @@ const PERM_MAP = {
   invoices: ['sales.view', 'sales.manage'], creditNotes: ['sales.view', 'sales.credit'],
   transactions: ['finance.view', 'finance.manage'], finAccounts: ['finance.view', 'finance.manage'],
   journalEntries: ['finance.view', 'finance.manage'],
+  bankRecs: ['finance.view', 'finance.manage'],
   technicians: ['jobcards.view', 'admin.users'], advisors: ['jobcards.view', 'admin.users'],
   bays: ['jobcards.view', 'inventory.manage'],
   users: ['admin.users', 'admin.users'], roles: ['admin.users', 'admin.users'],
@@ -3074,6 +3076,122 @@ app.post('/api/opening-balances', asyncH(async (req, res) => {
     await client.query('COMMIT');
     audit(req, 'opening-balances', 'journalEntries', entry.id, date);
     res.json({ ok: true, entry, stockValue, equity: Math.abs(diff) });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// BANK RECONCILIATION
+// The bank's version of events against ours. The value is not the tick-list —
+// it is the DIFFERENCE, which is either a timing difference you can name
+// (a cheque not yet presented) or an error you need to find.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Everything posted to a cash/bank account up to a date, with its reconciled
+// state, so the operator can see what is still outstanding.
+app.get('/api/bank/unreconciled', asyncH(async (req, res) => {
+  const accountId = String(req.query.accountId || '');
+  const to = String(req.query.to || '').slice(0, 10) || '9999-12-31';
+  if (!accountId) return res.status(400).json({ error: 'Choose a bank or cash account.' });
+  const { rows } = await pool.query(
+    `SELECT jl.id, jl.debit, jl.credit, jl.entry_date, jl.data, je.data AS entry
+       FROM journal_lines jl JOIN journal_entries je ON je.id = jl.entry_id
+      WHERE jl.account_id = $1 AND jl.entry_date <= $2
+      ORDER BY jl.entry_date ASC, je.seq ASC`, [accountId, to]);
+  let bookBalance = 0, reconciled = 0;
+  const lines = rows.map((r) => {
+    const dr = round2(Number(r.debit) || 0), cr = round2(Number(r.credit) || 0);
+    bookBalance = round2(bookBalance + dr - cr);
+    const rec = (r.data || {}).reconciledIn || '';
+    if (rec) reconciled = round2(reconciled + dr - cr);
+    return {
+      lineId: r.id, date: r.entry_date, entryNo: r.entry.no,
+      memo: (r.data || {}).memo || r.entry.memo, refNo: r.entry.refNo,
+      party: (r.data || {}).partyName || '', debit: dr, credit: cr,
+      reconciledIn: rec,
+    };
+  });
+  res.json({
+    accountId, to, bookBalance, reconciledBalance: reconciled,
+    unreconciledBalance: round2(bookBalance - reconciled),
+    lines, outstanding: lines.filter((l) => !l.reconciledIn),
+  });
+}));
+
+// Close a reconciliation: tick the lines that appear on the statement and
+// record what did not clear.
+app.post('/api/bank/reconcile', asyncH(async (req, res) => {
+  const b = req.body || {};
+  const accountId = String(b.accountId || '');
+  const lineIds = Array.isArray(b.lineIds) ? b.lineIds : [];
+  const statementBalance = round2(Number(b.statementBalance) || 0);
+  const statementDate = String(b.statementDate || '').slice(0, 10) || tsToDs(Date.now());
+  if (!accountId) return res.status(400).json({ error: 'Choose the account being reconciled.' });
+  if (!lineIds.length) return res.status(400).json({ error: 'Tick at least one line that appears on the statement.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Only lines on this account, and never one already reconciled elsewhere.
+    const { rows } = await client.query(
+      `SELECT id, debit, credit, data FROM journal_lines
+        WHERE id = ANY($1::text[]) AND account_id = $2 FOR UPDATE`, [lineIds, accountId]);
+    if (rows.length !== lineIds.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Some ticked lines do not belong to this account.' });
+    }
+    const already = rows.filter((r) => (r.data || {}).reconciledIn);
+    if (already.length) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: `${already.length} of those lines are already reconciled on an earlier statement.` });
+    }
+
+    const id = crypto.randomUUID();
+    const seq = await allocSeq(client, 'bankRecs', 'bank_recs', 1014, id);
+    const no = 'REC-' + String(seq).padStart(4, '0');
+    const now = Date.now();
+    const actor = (req.auth && req.auth.name) || '?';
+
+    let cleared = 0;
+    for (const r of rows) {
+      cleared = round2(cleared + (Number(r.debit) || 0) - (Number(r.credit) || 0));
+      await client.query(`UPDATE journal_lines SET data = data || $2::jsonb WHERE id = $1`,
+        [r.id, JSON.stringify({ reconciledIn: no, reconciledAt: now })]);
+    }
+
+    // Everything on this account up to the statement date that was NOT ticked
+    // is what has not yet cleared the bank.
+    const outRows = await client.query(
+      `SELECT COALESCE(SUM(debit - credit),0) v FROM journal_lines
+        WHERE account_id = $1 AND entry_date <= $2 AND COALESCE(data->>'reconciledIn','') = ''`,
+      [accountId, statementDate]);
+    const outstanding = round2(Number(outRows.rows[0].v) || 0);
+
+    const bookRows = await client.query(
+      `SELECT COALESCE(SUM(debit - credit),0) v FROM journal_lines
+        WHERE account_id = $1 AND entry_date <= $2`, [accountId, statementDate]);
+    const bookBalance = round2(Number(bookRows.rows[0].v) || 0);
+
+    // The reconciling item. If this is not zero, something is genuinely wrong —
+    // it is reported rather than hidden.
+    const difference = round2(statementBalance - (bookBalance - outstanding));
+
+    const doc = {
+      accountId, accountName: b.accountName || '', statementDate, statementBalance,
+      bookBalance, clearedTotal: cleared, outstandingTotal: outstanding, difference,
+      reconciled: Math.abs(difference) < 0.005,
+      lineCount: rows.length, lineIds, notes: String(b.notes || '').trim(),
+      seq, createdAt: now, createdBy: actor,
+    };
+    await client.query(`INSERT INTO bank_recs (id, data, seq, created_at) VALUES ($1,$2,$3,$4)`,
+      [id, JSON.stringify(doc), seq, now]);
+    await client.query('COMMIT');
+    audit(req, 'bank-reconcile', 'bankRecs', id, `${no} diff ${difference}`);
+    res.json({ id, ...doc, no });
   } catch (e) {
     await client.query('ROLLBACK');
     throw e;
